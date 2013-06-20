@@ -15,6 +15,7 @@ setup(name='fungidb_tools',
       author='Edward Liaw',
       author_email='ed.liaw@fungidb.org',
       packages=['fungidb_tools'],
+      scripts=['scripts/generate_datasets'],
       install_requires=[
           'decorator',
           'gdata',
