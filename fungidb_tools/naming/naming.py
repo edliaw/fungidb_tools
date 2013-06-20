@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """FungiDB naming conventions to standardize organism names in the database.
 
 2013-06-10
