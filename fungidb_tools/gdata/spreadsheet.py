@@ -1,5 +1,3 @@
-#!/usr/bin/env python2.7
-# -*- coding: utf-8 -*-
 """Simple class to encapsulate GData client for spreadsheets.
 
 2013-06-10
@@ -13,16 +11,6 @@ import warnings
 import os
 import urlparse
 import gdata.spreadsheet.service as service
-
-
-def open_fungidb_sheet(email=None, pw=None):
-    """Example code.  Open spreadsheet."""
-    document = "multi-species fungal genome db targets"
-    worksheet = "Target Genomes for Release"
-    client = SimpleGData(email, pw)
-    client.select_document(document)
-    client.select_worksheet(worksheet)
-    return client
 
 
 class SimpleGData(object):

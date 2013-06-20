@@ -1,16 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""FungiDB conventions to standardize organism naming.
+"""FungiDB naming conventions to standardize organism names in the database.
 
 2013-06-10
 Edward Liaw
 """
-try:
-    import re2 as re
-except ImportError:
-    import re
-else:
-    re.set_fallback_notification(re.FALLBACK_QUIETLY)
+import re
 from warnings import warn
 from decorator import decorator
 
@@ -21,11 +16,9 @@ RE_NON_ALPHA = re.compile(r'[^a-zA-Z]+')
 
 
 def _unique_abbrev(func, *args, **kwargs):
-    """Decorator that uses caching to check that we only generate unique names
-    of length 4 (by default)."""
     long_name = func(*args, **kwargs)
     mod = func.length - 1
-    for i in range(len(long_name - mod)):
+    for i in range(len(long_name) - mod):
         name = long_name[:mod] + long_name[i + mod]
         if name not in func.cache:
             break
@@ -38,6 +31,9 @@ def _unique_abbrev(func, *args, **kwargs):
 
 
 def unique_abbrev(f, length=4):
+    """Decorator that uses caching to check that we only generate unique names
+    of length 4 (by default).
+    """
     f.cache = set()
     f.length = length
     return decorator(_unique_abbrev, f)
