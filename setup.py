@@ -16,6 +16,7 @@ setup(name='fungidb_tools',
       author_email='ed.liaw@fungidb.org',
       packages=['fungidb_tools'],
       install_requires=[
+          'decorator',
           'gdata',
           'lxml',
       ],
