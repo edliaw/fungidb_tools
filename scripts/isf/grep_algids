@@ -1,0 +1,52 @@
+#!/usr/bin/env python2.7
+# -*- coding: utf-8 -*-
+"""Parse the algorithm invocation ids from a log file.
+
+2012/12/19
+Edward Liaw
+"""
+from __future__ import print_function
+import re
+import sys
+import argparse
+
+RE_PLUGIN = re.compile(r'PLUGIN\t[A-Za-z:]+?([A-Za-z]+)$')
+RE_ALGID = re.compile(r'AlgInvocationId\t(\d+)')
+
+
+def parse_arguments():
+    """Handle command-line arguments.
+
+    Returns:
+        args: Arguments passed in from the command-line."""
+    parser = argparse.ArgumentParser(description=__doc__,
+                                     fromfile_prefix_chars='@')
+    parser.add_argument('infile',
+                        type=argparse.FileType('r'), nargs='?',
+                        default=sys.stdin, help='input file')
+    parser.add_argument('outfile',
+                        type=argparse.FileType('w'), nargs='?',
+                        default=sys.stdout, help='output file')
+    return parser.parse_args()
+
+
+def main():
+    args = parse_arguments()
+
+    # Handle I/O.
+    ids = {}
+    plugin = ''
+    with args.infile as infile, args.outfile as outfile:
+        for line in infile:
+            match = RE_PLUGIN.search(line)
+            if match:
+                plugin = match.group(1)
+            match = RE_ALGID.search(line)
+            if match:
+                ids[match.group(1)] = plugin
+        for id, plugin in reversed(sorted(ids.items())):
+            print("%s %s" % (id, plugin), file=outfile)
+
+
+if __name__ == "__main__":
+    main()

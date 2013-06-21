@@ -1,0 +1,173 @@
+#!/usr/bin/env python2.7
+# -*- coding: utf-8 -*-
+"""Reformat gff file for ISF.
+Modifies the first two columns.
+
+2012/12/03
+Edward Liaw
+"""
+from __future__ import print_function
+import sys
+import warnings
+from fungidb_tools.isf import format_isf
+from collections import OrderedDict
+
+
+def parse_arguments():
+    """Handle command-line arguments.
+
+    Returns:
+        args: Arguments passed in from the command-line.
+    """
+    parser = format_isf.init_argparse()
+    parser.add_argument('-f', '--filetype',
+                        choices=('gtf', 'gff3'), default='gtf',
+                        help='filetype to parse')
+    parser.add_argument('-v', '--provider',
+                        help='replacement text for provider')
+    parser.add_argument('-c', '--comments',
+                        action='store_true',
+                        help='retain comments')
+    parser.add_argument('--prefix',
+                        help='unique feature prefix for organism')
+    parser.add_argument('--nostart',
+                        action='store_true',
+                        help='remove start and stop codons')
+    return parser.parse_args()
+
+
+class GffOptions(object):
+    def __init__(self, args):
+        self.delim = self._set_filetype(args.filetype)
+        self.print_comment = self._set_comments(args.comments)
+        self.is_start = self._set_nostart(args.nostart)
+
+    @staticmethod
+    def _set_filetype(filetype):
+        attr_delim = ';'
+        row_delim = '\t'
+        if filetype == 'gtf':
+            pair_delim = ' '
+        elif filetype == 'gff3':
+            pair_delim = '='
+        else:
+            raise Exception("Should not reach here")
+        return pair_delim, attr_delim, row_delim
+
+    @staticmethod
+    def _set_comments(comment_flag):
+        if comment_flag:
+            def print_comment(comment, file=sys.stdout):
+                print(comment, file=file)
+        else:
+            def print_comment(comment, file=sys.stdout):
+                return
+        return print_comment
+
+    @staticmethod
+    def _set_nostart(nostart_flag):
+        if nostart_flag:
+            def is_start(feature_type):
+                return feature_type in ('start_codon', 'stop_codon')
+        else:
+            def is_start(feature_type):
+                return False
+        return is_start
+
+
+def format_feature(cols, attr, snoRNA, args):
+    # Modify the provider
+    if args.provider:
+        cols[1] = args.provider
+
+    # Tag snoRNAs with prefix to make them unique
+    if args.prefix:
+        if cols[2] == 'snoRNA':
+            snoRNA.append(attr['ID'])
+            attr['ID'] = '_'.join((args.prefix, attr['ID']))
+        elif cols[2] in ('noncoding_exon', 'intron') and attr.get('Parent') in snoRNA:
+            attr['Parent'] = '_'.join((args.prefix, attr['Parent']))
+
+    # Remove _mRNA from the IDs
+    try:
+        attr['ID'] = attr['ID'].replace('_mRNA', '')
+    except:
+        pass
+    try:
+        attr['Parent'] = attr['Parent'].replace('_mRNA', '')
+    except:
+        pass
+
+
+def parse_gff(infile, outfile, options):
+    pair_delim, attr_delim, col_delim = options.delim
+    for line in infile:
+        if line.startswith('#'):
+            # Check for comments
+            if line.startswith('##FASTA'):
+                # Quit after fasta sequences
+                break
+            options.print_comment(line.rstrip(), outfile)
+            continue
+        # Separate content
+        cols = line.rstrip().split(col_delim, 9)
+        attr = OrderedDict()
+        for pair in cols[8].rstrip(attr_delim).split(attr_delim):
+            pair = pair.strip()
+            if pair.startswith('#'):
+                # Try to cut out comments; warn in case it's a bug
+                warnings.warn("WARNING: inline comment present:\n{}".format(line))
+                break
+            key, val = pair.split(pair_delim, 2)
+            attr[key] = val
+        #attr = OrderedDict(pair.strip().split(pair_delim, 2) for pair in cols[8].rstrip(attr_delim).split(attr_delim))
+
+        yield cols, attr
+
+
+def remake_gff(cols, attr, options):
+    pair_delim, attr_delim, col_delim = options.delim
+    cols[8] = attr_delim.join(pair_delim.join(pair) for pair in attr.items())
+    return col_delim.join(cols)
+
+
+def main():
+    args = parse_arguments()
+    options = GffOptions(args)
+    formatter = format_isf.ContigFormatter.from_args(args)
+
+    snoRNA = []
+
+    with args.infile as infile, args.outfile as outfile:
+        for cols, attr in parse_gff(infile, outfile, options):
+            if options.is_start(cols[2]):
+                continue
+
+            try:
+                cols[0] = formatter.format(cols[0])
+            except format_isf.NoMatchException:
+                warnings.warn("SKIPPED: re fails to match component of {line}".format(line=cols[0]))
+            except AttributeError:
+                warnings.warn("SKIPPED: re does not match {line}".format(line=cols[0]))
+                continue
+
+            # Fix chromosome features
+            if cols[2] == 'chromosome':
+                try:
+                    attr['ID'] = formatter.format(attr['ID'])
+                except format_isf.NoMatchException:
+                    warnings.warn("SKIPPED: re fails to match component of {line}".format(line=attr['ID']))
+                    continue
+                except AttributeError:
+                    warnings.warn("SKIPPED: re does not match {line}".format(line=attr['ID']))
+                    continue
+
+            # Fix other feature information
+            format_feature(cols, attr, snoRNA, args)
+
+            # Print to file
+            print(remake_gff(cols, attr, options), file=outfile)
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,70 @@
+#!/usr/bin/env python2.7
+"""Generates a chromosome map for a fasta file.
+
+2012/09/14
+Edward Liaw
+"""
+from __future__ import print_function
+import sys
+import argparse
+import re
+
+RE_DEFAULT = r'Chr(?:(?P<number>\d+)|(?P<letter>[A-Z]))'
+
+
+def parse_arguments():
+    """Handle command-line arguments.
+
+    Returns:
+        args: Arguments passed in from the command-line."""
+    parser = argparse.ArgumentParser(description=__doc__,
+                                     fromfile_prefix_chars='@')
+    parser.add_argument('infile',
+                        type=argparse.FileType('r'), nargs='?',
+                        default=sys.stdin, help='input file')
+    parser.add_argument('outfile',
+                        type=argparse.FileType('w'), nargs='?',
+                        default=sys.stdout, help='output file')
+    parser.add_argument('-r', '--regex',
+                        default=RE_DEFAULT,
+                        help='regular expression for the fasta header')
+    return parser.parse_args()
+
+
+def parse_headers(infile):
+    """Get fasta headers.
+
+    Args:
+        infile: A filestream to read from.
+    """
+    for line in infile:
+        if line.startswith('>'):
+            yield line.rstrip().lstrip('>')
+
+
+def main():
+    args = parse_arguments()
+
+    target = re.compile(args.regex)
+
+    # Handle I/O.
+    with args.infile as infile, args.outfile as outfile:
+        for i, header in enumerate(parse_headers(infile)):
+            try:
+                value = target.search(header).groupdict()
+            except AttributeError:
+                raise Exception("Not an expected header format: {}".format(header))
+
+            if value['number']:
+                number = int(value['number'])
+            elif value['letter']:
+                number = value['letter']
+            else:
+                raise Exception(header)
+
+            output = (str(col) for col in (header, number, i + 1))
+            print('\t'.join(output), file=outfile)
+
+
+if __name__ == "__main__":
+    main()

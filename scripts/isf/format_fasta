@@ -1,0 +1,33 @@
+#!/usr/bin/env python2.7
+# -*- coding: utf-8 -*-
+"""Reformat fasta file for ISF.
+
+2013/04/11
+Edward Liaw
+"""
+from __future__ import print_function
+import warnings
+from fungidb_tools.isf import format_isf
+from Bio import SeqIO
+
+
+def main():
+    args = format_isf.parse_arguments()
+    formatter = format_isf.ContigFormatter.from_args(args)
+
+    with args.infile as infile, args.outfile as outfile:
+        for record in SeqIO.parse(infile, 'fasta'):
+            try:
+                record.id = formatter.format(record.id)
+                record.description = ''
+                SeqIO.write(record, outfile, 'fasta')
+            except format_isf.NoMatchException:
+                warnings.warn("SKIPPED: re fails to match component of {line}".format(line=record.id))
+                continue
+            except AttributeError:
+                warnings.warn("SKIPPED: re does not match {line}".format(line=record.id))
+                continue
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,73 @@
+#!/usr/bin/env python2.7
+"""Extract columns from a tab-separated summary file.
+
+2012/10/01
+Edward Liaw
+"""
+from __future__ import print_function
+import sys
+import argparse
+import warnings
+
+ID_COL = 'transcriptId'
+SAVE_COLS = ('kogdefline',)
+
+
+def parse_arguments():
+    """Handle command-line arguments.
+
+    Returns:
+        args: Arguments passed in from the command-line."""
+    parser = argparse.ArgumentParser(description=__doc__,
+                                     fromfile_prefix_chars='@')
+    parser.add_argument('infile',
+                        type=argparse.FileType('r'), nargs='?',
+                        default=sys.stdin, help='input file')
+    parser.add_argument('outfile',
+                        type=argparse.FileType('w'), nargs='?',
+                        default=sys.stdout, help='output file')
+    parser.add_argument('-i', '--id',
+                        help='header of the id column')
+    parser.add_argument('-p', '--prefix',
+                        help='id prefix')
+    parser.add_argument('-s', '--save',
+                        nargs='+', default=SAVE_COLS,
+                        help='headers of columns to save')
+    return parser.parse_args()
+
+
+def mark_columns(header, id, save):
+    spline = header.rstrip('\n').lstrip('#').split('\t')
+    id_col = spline.index(id)
+    marked = [i for i, col in enumerate(spline) if col in save]
+    return id_col, marked
+
+
+def main():
+    args = parse_arguments()
+
+    # Handle I/O.
+    with args.infile as infile, args.outfile as outfile:
+        id_col, marked = mark_columns(next(infile), args.id, args.save)
+        prev_outstr = None
+        prev_id = None
+        for line in infile:
+            spline = line.rstrip('\n').split('\t')
+
+            outstr = '\t'.join([spline[mark] for mark in marked])
+            if prev_outstr == outstr:
+                continue
+            prev_outstr = outstr
+
+            id = spline[id_col]
+            if args.prefix:
+                id = '_'.join((args.prefix, id))
+            if prev_id == id:
+                warnings.warn('Non-unique key: {}'.format(id))
+            prev_id = id
+
+            print('\t'.join((id, outstr)), file=outfile)
+
+
+if __name__ == "__main__":
+    main()
