@@ -87,7 +87,7 @@ def abbrev_strain(strain):
     shortened_words.append(strain[prev:])
     normalized = "".join(shortened_words)
 
-    # Remove spaces
+    # Remove spaces.
     normalized = normalized.replace(" ", "")
 
     # Substitute none alpha-numeric characters with a -.
@@ -115,9 +115,12 @@ def split_taxname(taxname):
         Species may be more than one word, so long as the inner words are
             abbreviations (end with a .).
         Strain immediately follows species and it can be any number of words.
+        Strain may be None if the taxonomy name is only of the species.
+            In this case, you'll need to provide the strain name some other
+            way.
 
     >>> split_taxname('Mucor circinelloides f. lusitanicus CBS 277.49')
-    ('Mucor', 'circinelloides f. lusitanicus CBS', '277.49')
+    ('Mucor', 'circinelloides f. lusitanicus',  'CBS 277.49')
     """
     split_name = taxname.strip().split(" ")
     genus = split_name.pop(0)
@@ -137,11 +140,13 @@ def split_taxname(taxname):
             else:
                 break
     if strain is None:
-        # Not a special species name.
+        # Not a special species name.  Species is just one word, so strain is
+        # the rest.
         strain = " ".join(split_name[1:])
 
     if not strain:
-        # Empty strain name.
+        # No strain name.  Some strains don't have an NCBI taxid so we had to
+        # use the species NCBI taxid (and species names).
         warn("Organism %s does not have a strain." % taxname)
 
     return genus, species, strain
