@@ -15,10 +15,17 @@ setup(name='fungidb_tools',
       author='Edward Liaw',
       author_email='ed.liaw@fungidb.org',
       packages=['fungidb_tools'],
-      scripts=['scripts/generate_datasets'],
+      scripts=[
+          'scripts/datasets/generate_datasets',
+          'scripts/isf/format_fasta',
+          'scripts/isf/format_gff',
+          'scripts/isf/generate_chr_map',
+          'scripts/isf/grep_algids',
+      ],
       install_requires=[
           'decorator',
           'gdata',
           'lxml',
+          'biopython',
       ],
       zip_safe=False,)
