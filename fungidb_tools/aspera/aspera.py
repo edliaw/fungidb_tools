@@ -18,8 +18,8 @@ class Aspera(object):
         ascp = os.path.join(base_dir, "bin/ascp")
 
         assert os.path.exists(base_dir), "Aspera path does not exist at %s" % base_dir
-        assert os.path.exists(dsa), "Aspera dsa key missing at %s" % dsa
-        assert os.path.exists(ascp), "Aspera plugin missing at %s" % ascp
+        assert os.path.isfile(dsa), "Aspera dsa key missing at %s" % dsa
+        assert os.path.isfile(ascp) and os.access(ascp, os.X_OK), "Aspera plugin missing at %s" % ascp
 
         self._ascp = ascp
         self._opts = opts + ('-i', dsa)
