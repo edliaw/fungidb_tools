@@ -6,14 +6,31 @@ Edward Liaw
 import re
 from warnings import warn
 from decorator import decorator
+import unicodedata
 
 
-RE_NON_ALPHANUM = re.compile(r'[^a-zA-Z0-9]+')
+RE_WHITESPACE = re.compile(r'\s+')
+RE_UNFRIENDLY = re.compile(r'[^\w\s]+')
 RE_LONG_WORDS = re.compile(r'[a-zA-Z][a-z]{3,}')
 RE_NON_ALPHA = re.compile(r'[^a-zA-Z]+')
 
 
+def slugify(string, whitespace="_", unfriendly="-"):
+    """Reduces a string into ASCII and substitutes for whitespace and
+    non-alphabetic characters.
+    """
+    string = RE_UNFRIENDLY.sub(
+        unfriendly,
+        unicodedata.normalize('NFKD', unicode(string)).encode('ascii', 'ignore')
+    )
+    string = RE_WHITESPACE.sub(whitespace, string)
+    return string
+
+
 def _unique_abbrev(func, *args, **kwargs):
+    """Decorator: Uses caching to check that we only generate unique names
+    of length 4 (by default).
+    """
     long_name = func(*args, **kwargs)
     mod = func.length - 1
     for i in range(len(long_name) - mod):
@@ -87,11 +104,9 @@ def abbrev_strain(strain):
     shortened_words.append(strain[prev:])
     normalized = "".join(shortened_words)
 
-    # Remove spaces.
-    normalized = normalized.replace(" ", "")
+    # Remove spaces and substitute non-alphanumeric characters.
+    normalized = slugify(normalized, whitespace="", unfriendly="-")
 
-    # Substitute none alpha-numeric characters with a -.
-    normalized = RE_NON_ALPHANUM.sub("-", normalized)
     return normalized
 
 
