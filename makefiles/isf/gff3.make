@@ -48,36 +48,33 @@ INSERT_FEAT_OPTS  ?= --extDbName $(DB_NAME) --extDbRlsVer $(VERSION) --mapFile $
 UNDO              = GUS::Supported::Plugin::InsertSequenceFeaturesUndo
 
 
-# Recipes:
-.PHONY : all isf files clean link algid insertf insertf-c insertf-u% insertf-u%-c
+files: report.txt $(CHR_MAP)
 
-all : isf
+all: isf
 	${MAKE} link
 
-isf : insertf-c
+isf: insertf-c
 
-files : report.txt $(CHR_MAP)
-
-clean :
+clean:
 	rm genome.* report.txt $(CHR_MAP)
 
-genome.gff3 :
+genome.gff3:
 	# Copy provider file and rename the id and source (first two columns).
 	$(CAT) $(PROVIDER_FILE) | $(FORMAT_GFF3) $(FORMAT_GFF3_OPTS) >| $@
 
-genome.gff : genome.gff3
+genome.gff: genome.gff3
 	# Convert GFF3 to pseudo GFF3 format (compatible with ISF).
 	preprocessGFF3 --input_gff $< --output_gff $@
 
-chromosomeMap.txt :
+chromosomeMap.txt:
 	# Copy the chromosome map file
 	cp $(MAP_FILE) $@
 
-report.txt : genome.gff
+report.txt: genome.gff
 	# Generate feature qualifiers for genome.gff.
 	reportFeatureQualifiers --format gff3 --file_or_dir $< >| $@
 
-link : genome.gff3 $(CHR_MAP)
+link: genome.gff3 $(CHR_MAP)
 	# Link files to the final directory.
 	mkdir -p ../final
 	cd ../final && \
@@ -85,21 +82,24 @@ link : genome.gff3 $(CHR_MAP)
 	  ln -s ../workspace/$$file; \
 	done
 
-insertf-c : genome.gff $(CHR_MAP)
+insertf-c: genome.gff $(CHR_MAP)
 	ga $(INSERT_FEAT) $(INSERT_FEAT_OPTS) --inputFileOrDir $< --validationLog val.log --bioperlTreeOutput bioperlTree.out --commit >> $(LOG) 2>&1
 
-insertf : genome.gff $(CHR_MAP)
+insertf: genome.gff $(CHR_MAP)
 	# Run ISF to insert features.
 	ga $(INSERT_FEAT) $(INSERT_FEAT_OPTS) --inputFileOrDir $< --validationLog val.log --bioperlTreeOutput bioperlTree.out >| error.log 2>&1
 
 
 # Undoing:
-algid :
+algid:
 	$(GREP_ALGIDS) $(GREP_ALGIDS_OPTS)
 
-insertf-u%-c :
+insertf-u%-c:
 	ga $(UNDO) --mapfile $(XML_MAP) --algInvocationId $* --commit
 
-insertf-u% :
+insertf-u%:
 	# Undo feature insertion.
 	ga $(UNDO) --mapfile $(XML_MAP) --algInvocationId $*
+
+
+.PHONY: files all isf clean link algid insertf insertf-c insertf-u% insertf-u%-c

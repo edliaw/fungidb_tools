@@ -44,31 +44,28 @@ UNDO              = GUS::Community::Plugin::Undo
 UNDO_INSERTF      = GUS::Supported::Plugin::InsertSequenceFeaturesUndo
 
 
-# Recipes:
-.PHONY : all isf files clean link algid insertdb insertdb-c insertdb-u% insertdb-u%-c insertri insertri-c insertri-u% insertri-u%-c insertf insertf-c insertf-u% insertf-u%-c
+files: report.txt
 
-all : isf
+all: isf
 	${MAKE} link
 
-isf :
+isf:
 	${MAKE} insertdb-c
 	${MAKE} insertri-c
 	${MAKE} insertf-c
 
-files : report.txt
-
-clean :
+clean:
 	rm genome.* report.txt
 
-genome.gbf :
+genome.gbf:
 	# Concatenate files and filter out mitochondrial contigs.
 	$(CAT) $(PROVIDER_FILE) >| $@
 
-report.txt : genome.gbf
+report.txt: genome.gbf
 	# Generate feature report.
 	reportFeatureQualifiers --format genbank --file_or_dir $< >| $@
 
-link : genome.gbf
+link: genome.gbf
 	# Link files to the final directory.
 	mkdir -p ../final
 	cd ../final && \
@@ -78,49 +75,52 @@ link : genome.gbf
 
 
 # ISF:
-insertdb-c :
+insertdb-c:
 	ga $(INSERT_DB) $(INSERT_DB_OPTS) --commit >> $(LOG) 2>&1
 
-insertdb :
+insertdb:
 	# Insert species table.
 	ga $(INSERT_DB) $(INSERT_DB_OPTS)
 
-insertri-c :
+insertri-c:
 	ga $(INSERT_RI) $(INSERT_RI_OPTS) --commit >> $(LOG) 2>&1
 
-insertri :
+insertri:
 	# Add version to table.
 	ga $(INSERT_RI) $(INSERT_RI_OPTS)
 
-insertf-c : genome.gbf
+insertf-c: genome.gbf
 	ga $(INSERT_FEAT) $(INSERT_FEAT_OPTS) --inputFileOrDir $< --validationLog val.log --bioperlTreeOutput bioperlTree.out --commit >> $(LOG) 2>&1
 
-insertf : genome.gbf
+insertf: genome.gbf
 	# Run ISF to insert features.
 	ga $(INSERT_FEAT) $(INSERT_FEAT_OPTS) --inputFileOrDir $< --validationLog val.log --bioperlTreeOutput bioperlTree.out >| error.log 2>&1
 
 
 # Undoing:
-algid :
+algid:
 	$(GREP_ALGIDS) $(GREP_ALGIDS_OPTS)
 
-insertf-u%-c :
+insertf-u%-c:
 	ga $(UNDO_INSERTF) --mapfile $(XML_MAP) --algInvocationId $* --commit
 
-insertf-u% :
+insertf-u%:
 	# Undo feature insertion.
 	ga $(UNDO_INSERTF) --mapfile $(XML_MAP) --algInvocationId $*
 
-insertri-u%-c :
+insertri-u%-c:
 	ga $(UNDO) --plugin $(INSERT_RI) --algInvocationId $* --commit
 
-insertri-u% :
+insertri-u%:
 	# Undo versioning.
 	ga $(UNDO) --plugin $(INSERT_RI) --algInvocationId $*
 
-insertdb-u%-c :
+insertdb-u%-c:
 	ga $(UNDO) --plugin $(INSERT_DB) --algInvocationId $* --commit
 
-insertdb-u% :
+insertdb-u%:
 	# Undo species table.
 	ga $(UNDO) --plugin $(INSERT_DB) --algInvocationId $*
+
+
+.PHONY: files all isf clean link algid insertdb insertdb-c insertdb-u% insertdb-u%-c insertri insertri-c insertri-u% insertri-u%-c insertf insertf-c insertf-u% insertf-u%-c

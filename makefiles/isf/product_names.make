@@ -37,23 +37,20 @@ INSERT_P_OPTS     = --productDbName $(DB_NAME) --productDbVer $(VERSION) --sqlVe
 UNDO              = GUS::Community::Plugin::Undo
 
 
-# Recipes:
-.PHONY : all isf files clean link algid insertp insertp-c insertp-u% insertp-u%-c
-
-all : isf
+all: isf
 	${MAKE} link
 
-isf : insertp-c
+isf: insertp-c
 
-files : products.txt
+files: products.txt
 
-clean :
+clean:
 	rm products.txt
 
-products.txt :
+products.txt:
 	$(CAT) "$(PROVIDER_FILE)" | $(EXTRACT_PRODUCTS) $(EXTRACT_PRODUCTS_OPTS) >| $@
 
-link : products.txt
+link: products.txt
 	# Link files to the final directory.
 	mkdir -p ../final
 	cd ../final && \
@@ -61,20 +58,23 @@ link : products.txt
 	  ln -s ../workspace/$$file; \
 	done
 
-insertp-c : products.txt
+insertp-c: products.txt
 	ga $(INSERT_P) $(INSERT_P_OPTS) --file $< >> $(LOG) 2>&1
 
-insertp : products.txt
+insertp: products.txt
 	# Insert products into table.
 	ga $(INSERT_P) $(INSERT_P_OPTS) --file $< >| error.log 2>&1
 
 
 # Undoing:
-algid :
+algid:
 	$(GREP_ALGIDS) $(GREP_ALGIDS_OPTS)
 
-insertp-u%-c :
+insertp-u%-c:
 	ga $(UNDO) --plugin $(INSERT_P) --algInvocationId $* --commit
 
-insertp-u% :
+insertp-u%:
 	ga $(UNDO) --plugin $(INSERT_P) --algInvocationId $*
+
+
+.PHONY: all isf files clean link algid insertp insertp-c insertp-u% insertp-u%-c

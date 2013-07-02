@@ -37,37 +37,49 @@ GENOME_DIRS = $(addprefix $(LONG_TYPE)_$(SOURCE)_,$(EXT))
 FUNCTION_DIRS = $(addprefix $(SOURCE)_,$(FUNCTION_NAMES))
 
 
+# Shortcut recipes:
+all: basedirs genome product function ;
+
+# Make all the base directories for this organism.
+basedirs: $(BASE_PATHS) ;
+
+GENOME_EXT = $(addprefix genome_,$(EXT))
+genome: $(GENOME_EXT) ;
+
+function: $(FUNCTION_PATHS) ;
+
+
 # Directory structure:
-$(ID) :
+$(ID):
 	mkdir $@
 
 BASE_PATHS = $(addprefix $(ID)/,$(BASE_DIRS))
-$(BASE_PATHS) : | $(ID)
+$(BASE_PATHS): | $(ID)
 	mkdir $@
 
 GENOME_ROOT = $(ID)/genome
 GENOME_PATHS = $(addprefix $(GENOME_ROOT)/,$(GENOME_DIRS))
-$(GENOME_PATHS) : | $(GENOME_ROOT)
+$(GENOME_PATHS): | $(GENOME_ROOT)
 	mkdir $@
 
 FUNCTION_ROOT = $(ID)/function
 FUNCTION_PATHS = $(addprefix $(FUNCTION_ROOT)/,$(FUNCTION_DIRS))
-$(FUNCTION_PATHS) : | $(FUNCTION_ROOT)
+$(FUNCTION_PATHS): | $(FUNCTION_ROOT)
 	mkdir $@
 
 VERSION_PATH = $(addprefix %/,$(VERSION))
-$(VERSION_PATH) : | %
+$(VERSION_PATH): | %
 	mkdir $@
 
 WORK_PATHS = $(addprefix %/,$(WORK_DIRS))
-$(WORK_PATHS) : | %
+$(WORK_PATHS): | %
 	mkdir -p $(addprefix $*/,$(WORK_DIRS))
 
-%/Makefile : | %
+%/Makefile: | %
 	touch $@
 
 GENOME_MAKE = $(GENOME_ROOT)/$(LONG_TYPE)_$(SOURCE)_%/$(VERSION)/workspace/Makefile
-genome_% : $(GENOME_MAKE)
+genome_%: $(GENOME_MAKE)
 	echo "# Organism: " >> $<
 	echo "ID      = $(ID)" >> $<
 	echo "TAXID   = " >> $<
@@ -83,7 +95,7 @@ genome_% : $(GENOME_MAKE)
 
 
 PRODUCT_MAKE = $(FUNCTION_ROOT)/$(SOURCE)_product_names/$(VERSION)/workspace/Makefile
-product : $(PRODUCT_MAKE)
+product: $(PRODUCT_MAKE)
 	echo "# Organism: " >> $<
 	echo "ID      = $(ID)" >> $<
 	echo "SOURCE  = $(SOURCE)" >> $<
@@ -94,17 +106,5 @@ product : $(PRODUCT_MAKE)
 	echo "include $(MAKEFILES)/product_names.make" >> $<
 
 
-# Shortcut recipes:
-
-.SECONDARY :
-.PHONY : all basedirs genome product function genome_%
-
-all : basedirs genome product function ;
-
-# Make all the base directories for this organism.
-basedirs : $(BASE_PATHS) ;
-
-GENOME_EXT = $(addprefix genome_,$(EXT))
-genome : $(GENOME_EXT) ;
-
-function : $(FUNCTION_PATHS) ;
+.SECONDARY:
+.PHONY: all basedirs genome product function genome_%

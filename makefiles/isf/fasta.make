@@ -46,31 +46,28 @@ LOAD_SEQS_OPTS    ?= --externalDatabaseName $(DB_NAME) --ncbiTaxId $(TAXID) --ex
 UNDO              = GUS::Community::Plugin::Undo
 
 
-# Recipes:
-.PHONY : all isf files clean link algid insertdb insertdb-c insertdb-u% insertdb-u%-c insertri insertri-c insertri-u% insertri-u%-c loadseqs loadseqs-c loadseqs-u% loadseqs-u%-c
+files: genome.fasta $(CHR_MAP)
 
-all : isf
+all: isf
 	${MAKE} link
 
-isf :
+isf:
 	${MAKE} insertdb-c
 	${MAKE} insertri-c
 	${MAKE} loadseqs-c
 
-files : genome.fasta $(CHR_MAP)
-
-clean :
+clean:
 	rm genome.* $(CHR_MAP)
 
-genome.fasta :
+genome.fasta:
 	# Filter out mitochondrial contigs and reformatted headers.
 	$(CAT) $(PROVIDER_FILE) | $(FORMAT_FASTA) $(FORMAT_FASTA_OPTS) >| $@
 
-chromosomeMap.txt : genome.fasta
+chromosomeMap.txt: genome.fasta
 	# Generate chromosome map file.
 	$(GENERATE_MAP) $(GENERATE_MAP_OPTS) >| $@
 
-link : genome.fasta $(CHR_MAP)
+link: genome.fasta $(CHR_MAP)
 	# Link files to the final directory.
 	mkdir -p ../final
 	cd ../final && \
@@ -80,49 +77,52 @@ link : genome.fasta $(CHR_MAP)
 
 
 # ISF:
-insertdb-c :
+insertdb-c:
 	ga $(INSERT_DB) $(INSERT_DB_OPTS) --commit >> $(LOG) 2>&1
 
-insertdb :
+insertdb:
 	# Insert species table.
 	ga $(INSERT_DB) $(INSERT_DB_OPTS)
 
-insertri-c :
+insertri-c:
 	ga $(INSERT_RI) $(INSERT_RI_OPTS) --commit >> $(LOG) 2>&1
 
-insertri :
+insertri:
 	# Add version to table.
 	ga $(INSERT_RI) $(INSERT_RI_OPTS)
 
-loadseqs-c : genome.fasta $(CHR_MAP)
+loadseqs-c: genome.fasta $(CHR_MAP)
 	ga $(LOAD_SEQS) $(LOAD_SEQS_OPTS) --sequenceFile genome.fasta --commit >> $(LOG) 2>&1
 
-loadseqs : genome.fasta $(CHR_MAP)
+loadseqs: genome.fasta $(CHR_MAP)
 	# Load data into table.
 	ga $(LOAD_SEQS) $(LOAD_SEQS_OPTS) --sequenceFile genome.fasta >| error.log 2>&1
 
 
 # Undoing:
-algid :
+algid:
 	$(GREP_ALGIDS) $(GREP_ALGIDS_OPTS)
 
-loadseqs-u%-c :
+loadseqs-u%-c:
 	ga $(UNDO) --plugin $(LOAD_SEQS) --algInvocationId $* --commit
 
-loadseqs-u% :
+loadseqs-u%:
 	# Undo sequence loading.
 	ga $(UNDO) --plugin $(LOAD_SEQS) --algInvocationId $*
 
-insertri-u%-c :
+insertri-u%-c:
 	ga $(UNDO) --plugin $(INSERT_RI) --algInvocationId $* --commit
 
-insertri-u% :
+insertri-u%:
 	# Undo versioning.
 	ga $(UNDO) --plugin $(INSERT_RI) --algInvocationId $*
 
-insertdb-u%-c :
+insertdb-u%-c:
 	ga $(UNDO) --plugin $(INSERT_DB) --algInvocationId $* --commit
 
-insertdb-u% :
+insertdb-u%:
 	# Undo species table.
 	ga $(UNDO) --plugin $(INSERT_DB) --algInvocationId $*
+
+
+.PHONY: files all isf clean link algid insertdb insertdb-c insertdb-u% insertdb-u%-c insertri insertri-c insertri-u% insertri-u%-c loadseqs loadseqs-c loadseqs-u% loadseqs-u%-c
