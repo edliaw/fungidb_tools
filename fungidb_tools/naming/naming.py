@@ -29,7 +29,7 @@ def _unique_abbrev(func, *args, **kwargs):
 
 
 def unique_abbrev(f, length=4):
-    """Decorator that uses caching to check that we only generate unique names
+    """Decorator: Uses caching to check that we only generate unique names
     of length 4 (by default).
     """
     f.cache = set()
