@@ -1,5 +1,5 @@
 BRANCH ?= trunk
-DB     ?= fungbl3n
+DB     ?= fungbl2n
 USER   ?= edliaw
 
 GUS_BLD     ?= CBIL DJob GusSchema ReFlow WDK WSF FgpUtil
@@ -22,49 +22,51 @@ else
   BRANCH_DIR = branches/$(BRANCH)
 endif
 
-.PHONY : all tuning sql _clean_ checkout co-gus-% co-apidb-% u-% b-% $(ALL_DIRS)
 
-all : $(GUS) $(APIDB)
+all: $(GUS) $(APIDB)
 
-tuning :
+tuning:
 	tuningManager --instance $(DB) --propfile ${GUS_HOME}/config/tuningManagerProp.xml --doUpdate &
 
-sql :
+sql:
 	sqlplus $(USER)@$(DB)
 
-_clean_ :
+_clean_:
 	rm -rf $(ALL_DIRS)
 
-checkout :
+checkout:
 	# Checkout GUS
 	$(SVN_CO) $(SVN_URL)/gus/GusAppFramework/$(BRANCH_DIR) GUS
 	# Checkout gus directories
 	@for TARGET in $(GUS); do \
-	  ${MAKE} co-gus-$$TARGET; \
+	  ${MAKE} $$(TARGET)-gus-checkout; \
 	done
 	# Checkout apidb directories
 	for TARGET in $(APIDB); do \
-	  ${MAKE} co-apidb-$$TARGET; \
+	  ${MAKE} $$(TARGET)-apidb-checkout; \
 	done
 
-co-gus-% :
+%-gus-checkout:
 	$(SVN_CO) $(SVN_URL)/gus/$*/$(BRANCH_DIR) $*
 
-co-apidb-% :
+%-apidb-checkout:
 	$(SVN_CO) $(SVN_URL)/apidb/$*/$(BRANCH_DIR) $*
 
-u-% :
+%-u:
 	svn up $*
 
-b-GUS :
+GUS-b:
 	touch ./GusSchema/Definition/config/gus_schema.xml
 	bld GUS
 
-b-% :
+%-b:
 	bld $*
 
-$(ALL_DIRS) ::
-	@${MAKE} u-$@
+$(ALL_DIRS)::
+	@${MAKE} $@-u
 
-$(BLD_DIRS) ::
-	@${MAKE} b-$@
+$(BLD_DIRS)::
+	@${MAKE} $@-b
+
+
+.PHONY: all tuning sql _clean_ checkout $(ALL_DIRS)

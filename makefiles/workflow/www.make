@@ -30,6 +30,7 @@ else
   BRANCH_DIR = branches/$(BRANCH)
 endif
 
+
 reload:
 	# Reload the website cache.
 	instance_manager manage FungiDB reload $(SITE).$(USER)
@@ -77,36 +78,36 @@ checkout:
 	$(SVN_CO) $(SVN_URL)/gus/GusAppFramework/$(BRANCH_DIR) GUS
 	# Checkout gus directories
 	@for TARGET in $(GUS); do \
-	  ${MAKE} co-gus-$$TARGET; \
+	  ${MAKE} $$(TARGET)-gus-checkout; \
 	done
 	# Checkout apidb directories
 	for TARGET in $(APIDB); do \
-	  ${MAKE} co-apidb-$$TARGET; \
+	  ${MAKE} $$(TARGET)-apidb-checkout; \
 	done
 
-co-gus-%:
+%-gus-checkout:
 	$(SVN_CO) $(SVN_URL)/gus/$*/$(BRANCH_DIR) $*
 
-co-apidb-%:
+%-apidb-checkout:
 	$(SVN_CO) $(SVN_URL)/apidb/$*/$(BRANCH_DIR) $*
 
-u-%:
+%-u:
 	svn up $*
 
-b-%:
+%-b:
 	bld $*
 
-bw-%:
+%-bw:
 	bldw $* $(WEBAPP)
 
 $(ALL_DIRS)::
-	@${MAKE} u-$@
+	@${MAKE} $@-u
 
 $(WEB_BLDW)::
-	@${MAKE} bw-$@
+	@${MAKE} $@-bw
 
 $(BLD_DIRS)::
-	@${MAKE} b-$@
+	@${MAKE} $@-b
 
 
-.PHONY: reload rebuild reboot link cattail all tuning sql _clean_ checkout co-gus-% co-apidb-% u-% b-% $(ALL_DIRS)
+.PHONY: reload rebuild reboot link cattail all tuning sql _clean_ checkout $(ALL_DIRS)
