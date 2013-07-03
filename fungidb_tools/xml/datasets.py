@@ -1,0 +1,128 @@
+from lxml import etree
+from .. import naming
+
+
+def xml_bool(b):
+    """Write out boolean as a string for the xml file."""
+    return "true" if b else "false"
+
+
+def make_prop(orgn, name, text):
+    """Create an xml property subelement."""
+    prop = etree.SubElement(orgn, "prop", name=name).text = text
+    return prop
+
+
+def extract_reps(organisms):
+    """Make dictionaries of all the representative species and families. Also,
+    perform some checks to ensure that the representative species are unique
+    and present.
+    """
+    species_reps = {}
+    family_reps = {}
+    for o in organisms:
+        abbrev = o["fungidbabbreviation"]
+
+        genus_species = naming.genus_species(o["fullnamencbi"])
+        if o["speciesrepresentative"] == "Yes":
+            assert genus_species not in species_reps, "Species has more than one representative: %s" % genus_species
+            species_reps[genus_species] = abbrev
+        assert genus_species in species_reps, "Representative species missing or not in order (representative must be first): %s" % genus_species
+
+        family = o["class"]
+        if o["familyrepresentative"] == "Yes":
+            assert family not in family_reps, "Family has more than one representative: %s" % family
+            family_reps[family] = (abbrev, o["strainncbitaxid"])
+    return species_reps, family_reps
+
+
+def make_datasets_xml(organisms):
+    """Make a datasets xml file for a set of organisms.
+
+    Args:
+        organisms: pulled in as a JSON object from the FungiDB spreadsheet.
+    """
+    datasets = etree.Element("datasets")
+    etree.SubElement(datasets, "constant", name="projectName", value="FungiDB")
+
+    loaded = [o for o in organisms if o["loaded"] in ("Yes", "Reload")]
+    # Isolate columns as dictionaries to check representatives against.
+    species_reps, family_reps = extract_reps(loaded)
+
+    for o in loaded:
+        # Check spreadsheet values against our naming scheme.
+        taxname = o["fullnamencbi"]
+        genus, species, strain = naming.split_taxname(taxname)
+        o_strain = o["strain"]
+        if strain:
+            # Check that strain in full NCBI name matches spreadsheet.
+            assert strain == o_strain, "%s : %s" % (strain, o_strain)
+        else:
+            # NCBI name doesn"t have a strain name: set it to the spreadsheet
+            # value.
+            strain = o_strain
+        abbrev = naming.abbrev_dbname(genus, species, strain)
+        filename = naming.filename(genus, species, strain)
+
+        # Check that our spreadsheet values are consistent.
+        assert abbrev == o["fungidbabbreviation"]
+        assert " ".join((genus, species)) == o["speciesnamencbi"]
+
+        # Representative species and family.
+        is_species_rep = (o["speciesrepresentative"] == "Yes")
+        is_family_rep = (o["familyrepresentative"] == "Yes")
+        species_rep = species_reps[naming.genus_species(o["speciesnamencbi"])]
+        family_name = o["class"]
+        family_rep, family_rep_taxid = family_reps[family_name]
+        assert is_species_rep == (species_rep == abbrev), "Reference strain incorrect: %s" % species_rep
+        assert is_family_rep == (family_rep == abbrev), "Representative family incorrect: %s" % family_rep
+        if not is_family_rep:
+            # The family name and taxid are blank for non-representative
+            # species.
+            family_name = ""
+            family_rep_taxid = ""
+
+        # Write fields into the xml file.
+        ds = etree.SubElement(datasets, "dataset", **{"class": "organism"})
+        make_prop(ds, "projectName", "$$projectName$$")
+        make_prop(ds, "organismFullName", taxname)
+        make_prop(ds, "ncbiTaxonId", o["strainncbitaxid"])
+        make_prop(ds, "speciesNcbiTaxonId", o["speciesncbitaxid"])
+        make_prop(ds, "organismAbbrev", abbrev)
+        make_prop(ds, "publicOrganismAbbrev", abbrev)
+        make_prop(ds, "organismNameForFiles", filename)
+        make_prop(ds, "strainAbbrev", abbrev[4:])
+        make_prop(ds, "orthomclAbbrev", naming.orthomcl(genus, species, strain))
+        make_prop(ds, "taxonHierarchyForBlastxFilter", " ".join(("Eukaryota", "Fungi", genus)))
+        make_prop(ds, "genomeSource", o["source"])
+        make_prop(ds, "genomeVersion", o["assemblyversion"])
+        # Species representative / reference strain.
+        make_prop(ds, "isReferenceStrain", xml_bool(is_species_rep))
+        make_prop(ds, "referenceStrainOrganismAbbrev", species_rep)
+        # Family representative.
+        make_prop(ds, "isFamilyRepresentative", xml_bool(is_family_rep))
+        make_prop(ds, "familyRepOrganismAbbrev", family_rep)
+        make_prop(ds, "familyNcbiTaxonIds", family_rep_taxid)
+        make_prop(ds, "familyNameForFiles", family_name)
+        # May need to add some of these parameters to the spreadsheet if they
+        # vary.
+        make_prop(ds, "isHaploid", xml_bool(True))
+        make_prop(ds, "isAnnotatedGenome", xml_bool(True))
+        make_prop(ds, "annotationIncludesTRNAs", xml_bool(False))
+        make_prop(ds, "hasDeprecatedGenes", xml_bool(False))
+        make_prop(ds, "hasTemporaryNcbiTaxonId", xml_bool(False))
+        make_prop(ds, "runExportPred", xml_bool(False))
+        make_prop(ds, "skipOrfs", xml_bool(False))
+        make_prop(ds, "maxIntronSize", "1000")
+
+        if is_species_rep:
+            rs = etree.SubElement(datasets, "dataset", **{"class": "referenceStrain"})
+            make_prop(rs, "organismAbbrev", species_rep)
+            make_prop(rs, "isAnnotatedGenome", xml_bool(True))
+
+    for ortho in ("orthomcl", "orthomclPhyletic", "orthomclTree"):
+        omcl = etree.SubElement(datasets, "dataset", **{"class": ortho})
+        make_prop(omcl, "projectName", "$$projectName$$")
+        make_prop(omcl, "version", "5.11")
+
+    return datasets
