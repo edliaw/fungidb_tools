@@ -24,9 +24,9 @@ setup(name='fungidb_tools',
           'scripts/isf/grep_algids',
       ],
       install_requires=[
-          'decorator',
-          'gdata',
-          'lxml',
           'biopython',
+          'lxml',
+          'gdata',
+          'decorator',
       ],
       zip_safe=False,)
