@@ -145,7 +145,7 @@ def main():
 
             try:
                 cols[0] = formatter.format(cols[0])
-            except format_isf.NoMatchException:
+            except isf.NoMatchException:
                 warnings.warn("SKIPPED: re fails to match component of {line}".format(line=cols[0]))
             except AttributeError:
                 warnings.warn("SKIPPED: re does not match {line}".format(line=cols[0]))
