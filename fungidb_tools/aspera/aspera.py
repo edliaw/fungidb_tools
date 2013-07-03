@@ -5,7 +5,6 @@
 2013/01/03
 Edward Liaw
 """
-from __future__ import print_function
 import subprocess
 import os
 

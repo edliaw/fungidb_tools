@@ -4,13 +4,13 @@
 Edward Liaw
 """
 from __future__ import print_function
-import gdata
-import json
 import sys
-import warnings
 import os
+import json
 import urlparse
-import gdata.spreadsheet.service as service
+import gdata
+from warnings import warn
+from gdata.spreadsheet import service
 
 
 class SimpleGData(object):
@@ -75,7 +75,7 @@ class SimpleGData(object):
             client.ProgrammaticLogin()
             self.client = client
         except gdata.service.BadAuthentication:
-            warnings.warn("Login failed.")
+            warn("Login failed.")
 
     def select_document(self, document):
         """Sets self.sid."""
@@ -84,12 +84,12 @@ class SimpleGData(object):
         try:
             self.sid = self._feed_ids(feed)[0]
         except IndexError:
-            warnings.warn("Could not find document")
+            warn("Could not find document")
 
     def select_worksheet(self, worksheet):
         """Sets self.wid."""
         if self.sid is None:
-            warnings.warn("Need to select a spreadsheet first.")
+            warn("Need to select a spreadsheet first.")
             return
 
         q = self._query_feed(worksheet)
@@ -97,11 +97,11 @@ class SimpleGData(object):
         try:
             self.wid = self._feed_ids(feed)[0]
         except IndexError:
-            warnings.warn("Could not find worksheet.")
+            warn("Could not find worksheet.")
 
     def get_row_feed(self):
         if self.sid is None or self.wid is None:
-            warnings.warn("Need to select a worksheet first.")
+            warn("Need to select a worksheet first.")
             return
         return self.client.GetListFeed(self.sid, self.wid)
 

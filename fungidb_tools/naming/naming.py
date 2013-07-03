@@ -8,7 +8,6 @@ from warnings import warn
 from decorator import decorator
 import unicodedata
 
-
 RE_WHITESPACE = re.compile(r'\s+')
 RE_UNFRIENDLY = re.compile(r'[^\w\s]+')
 RE_LONG_WORDS = re.compile(r'[a-zA-Z][a-z]{3,}')
