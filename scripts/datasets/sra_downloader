@@ -6,7 +6,7 @@
 Edward Liaw
 """
 from __future__ import print_function
-import sys
+import os
 import argparse
 from warnings import warn
 from fungidb_tools.aspera import Aspera
@@ -37,9 +37,9 @@ def parse_arguments():
                                      fromfile_prefix_chars='@')
     parser.add_argument('terms', nargs='*', help='Entrez search terms')
     parser.add_argument('-d', '--outdir',
-                        default=path.curdir, help='output directory')
+                        default=os.path.curdir, help='output directory (defaults to CWD)')
     return parser.parse_args()
-    
+
 
 def map_from_search(term):
     """Get associated ids from NCBI."""
@@ -69,7 +69,7 @@ def map_from_search(term):
             warn("%s has more than one associated SRP" % id)
         results['srp'] = root.find(SRP_ENTREZ).attrib['accession']
 
-        results['pid'] = [pid.text for pid in root.findall(XML_PID_PATH)]
+        results['pid'] = [pid.text for pid in root.findall(PID_ENTREZ)]
         yield id, results
 
 
