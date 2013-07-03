@@ -11,15 +11,6 @@ import argparse
 SAVE_COLS = ('LOCUS', 'NAME')
 
 
-def read_input(infile):
-    """Read input.
-
-    Args:
-        infile: A filestream to read from.
-    """
-    pass
-
-
 def mark_columns(header):
     marked = []
     spline = header.rstrip('\n').split('\t')
@@ -28,15 +19,6 @@ def mark_columns(header):
             if col == save:
                 marked.append(i)
     return marked
-
-
-def write_output(outfile):
-    """Write output.
-
-    Args:
-        outfile: A filestream to write to.
-    """
-    pass
 
 
 def parse_arguments():
