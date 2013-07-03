@@ -7,13 +7,18 @@ Edward Liaw
 """
 from __future__ import print_function
 import warnings
-from fungidb_tools.isf import format_isf
+from fungidb_tools import isf
 from Bio import SeqIO
 
 
+def parse_arguments():
+    parser = isf.init_argparse()
+    return parser.parse_args()
+
+
 def main():
-    args = format_isf.parse_arguments()
-    formatter = format_isf.ContigFormatter.from_args(args)
+    args = parse_arguments()
+    formatter = isf.ContigFormatter.from_args(args)
 
     with args.infile as infile, args.outfile as outfile:
         for record in SeqIO.parse(infile, 'fasta'):
@@ -21,7 +26,7 @@ def main():
                 record.id = formatter.format(record.id)
                 record.description = ''
                 SeqIO.write(record, outfile, 'fasta')
-            except format_isf.NoMatchException:
+            except isf.NoMatchException:
                 warnings.warn("SKIPPED: re fails to match component of {line}".format(line=record.id))
                 continue
             except AttributeError:

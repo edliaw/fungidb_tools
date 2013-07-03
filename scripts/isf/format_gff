@@ -9,7 +9,7 @@ Edward Liaw
 from __future__ import print_function
 import sys
 import warnings
-from fungidb_tools.isf import format_isf
+from fungidb_tools import isf
 from collections import OrderedDict
 
 
@@ -19,7 +19,7 @@ def parse_arguments():
     Returns:
         args: Arguments passed in from the command-line.
     """
-    parser = format_isf.init_argparse()
+    parser = isf.init_argparse()
     parser.add_argument('-f', '--filetype',
                         choices=('gtf', 'gff3'), default='gtf',
                         help='filetype to parse')
@@ -134,7 +134,7 @@ def remake_gff(cols, attr, options):
 def main():
     args = parse_arguments()
     options = GffOptions(args)
-    formatter = format_isf.ContigFormatter.from_args(args)
+    formatter = isf.ContigFormatter.from_args(args)
 
     snoRNA = []
 
@@ -155,7 +155,7 @@ def main():
             if cols[2] == 'chromosome':
                 try:
                     attr['ID'] = formatter.format(attr['ID'])
-                except format_isf.NoMatchException:
+                except isf.NoMatchException:
                     warnings.warn("SKIPPED: re fails to match component of {line}".format(line=attr['ID']))
                     continue
                 except AttributeError:
