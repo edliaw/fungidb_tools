@@ -2,6 +2,10 @@ from lxml import etree
 from .. import naming
 
 
+class InvalidSpreadsheetException(Exception):
+    pass
+
+
 def xml_bool(b):
     """Write out boolean as a string for the xml file."""
     return "true" if b else "false"
@@ -13,7 +17,7 @@ def make_prop(orgn, name, text):
     return prop
 
 
-def extract_reps(organisms):
+def extract_reps(organisms, debug=False):
     """Make dictionaries of all the representative species and families. Also,
     perform some checks to ensure that the representative species are unique
     and present.
@@ -25,18 +29,22 @@ def extract_reps(organisms):
 
         genus_species = naming.genus_species(o["fullnamencbi"])
         if o["speciesrepresentative"] == "Yes":
-            assert genus_species not in species_reps, "Species has more than one representative: %s" % genus_species
+            if debug and genus_species in species_reps:
+                raise InvalidSpreadsheetException("{} species has too many representatives: {}.".format(genus_species, (species_reps[genus_species], abbrev)))
             species_reps[genus_species] = abbrev
-        assert genus_species in species_reps, "Representative species missing or not in order (representative must be first): %s" % genus_species
+        elif debug and genus_species not in species_reps:
+            raise InvalidSpreadsheetException("{} species missing representative or out of order (representative must come first).".format(genus_species))
 
         family = o["class"]
         if o["familyrepresentative"] == "Yes":
-            assert family not in family_reps, "Family has more than one representative: %s" % family
+            if debug and family in family_reps:
+                raise InvalidSpreadsheetException("{} family has too many representatives: {}.".format(family, (family_reps[family][0], abbrev,)))
             family_reps[family] = (abbrev, o["strainncbitaxid"])
+
     return species_reps, family_reps
 
 
-def make_datasets_xml(organisms):
+def make_datasets_xml(organisms, debug=False):
     """Make a datasets xml file for a set of organisms.
 
     Args:
@@ -46,8 +54,8 @@ def make_datasets_xml(organisms):
     etree.SubElement(datasets, "constant", name="projectName", value="FungiDB")
 
     loaded = [o for o in organisms if o["loaded"] in ("Yes", "Reload")]
-    # Isolate columns as dictionaries to check representatives against.
-    species_reps, family_reps = extract_reps(loaded)
+    # Put representative organisms into dictionaries.
+    species_reps, family_reps = extract_reps(loaded, debug)
 
     for o in loaded:
         # Check spreadsheet values against our naming scheme.
@@ -56,7 +64,8 @@ def make_datasets_xml(organisms):
         o_strain = o["strain"]
         if strain:
             # Check that strain in full NCBI name matches spreadsheet.
-            assert strain == o_strain, "%s : %s" % (strain, o_strain)
+            if debug and strain != o_strain:
+                raise InvalidSpreadsheetException("{} strain does not match {} in spreadsheet.".format(strain, o_strain))
         else:
             # NCBI name doesn"t have a strain name: set it to the spreadsheet
             # value.
@@ -65,8 +74,11 @@ def make_datasets_xml(organisms):
         filename = naming.filename(genus, species, strain)
 
         # Check that our spreadsheet values are consistent.
-        assert abbrev == o["fungidbabbreviation"]
-        assert " ".join((genus, species)) == o["speciesnamencbi"]
+        o_abbrev = o["fungidbabbreviation"]
+        if debug and abbrev != o_abbrev:
+            raise InvalidSpreadsheetException("{} abbreviation does not match {} in spreadsheet.".format(abbrev, o_abbrev))
+        if debug and " ".join((genus, species)) != o["speciesnamencbi"]:
+            raise InvalidSpreadsheetException("{} species name does not match {} in spreadsheet.".format(" ".join((genus, species)), o["speciesnamencbi"]))
 
         # Representative species and family.
         is_species_rep = (o["speciesrepresentative"] == "Yes")
@@ -74,8 +86,10 @@ def make_datasets_xml(organisms):
         species_rep = species_reps[naming.genus_species(o["speciesnamencbi"])]
         family_name = o["class"]
         family_rep, family_rep_taxid = family_reps[family_name]
-        assert is_species_rep == (species_rep == abbrev), "Reference strain incorrect: %s" % species_rep
-        assert is_family_rep == (family_rep == abbrev), "Representative family incorrect: %s" % family_rep
+        if debug and is_species_rep != (species_rep == abbrev):
+            raise InvalidSpreadsheetException("{} reference strain incorrect for {}".format(species_rep, abbrev))
+        if debug and is_family_rep != (family_rep == abbrev):
+            raise InvalidSpreadsheetException("{} family representative incorrect for {}".format(family_rep, abbrev))
         if not is_family_rep:
             # The family name and taxid are blank for non-representative
             # species.
