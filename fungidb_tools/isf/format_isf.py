@@ -1,4 +1,10 @@
-"""Reformat a data file for ISF.
+"""Reformat a contig name to one suitable for inserting into ApiDB.
+
+Example
+Input:
+    >Supercontig_12.1 of Neurospora crassa OR74A
+Output:
+    >NcraOR74A_SC01
 
 2013/04/11
 Edward Liaw
@@ -10,13 +16,13 @@ import argparse
 from warnings import warn
 from . import roman
 
-
 RE_DEFAULT = r'(?P<species>\w+)_(?P<type>Chr|SC)(?:(?P<number>\d+)|(?P<letter>[A-Z]+))'
 NUMBER_FORMAT = '{{number:0{padding:d}d}}'
 CONTIG_FORMAT = '{species}_{type}{contig}'
 
 
 def init_argparse():
+    """Setup an ArgumentParser with options needed for the formatter."""
     parser = argparse.ArgumentParser(description=__doc__,
                                      fromfile_prefix_chars='@')
     parser.add_argument('infile',
@@ -43,16 +49,6 @@ def init_argparse():
     return parser
 
 
-def parse_arguments():
-    """Handle command-line arguments.
-
-    Returns:
-        args: Arguments passed in from the command-line.
-    """
-    parser = init_argparse()
-    return parser.parse_args()
-
-
 def _do_nothing(*args, **kwargs):
     return None
 
@@ -64,6 +60,7 @@ class NoMatchException(Exception):
 class ContigFormatter(object):
     """Configurable formatter to rename contigs.  Improve this later.
     """
+
     def __init__(self, regex, number_format, contig_format=CONTIG_FORMAT,
                  species=None, type=None, roman=None):
         self.regex = re.compile(regex)
@@ -112,7 +109,9 @@ class ContigFormatter(object):
 
 
 def main():
-    args = parse_arguments()
+    """Example main function."""
+    parser = init_argparse()
+    args = parser.parse_args()
     formatter = ContigFormatter.from_args(args)
 
     with args.infile as infile, args.outfile as outfile:
@@ -125,7 +124,3 @@ def main():
             except AttributeError:
                 warn("SKIPPED: re does not match {line}".format(line=line))
                 continue
-
-
-if __name__ == "__main__":
-    main()
