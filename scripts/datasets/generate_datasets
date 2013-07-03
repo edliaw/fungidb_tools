@@ -3,13 +3,16 @@
 from __future__ import print_function
 import os
 import argparse
+import json
 from lxml import etree
+from fungidb_tools.simple_gdata import SimpleGData
 from fungidb_tools.xml import datasets
 from fungidb_tools.xml.ElementLib import indent
-import json
 
 DEFAULT_JSON = os.path.expanduser("~/workspace/FungiDB.json")
 DEFAULT_DATASETS = os.path.expanduser("~/workspace/FungiDB.xml")
+DEFAULT_DOCUMENT = "multi-species fungal genome db targets"
+DEFAULT_WORKSHEET = "Target Genomes for Release"
 
 
 def parse_arguments():
@@ -20,14 +23,14 @@ def parse_arguments():
     """
     parser = argparse.ArgumentParser(description=__doc__,
                                      fromfile_prefix_chars='@')
-    parser.add_argument('infile',
-                        type=argparse.FileType('r'), nargs='?',
-                        default=open(DEFAULT_JSON),
-                        help='input .json spreadsheet rows')
-    parser.add_argument('outfile',
+    parser.add_argument('jsonfile',
+                        type=argparse.FileType('w'), nargs='?',
+                        default=open(DEFAULT_JSON, 'w'),
+                        help='jsonized spreadsheet')
+    parser.add_argument('xmlfile',
                         type=argparse.FileType('w'), nargs='?',
                         default=open(DEFAULT_DATASETS, 'w'),
-                        help='output .xml filename')
+                        help='xml datasets file')
     parser.add_argument('-c', '--check',
                         action='store_true',
                         help='check spreadsheet for errors')
@@ -37,14 +40,20 @@ def parse_arguments():
 def main():
     args = parse_arguments()
 
-    with args.infile as infile:
-        organisms = json.load(infile)
+    sheet = SimpleGData.prompt_creds()
+    sheet.select_document(DEFAULT_DOCUMENT)
+    sheet.select_worksheet(DEFAULT_WORKSHEET)
 
-    datasets_xml = datasets.make_datasets_xml(organisms, args.check)
+    feed = sheet.json_feed()
+
+    with args.jsonfile as jsonfile:
+        print(json.dumps(feed, sort_keys=True, indent=2), file=jsonfile)
+
+    datasets_xml = datasets.make_datasets_xml(feed, args.check)
     indent(datasets_xml)
 
-    with args.outfile as outfile:
-        print(etree.tostring(datasets_xml), file=outfile)
+    with args.xmlfile as xmlfile:
+        print(etree.tostring(datasets_xml), file=xmlfile)
 
 
 if __name__ == "__main__":
