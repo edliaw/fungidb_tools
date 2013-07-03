@@ -4,7 +4,6 @@
 Edward Liaw
 """
 from __future__ import print_function
-import sys
 import os
 import json
 import urlparse
@@ -13,107 +12,127 @@ from warnings import warn
 from gdata.spreadsheet import service
 
 
+class GDataException(Exception):
+    pass
+
+
+def _entry_id(entry):
+    """Pull out the GData ID from a url."""
+    split = urlparse.urlsplit(entry.id.text)
+    return os.path.basename(split.path)
+
+
+def _entry_ids(feed):
+    """Get a list of IDs from an XML feed."""
+    return [_entry_id(entry) for entry in feed.entry]
+
+
+def _entries_dict(feed):
+    """Get a list of IDs as a dictionary of {document titles : ID}."""
+    return {entry.title.text: _entry_id(entry) for entry in feed.entry}
+
+
+def _row_to_dict(row):
+    """Convert XML fields for a list feed into a dictionary."""
+    return {key: row.custom[key].text for key in row.custom}
+
+
+def _jsonize_list_feed(feed):
+    """Turn a list feed into a JSON-like object."""
+    return [_row_to_dict(row) for row in feed.entry]
+
+
+def _query_feed(title):
+    """Build a simple query for the title field in the document/worksheet
+    xml."""
+    q = service.DocumentQuery()
+    q['title'] = title
+    q['title-exact'] = 'true'
+    return q
+
+
 class SimpleGData(object):
     """Encapsulated GData client for general purpose use of spreadsheets."""
-    def __init__(self, email=None, pw=None):
-        self.login(email, pw)
-        self.sid = None
-        self.wid = None
-
-    @staticmethod
-    def _query_feed(title):
-        """Build a simple query for the title field in the document/worksheet
-        xml."""
-        q = service.DocumentQuery()
-        q['title'] = title
-        q['title-exact'] = 'true'
-        return q
-
-    @staticmethod
-    def _entry_id(entry):
-        split = urlparse.urlsplit(entry.id.text)
-        return os.path.basename(split.path)
-        #return entry.id.text.rsplit('/', 1)[1]
-
-    @staticmethod
-    def _feed_ids(feed):
-        return [SimpleGData._entry_id(entry) for entry in feed.entry]
-
-    @staticmethod
-    def _feed_dict(feed):
-        return {entry.title.text: SimpleGData._entry_id(entry) for entry in feed.entry}
-
-    @staticmethod
-    def _row_to_dict(row):
-        return {key: row.custom[key].text for key in row.custom}
-
-    @staticmethod
-    def _feed_to_dict(feed):
-        return [SimpleGData._row_to_dict(row) for row in feed.entry]
-
-    def _feed(self):
-        if self.sid is not None:
-            if self.wid is None:
-                return self.client.GetSpreadsheetsFeed(self.sid)
-            else:
-                return self.client.GetWorksheetsFeed(self.sid, self.wid)
-
-    def login(self, email=None, pw=None):
-        """Login a client using a Google email and password."""
+    def __init__(self, email, pw):
         client = service.SpreadsheetsService()
+        client.email = email
+        client.password = pw
+        client.ProgrammaticLogin()
+        self.client = client
+        self._sid = None
+        self._wid = None
 
+    @classmethod
+    def prompt_creds(cls, email=None, pw=None):
+        """Login using a Google email and password."""
         if email is None:
-            client.email = raw_input('Google email: ')
-        else:
-            client.email = email
+            email = raw_input('Google email: ')
         if pw is None:
-            client.password = raw_input('Google secret: ')
-        else:
-            client.password = pw
+            pw = raw_input('Google secret: ')
+        return cls(email, pw)
 
-        try:
-            client.ProgrammaticLogin()
-            self.client = client
-        except gdata.service.BadAuthentication:
-            warn("Login failed.")
+    @property
+    def sid(self):
+        """The document ID."""
+        if self._sid is None:
+            raise GDataException("Document ID not set.")
+        return self._sid
 
-    def select_document(self, document):
-        """Sets self.sid."""
-        q = self._query_feed(document)
-        feed = self.client.GetSpreadsheetsFeed(query=q)
+    @sid.setter
+    def sid(self, document_id):
+        self._sid = document_id
+
+    @property
+    def wid(self):
+        """The worksheet ID."""
+        if self._wid is None:
+            raise GDataException("Worksheet ID not set.")
+        return self._wid
+
+    @wid.setter
+    def wid(self, worksheet_id):
+        if self._sid is None:
+            raise GDataException("Must select a document before selecting a "
+                                 "worksheet.")
+        self._wid = worksheet_id
+
+    def select_document(self, name):
+        """Select a document by name."""
+        feed = self.client.GetSpreadsheetsFeed(query=_query_feed(name))
         try:
-            self.sid = self._feed_ids(feed)[0]
+            self.sid = _entry_ids(feed)[0]
         except IndexError:
-            warn("Could not find document")
+            warn("Could not find document %s." % name)
 
-    def select_worksheet(self, worksheet):
-        """Sets self.wid."""
-        if self.sid is None:
-            warn("Need to select a spreadsheet first.")
-            return
-
-        q = self._query_feed(worksheet)
-        feed = self.client.GetWorksheetsFeed(self.sid, query=q)
+    def select_worksheet(self, name):
+        """Choose a spreadsheet by name."""
+        feed = self.client.GetWorksheetsFeed(self.sid, query=_query_feed(name))
         try:
-            self.wid = self._feed_ids(feed)[0]
+            self.wid = _entry_ids(feed)[0]
         except IndexError:
-            warn("Could not find worksheet.")
+            warn("Could not find worksheet %s." % name)
 
-    def get_row_feed(self):
-        if self.sid is None or self.wid is None:
-            warn("Need to select a worksheet first.")
-            return
+    def get_list_feed(self):
+        """Get the rows of the spreadsheet as an XML feed."""
         return self.client.GetListFeed(self.sid, self.wid)
 
-    def get_json(self):
-        return self._feed_to_dict(self.get_row_feed())
+    def json_feed(self):
+        """Get the rows of the spreadsheet as a JSON-like object."""
+        return _jsonize_list_feed(self.get_list_feed())
+
+    def json_dump(self):
+        """Dump out the spreadsheet rows as a JSON string."""
+        json_dict = self.json_feed()
+        return json.dumps(json_dict, sort_keys=True, indent=2)
 
     def update_row(self, row):
+        """Update a row (XML GData object)."""
         for a_link in row.link:
             if a_link.rel == 'edit':
                 self.client.Put(row, a_link.href, converter=gdata.spreadsheet.SpreadsheetsListFromString)
 
-    def dump_json(self, outfile=sys.stdout):
-        json_dict = self.get_json()
-        print(json.dumps(json_dict, sort_keys=True,
-                         indent=2), file=outfile)
+    def _feed(self):
+        try:
+            return self.client.GetWorksheetsFeed(self.sid, self.wid)
+        except GDataException:
+            return self.client.GetSpreadsheetsFeed(self.sid)
