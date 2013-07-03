@@ -18,17 +18,17 @@ XML_MAP       ?= ${PROJECT_HOME}/ApiCommonData/Load/lib/xml/isf/FungiDB/fungiGen
 
 # Derived:
 ifeq ($(TYPE), Chr)
-LONG_TYPE     = chromosome
-CHR_MAP       = chromosomeMap.txt
-CHR_MAP_OPT   = --chromosomeMapFile $(CHR_MAP)
+  LONG_TYPE     = chromosome
+  CHR_MAP       = chromosomeMap.txt
+  CHR_MAP_OPT   = --chromosomeMapFile $(CHR_MAP)
 else ifeq ($(TYPE), SC)
-LONG_TYPE     = supercontig
+  LONG_TYPE     = supercontig
 endif
 
 ifeq ($(ZIP), true)
-CAT := zcat
+  CAT := zcat
 else
-CAT := cat
+  CAT := cat
 endif
 
 GREP_ALGIDS       = grep_algids

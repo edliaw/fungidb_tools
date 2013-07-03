@@ -11,18 +11,18 @@ FORMAT        ?=
 
 # Constants:
 ifeq ($(ZIP), true)
-CAT := zcat
+  CAT := zcat
 else
-CAT := cat
+  CAT := cat
 endif
 
 ifeq ($(FORMAT), gbf)
-EXTRACT_PRODUCTS = $(SCRIPTS)/extract_products_genbank.py
+  EXTRACT_PRODUCTS = $(SCRIPTS)/extract_products_genbank.py
 else ifeq ($(SOURCE), Broad)
-EXTRACT_PRODUCTS = $(SCRIPTS)/extract_products_broad.py
+  EXTRACT_PRODUCTS = $(SCRIPTS)/extract_products_broad.py
 else ifeq ($(SOURCE), JGI)
-EXTRACT_PRODUCTS = $(SCRIPTS)/extract_products_jgi.py
-EXTRACT_PRODUCTS_OPTS = -i transcriptId -s kogdefline -p $(PREFIX_TERM)
+  EXTRACT_PRODUCTS = $(SCRIPTS)/extract_products_jgi.py
+  EXTRACT_PRODUCTS_OPTS = -i transcriptId -s kogdefline -p $(PREFIX_TERM)
 endif
 
 DB_NAME           ?= $(ID)_genome_RSRC

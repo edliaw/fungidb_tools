@@ -22,23 +22,23 @@ LOG           ?= isf.log
 
 # Derived:
 ifeq ($(TYPE), Chr)
-LONG_TYPE     = chromosome
-CHR_MAP       = chromosomeMap.txt
-CHR_MAP_OPT   = --chromosomeMapFile $(CHR_MAP)
+  LONG_TYPE     = chromosome
+  CHR_MAP       = chromosomeMap.txt
+  CHR_MAP_OPT   = --chromosomeMapFile $(CHR_MAP)
 else ifeq ($(TYPE), SC)
-LONG_TYPE     = supercontig
+  LONG_TYPE     = supercontig
 endif
 
 ifeq ($(ZIP), true)
-CAT := zcat
+  CAT := zcat
 else
-CAT := cat
+  CAT := cat
 endif
 
 FORMAT_GFF3       = format_gff
 FORMAT_GFF3_OPTS  ?= --filetype gff3 --species $(ID) --type $(TYPE) --provider $(SOURCE) --regex "$(FORMAT_RE)" --padding $(FORMAT_PAD) --comments
 ifdef PREFIX
-FORMAT_GFF3_OPTS  += --prefix $(PREFIX)
+  FORMAT_GFF3_OPTS  += --prefix $(PREFIX)
 endif
 GREP_ALGIDS       = grep_algids
 GREP_ALGIDS_OPTS  ?= $(LOG)

@@ -27,17 +27,17 @@ LOG           ?= isf.log
 
 # Derived:
 ifeq ($(TYPE), Chr)
-LONG_TYPE     = chromosome
-CHR_MAP       = chromosomeMap.txt
-CHR_MAP_OPT   = --chromosomeMapFile $(CHR_MAP)
+  LONG_TYPE     = chromosome
+  CHR_MAP       = chromosomeMap.txt
+  CHR_MAP_OPT   = --chromosomeMapFile $(CHR_MAP)
 else ifeq ($(TYPE), SC)
-LONG_TYPE     = supercontig
+  LONG_TYPE     = supercontig
 endif
 
 ifeq ($(ZIP), true)
-CAT := zcat
+  CAT := zcat
 else
-CAT := cat
+  CAT := cat
 endif
 
 FORMAT_GTF        = format_gff
@@ -50,7 +50,7 @@ INSERT_FEAT_OPTS  ?= --extDbName $(DB_NAME) --extDbRlsVer $(VERSION) --mapFile $
 UNDO              = GUS::Supported::Plugin::InsertSequenceFeaturesUndo
 
 ifeq ($(SOURCE), JGI)
-FORMAT_GTF_OPTS += --nostart
+  FORMAT_GTF_OPTS += --nostart
 endif
 
 
