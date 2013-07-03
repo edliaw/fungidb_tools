@@ -3,7 +3,9 @@
 from __future__ import print_function
 import sys
 import argparse
+from lxml import etree
 from fungidb_tools.xml import datasets
+from fungidb_tools.xml.ElementLib import indent
 import json
 
 
@@ -30,10 +32,11 @@ def main():
     with args.infile as infile:
         organisms = json.load(infile)
 
-    datasets = datasets.make_datasets_xml(organisms)
+    datasets_xml = datasets.make_datasets_xml(organisms)
+    indent(datasets_xml)
 
     with args.outfile as outfile:
-        print(etree.tostring(datasets, pretty_print=True), file=outfile)
+        print(etree.tostring(datasets_xml), file=outfile)
 
 
 if __name__ == "__main__":
