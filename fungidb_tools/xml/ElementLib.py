@@ -4,7 +4,6 @@
 Edward Liaw
 """
 
-
 def _is_empty(text):
     return not text or text.isspace()
 
