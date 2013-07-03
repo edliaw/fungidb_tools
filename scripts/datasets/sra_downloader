@@ -1,0 +1,103 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""Download SRA files using aspera connect.
+
+2013/07/02
+Edward Liaw
+"""
+from __future__ import print_function
+import sys
+import argparse
+from warnings import warn
+from fungidb_tools.aspera import Aspera
+from fungidb_tools import simple_eutils as eutils
+
+NCBI_FTP = "anonftp@ftp-private.ncbi.nlm.nih.gov:"
+SRA_FTP_DIR = "sra/sra-instant/reads"
+SRA_FOLDER = {
+    "SRP": "ByStudy",
+    "SRX": "ByExperiment",
+    "SRR": "ByRun",
+    "SRS": "BySample",
+}
+
+SRX_ENTREZ = "EXPERIMENT_PACKAGE/EXPERIMENT"
+SRR_ENTREZ = "EXPERIMENT_PACKAGE/RUN_SET/RUN"
+SRP_ENTREZ = "EXPERIMENT_PACKAGE/STUDY"
+PID_ENTREZ = ("EXPERIMENT_PACKAGE/STUDY/DESCRIPTOR/RELATED_STUDIES/"
+              "RELATED_STUDY/RELATED_LINK/ID")
+
+
+def parse_arguments():
+    """Handle command-line arguments.
+
+    Returns:
+        args: Arguments passed in from the command-line."""
+    parser = argparse.ArgumentParser(description=__doc__,
+                                     fromfile_prefix_chars='@')
+    parser.add_argument('terms', nargs='*', help='Entrez search terms')
+    parser.add_argument('-d', '--outdir',
+                        default=path.curdir, help='output directory')
+    return parser.parse_args()
+    
+
+def map_from_search(term):
+    """Get associated ids from NCBI."""
+    ids = eutils.idlist_search('sra', term=term)
+    for id in ids:
+        results = {}
+        try:
+            results['taxid'] = eutils.idlist_link('taxonomy', 'sra', id).pop()
+        except IndexError:
+            raise IndexError("No taxonomy id associated with this study")
+        try:
+            results['biosample'] = eutils.idlist_link('biosample', 'sra', id).pop()
+        except IndexError:
+            raise IndexError("No bioproject id associated with this study")
+
+        root = eutils.etree_fetch('sra', id)
+
+        if len(root.findall(SRX_ENTREZ)) > 1:
+            warn("%s has more than one associated SRX" % id)
+        results['srx'] = root.find(SRX_ENTREZ).attrib['accession']
+
+        if len(root.findall(SRR_ENTREZ)) > 1:
+            warn("%s has more than one associated SRR" % id)
+        results['srr'] = root.find(SRR_ENTREZ).attrib['accession']
+
+        if len(root.findall(SRP_ENTREZ)) > 1:
+            warn("%s has more than one associated SRP" % id)
+        results['srp'] = root.find(SRP_ENTREZ).attrib['accession']
+
+        results['pid'] = [pid.text for pid in root.findall(XML_PID_PATH)]
+        yield id, results
+
+
+def sra_ftp_address(term):
+    """Find the corresponding ftp address for the SRA term."""
+    term = term.upper()
+    prefix1 = term[:3]
+    prefix2 = term[:6]
+    try:
+        link = os.path.join(SRA_FTP_DIR, SRA_FOLDER[prefix1], 'litesra', prefix1, prefix2, term)
+    except KeyError:
+        raise KeyError("Invalid SRA prefix: {}! Valid choices are {}.".format(prefix1, SRA_FOLDER.keys()))
+
+    return os.path.join(NCBI_FTP, link)
+
+
+def main():
+    args = parse_arguments()
+    ascp = Aspera()
+
+    for term in args.terms:
+        srp_set = set()
+        for id, results in map_from_search(term):
+            print(id, results, sep='\t')
+            srp_set.add(results['srp'])
+        for srp in srp_set:
+            ascp.fetch(srp, args.outdir)
+
+
+if __name__ == "__main__":
+    main()
