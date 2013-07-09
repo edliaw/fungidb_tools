@@ -11,10 +11,21 @@ def xml_bool(b):
     return "true" if b else "false"
 
 
-def make_prop(orgn, name, text):
+def make_constant(parent, name, value):
+    """Create an xml constant."""
+    const = etree.SubElement(parent, "constant", name=name, value=value)
+    return const
+
+
+def make_prop(parent, name, text):
     """Create an xml property subelement."""
-    prop = etree.SubElement(orgn, "prop", name=name).text = text
+    prop = etree.SubElement(parent, "prop", name=name).text = text
     return prop
+
+
+def make_dataset(parent, cls):
+    ds = etree.SubElement(parent, "dataset", **{"class": cls})
+    return ds
 
 
 def extract_reps(organisms, debug=False):
