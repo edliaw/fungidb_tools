@@ -1,0 +1,108 @@
+#!/usr/bin/env python
+from __future__ import print_function
+import os
+import json
+from warnings import warn
+from lxml import etree
+from fungidb_tools.xml import datasets
+from fungidb_tools import naming
+
+DATASETS_DIR = os.path.expanduser("~/GUS/trunk/project_home/FungiDBDatasets/Datasets/lib/xml/datasets/FungiDB")
+MD_DIR = "/eupath/data/EuPathDB/manualDelivery/FungiDB"
+DEFAULT_JSON = os.path.expanduser("~/workspace/FungiDB.json")
+DEFAULT_XML = os.path.expanduser("~/workspace/FungiDB.xml")
+
+
+def abbrevs_dict(jsonfile):
+    with open(jsonfile) as infile:
+        sheet = json.load(infile)
+        sheet = [o for o in sheet if o['loaded'] in ('Yes', 'Reload')]
+        species_reps, family_reps = datasets.extract_reps(sheet)
+        orgns = {}
+        for o in sheet:
+            abb = o['fungidbabbreviation']
+            cls = o['class']
+            species = naming.genus_species(o['fullnamencbi'])
+            abbrev = (abb, species_reps[species], family_reps[cls])
+            if o['oldabbreviations'] is not None:
+                for old in o['oldabbreviations'].split(','):
+                    orgns[old] = abbrev
+            orgns[o['fungidbabbreviation']] = abbrev
+    return orgns
+
+
+def main():
+    with open(DEFAULT_JSON) as jsonfile:
+        sheet = json.load(jsonfile)
+    sheet = [o for o in sheet if o['loaded'] in ('Yes', 'Reload')]
+    species_reps, family_reps = datasets.extract_reps(sheet)
+
+    ds = etree.Element("datasets")
+    for o in sheet:
+        abbrev = o['fungidbabbreviation']
+        fullname = o['fullnamencbi']
+        strain_abbrev = naming.abbrev_strain(o['strain'])
+        ref_strain = species_reps[naming.genus_species(fullname)]
+        family_rep = family_reps[o['class']][0]
+        strain_taxid = o['strainncbitaxid']
+        species_taxid = o['speciesncbitaxid']
+        version = o['assemblyversion']
+        idprefix = o['idprefix']
+        if idprefix is None:
+            idprefix = ""
+
+        try:
+            xmlpath = os.path.join(DATASETS_DIR, abbrev + '.xml')
+            xml = etree.parse(xmlpath)
+            # rep = xml.xpath('constant[@name="familyRepOrganismAbbrev"]')
+        except OSError:
+            warn("Failed to load xml file:", xmlpath)
+            break
+
+        datasets.make_constant(ds, "organismAbbrev", abbrev)
+        datasets.make_constant(ds, "strainAbbrev", strain_abbrev)
+        datasets.make_constant(ds, "referenceStrainOrganismAbbrev", ref_strain)
+        datasets.make_constant(ds, "familyRepOrganismAbbrev", family_rep)
+        datasets.make_constant(ds, "projectName", "FungiDB")
+        datasets.make_constant(ds, "ncbiTaxonId", strain_taxid)
+        datasets.make_constant(ds, "speciesNcbiTaxonId", species_taxid)
+        datasets.make_constant(ds, "genomeVersion", version)
+        # TODO: datasets.make_constant(ds, "soTerm", )
+        # TODO: datasets.make_constant(ds, "source", )
+        datasets.make_constant(ds, "idPrefix", idprefix)
+
+        d = datasets.make_dataset(ds, "validateOrganismInfo")
+        datasets.make_prop(d, "organismAbbrev", "$$organismAbbrev$$")
+        datasets.make_prop(d, "strainAbbrev", "$$strainAbbrev$$")
+        datasets.make_prop(d, "projectName", "$$projectName$$")
+        datasets.make_prop(d, "ncbiTaxonId", "$$ncbiTaxonId$$")
+        datasets.make_prop(d, "speciesNcbiTaxonId", "$$speciesNcbiTaxonId$$")
+        datasets.make_prop(d, "genomeVersion", "$$genomeVersion$$")
+
+        d = datasets.make_dataset(ds, "transcriptsFromReferenceStrain")
+        datasets.make_prop(d, "referenceStrainOrganismAbbrev", "$$referenceStrainOrganismAbbrev$$")
+
+        d = datasets.make_dataset(ds, "epitopesFromReferenceStrain")
+        datasets.make_prop(d, "referenceStrainOrganismAbbrev", "$$referenceStrainOrganismAbbrev$$")
+
+        d = datasets.make_dataset(ds, "isolatesFromFamilyRepresentative")
+        datasets.make_prop(d, "name", "genbank")
+        datasets.make_prop(d, "familyRepOrganismAbbrev", "$$familyRepOrganismAbbrev$$")
+
+        if o['speciesrepresentative'] == 'Yes':
+            d = datasets.make_dataset(ds, "referenceStrain-dbEST")
+            datasets.make_prop(d, "projectName", "$$projectName$$")
+            datasets.make_prop(d, "organismAbbrev", "$$organismAbbrev$$")
+            datasets.make_prop(d, "speciesNcbiTaxonId", "$$speciesNcbiTaxonId$$")
+
+            d = datasets.make_dataset(ds, "referenceStrain-epitope_sequences_IEDB")
+            datasets.make_prop(d, "organismAbbrev", "$$organismAbbrev$$")
+            datasets.make_prop(d, "speciesNcbiTaxonId", "$$speciesNcbiTaxonId$$")
+            datasets.make_prop(d, "version", "2.4")
+
+            d = datasets.make_dataset(ds, "referenceStrain-isolatesGenbank")
+            datasets.make_prop(d, "organismAbbrev", "$$organismAbbrev$$")
+            datasets.make_prop(d, "speciesNcbiTaxonId", "$$speciesNcbiTaxonId$$")
+
+if __name__ == "__main__":
+    main()
