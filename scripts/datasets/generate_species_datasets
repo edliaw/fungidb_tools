@@ -21,7 +21,7 @@ def abbrevs_dict(jsonfile):
         orgns = {}
         for o in sheet:
             abb = o['fungidbabbreviation']
-            cls = o['class']
+            cls = o['subclade']
             species = naming.genus_species(o['fullnamencbi'])
             abbrev = (abb, species_reps[species], family_reps[cls])
             if o['oldabbreviations'] is not None:
@@ -43,7 +43,7 @@ def main():
         fullname = o['fullnamencbi']
         strain_abbrev = naming.abbrev_strain(o['strain'])
         ref_strain = species_reps[naming.genus_species(fullname)]
-        family_rep = family_reps[o['class']][0]
+        family_rep = family_reps[o['subclade']][0]
         strain_taxid = o['strainncbitaxid']
         species_taxid = o['speciesncbitaxid']
         version = o['assemblyversion']

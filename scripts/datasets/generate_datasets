@@ -34,6 +34,8 @@ def parse_arguments():
     parser.add_argument('-c', '--check',
                         action='store_true',
                         help='check spreadsheet for errors')
+    parser.add_argument('-m', '--orthomcl',
+                        help='orthomcl version', default="5.12")
     return parser.parse_args()
 
 
@@ -49,7 +51,7 @@ def main():
     with args.jsonfile as jsonfile:
         print(json.dumps(feed, sort_keys=True, indent=2), file=jsonfile)
 
-    datasets_xml = datasets.make_datasets_xml(feed, args.check)
+    datasets_xml = datasets.make_datasets_xml(feed, args.orthomcl, args.check)
     indent(datasets_xml)
 
     with args.xmlfile as xmlfile:

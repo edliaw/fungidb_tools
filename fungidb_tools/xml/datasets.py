@@ -46,7 +46,7 @@ def extract_reps(organisms, debug=False):
         elif debug and genus_species not in species_reps:
             raise InvalidSpreadsheetException("{} species missing representative or out of order (representative must come first).".format(genus_species))
 
-        family = o["class"]
+        family = o["subclade"]
         if o["familyrepresentative"] == "Yes":
             if debug and family in family_reps:
                 raise InvalidSpreadsheetException("{} family has too many representatives: {}.".format(family, (family_reps[family][0], abbrev,)))
@@ -55,14 +55,14 @@ def extract_reps(organisms, debug=False):
     return species_reps, family_reps
 
 
-def make_datasets_xml(organisms, debug=False):
+def make_datasets_xml(organisms, orthomcl, debug=False):
     """Make a datasets xml file for a set of organisms.
 
     Args:
         organisms: pulled in as a JSON object from the FungiDB spreadsheet.
     """
     datasets = etree.Element("datasets")
-    etree.SubElement(datasets, "constant", name="projectName", value="FungiDB")
+    make_constant(datasets, "projectName", "FungiDB")
 
     loaded = [o for o in organisms if o["loaded"] in ("Yes", "Reload")]
     # Put representative organisms into dictionaries.
@@ -95,7 +95,7 @@ def make_datasets_xml(organisms, debug=False):
         is_species_rep = (o["speciesrepresentative"] == "Yes")
         is_family_rep = (o["familyrepresentative"] == "Yes")
         species_rep = species_reps[naming.genus_species(o["speciesnamencbi"])]
-        family_name = o["class"]
+        family_name = o["subclade"]
         family_rep, family_rep_taxid = family_reps[family_name]
         if debug and is_species_rep != (species_rep == abbrev):
             raise InvalidSpreadsheetException("{} reference strain incorrect for {}".format(species_rep, abbrev))
@@ -108,7 +108,7 @@ def make_datasets_xml(organisms, debug=False):
             family_rep_taxid = ""
 
         # Write fields into the xml file.
-        ds = etree.SubElement(datasets, "dataset", **{"class": "organism"})
+        ds = make_dataset(datasets, "organism")
         make_prop(ds, "projectName", "$$projectName$$")
         make_prop(ds, "organismFullName", taxname)
         make_prop(ds, "ncbiTaxonId", o["strainncbitaxid"])
@@ -141,13 +141,13 @@ def make_datasets_xml(organisms, debug=False):
         make_prop(ds, "maxIntronSize", "1000")
 
         if is_species_rep:
-            rs = etree.SubElement(datasets, "dataset", **{"class": "referenceStrain"})
+            rs = make_dataset(datasets, "referenceStrain")
             make_prop(rs, "organismAbbrev", species_rep)
             make_prop(rs, "isAnnotatedGenome", xml_bool(True))
 
     for ortho in ("orthomcl", "orthomclPhyletic", "orthomclTree"):
-        omcl = etree.SubElement(datasets, "dataset", **{"class": ortho})
+        omcl = make_dataset(datasets, ortho)
         make_prop(omcl, "projectName", "$$projectName$$")
-        make_prop(omcl, "version", "5.11")
+        make_prop(omcl, "version", orthomcl)
 
     return datasets
