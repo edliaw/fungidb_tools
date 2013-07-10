@@ -7,6 +7,7 @@ from warnings import warn
 from lxml import etree
 from fungidb_tools.xml import datasets
 from fungidb_tools import naming
+from fungidb_tools.xml.ElementLib import indent
 
 DATASETS_DIR = os.path.expanduser("~/GUS/trunk/project_home/FungiDBDatasets/Datasets/lib/xml/datasets/FungiDB")
 MD_DIR = "/eupath/data/EuPathDB/manualDelivery/FungiDB"
@@ -29,14 +30,15 @@ def parse_arguments():
     return parser.parse_args()
 
 
-def main():
-    args = parse_arguments()
-    with args.jsonfile as jsonfile:
-        organisms = json.load(jsonfile)
-    organisms = [o for o in organisms if datasets.get_row(o, 'isloaded') in ('Yes', 'Reload')]
+def make_species_xmls(organisms):
+    """Generate xml files for each species.
+
+    Args:
+        organisms: pulled in as a JSON object from the FungiDB spreadsheet
+    """
+    organisms = (o for o in organisms if datasets.get_row(o, 'isloaded') in ('Yes', 'Reload'))
     species_reps, family_reps = datasets.extract_reps(organisms)
 
-    ds = etree.Element("datasets")
     for o in organisms:
         abbrev = datasets.get_row(o, 'abbrev')
         fullname = datasets.get_row(o, 'fullname')
@@ -58,6 +60,7 @@ def main():
             warn("Failed to load xml file:", xmlpath)
             break
 
+        ds = etree.Element("datasets")
         datasets.make_constant(ds, "organismAbbrev", abbrev)
         datasets.make_constant(ds, "strainAbbrev", strain_abbrev)
         datasets.make_constant(ds, "referenceStrainOrganismAbbrev", ref_strain)
@@ -102,6 +105,17 @@ def main():
             d = datasets.make_dataset(ds, "referenceStrain-isolatesGenbank")
             datasets.make_prop(d, "organismAbbrev", "$$organismAbbrev$$")
             datasets.make_prop(d, "speciesNcbiTaxonId", "$$speciesNcbiTaxonId$$")
+
+        indent(ds)
+        yield ds
+
+
+def main():
+    args = parse_arguments()
+    with args.jsonfile as jsonfile:
+        organisms = json.load(jsonfile)
+    make_species_xmls(organisms)
+
 
 if __name__ == "__main__":
     main()
