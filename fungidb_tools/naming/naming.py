@@ -79,7 +79,7 @@ def filename(genus, species, strain):
     return "_".join((genus[0].upper() + species.lower(), strain))
 
 
-def genus_species(taxname):
+def short_species(taxname):
     """Genus and shortened species name if the species name is long.
 
     >>> genus_species('Mucor circinelloides f. lusitanicus CBS 277.49')
