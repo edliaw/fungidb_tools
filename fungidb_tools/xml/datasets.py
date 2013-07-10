@@ -21,6 +21,7 @@ _rows = {
     "isloaded": "loaded",
     "isrefstrain": "speciesrepresentative",
     "isfamrep": "familyrepresentative",
+    "idprefix": "idprefix",
     "oldabbrevs": "oldabbreviations",
 }
 
