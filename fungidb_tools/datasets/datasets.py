@@ -26,12 +26,12 @@ _rows = {
 }
 
 
-def get_row(o, row):
-    return o[_rows[row]]
-
-
 class InvalidSpreadsheetException(Exception):
     pass
+
+
+def get_row(o, row):
+    return o[_rows[row]]
 
 
 def xml_bool(b):
@@ -95,4 +95,5 @@ def old_abbrevs(organisms):
         if old_abbrevs is not None:
             for old in old_abbrevs.split(','):
                 sub_abbrev[old] = abbrev
+
     return sub_abbrev

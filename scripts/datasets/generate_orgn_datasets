@@ -5,9 +5,9 @@ import os
 import json
 from warnings import warn
 from lxml import etree
-from fungidb_tools.xml import datasets
 from fungidb_tools import naming
-from fungidb_tools.xml.ElementLib import indent
+from fungidb_tools import datasets
+from fungidb_tools.xml import indent
 
 DATASETS_DIR = os.path.expanduser("~/GUS/trunk/project_home/FungiDBDatasets/Datasets/lib/xml/datasets/FungiDB")
 MD_DIR = "/eupath/data/EuPathDB/manualDelivery/FungiDB"

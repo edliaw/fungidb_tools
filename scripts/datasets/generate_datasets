@@ -6,9 +6,9 @@ import argparse
 import json
 from lxml import etree
 from fungidb_tools import naming
+from fungidb_tools import datasets
 from fungidb_tools.simple_gdata import SimpleGData
-from fungidb_tools.xml import datasets
-from fungidb_tools.xml.ElementLib import indent
+from fungidb_tools.xml import indent
 
 
 def parse_arguments():
@@ -146,12 +146,12 @@ def main():
     sheet.select_document(datasets.defaults['gdoc'])
     sheet.select_worksheet(datasets.defaults['gsheet'])
 
-    feed = sheet.json_feed()
+    json_feed = sheet.json_feed()
 
     with args.jsonfile as jsonfile:
-        print(json.dumps(feed, sort_keys=True, indent=2), file=jsonfile)
+        print(json.dumps(json_feed, sort_keys=True, indent=2), file=jsonfile)
 
-    datasets_xml = make_datasets_xml(feed, args.orthomcl, args.debug)
+    datasets_xml = make_datasets_xml(json_feed, args.orthomcl, args.debug)
 
     with args.xmlfile as xmlfile:
         print(etree.tostring(datasets_xml), file=xmlfile)
