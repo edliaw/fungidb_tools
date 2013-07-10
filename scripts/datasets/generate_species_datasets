@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from __future__ import print_function
+import argparse
 import os
 import json
 from warnings import warn
@@ -13,41 +14,39 @@ DEFAULT_JSON = os.path.expanduser("~/workspace/FungiDB.json")
 DEFAULT_XML = os.path.expanduser("~/workspace/FungiDB.xml")
 
 
-def abbrevs_dict(jsonfile):
-    with open(jsonfile) as infile:
-        sheet = json.load(infile)
-        sheet = [o for o in sheet if o['loaded'] in ('Yes', 'Reload')]
-        species_reps, family_reps = datasets.extract_reps(sheet)
-        orgns = {}
-        for o in sheet:
-            abb = o['fungidbabbreviation']
-            cls = o['subclade']
-            species = naming.genus_species(o['fullnamencbi'])
-            abbrev = (abb, species_reps[species], family_reps[cls])
-            if o['oldabbreviations'] is not None:
-                for old in o['oldabbreviations'].split(','):
-                    orgns[old] = abbrev
-            orgns[o['fungidbabbreviation']] = abbrev
-    return orgns
+def parse_arguments():
+    """Handle command-line arguments.
+
+    Returns:
+        args: Arguments passed in from the command-line.
+    """
+    parser = argparse.ArgumentParser(description=__doc__,
+                                     fromfile_prefix_chars='@')
+    parser.add_argument('--jsonfile',
+                        type=argparse.FileType('r'),
+                        default=open(datasets.defaults['json'], 'r'),
+                        help='jsonized spreadsheet')
+    return parser.parse_args()
 
 
 def main():
-    with open(DEFAULT_JSON) as jsonfile:
-        sheet = json.load(jsonfile)
-    sheet = [o for o in sheet if o['loaded'] in ('Yes', 'Reload')]
-    species_reps, family_reps = datasets.extract_reps(sheet)
+    args = parse_arguments()
+    with args.jsonfile as jsonfile:
+        organisms = json.load(jsonfile)
+    organisms = [o for o in organisms if datasets.get_row(o, 'isloaded') in ('Yes', 'Reload')]
+    species_reps, family_reps = datasets.extract_reps(organisms)
 
     ds = etree.Element("datasets")
-    for o in sheet:
-        abbrev = o['fungidbabbreviation']
-        fullname = o['fullnamencbi']
-        strain_abbrev = naming.abbrev_strain(o['strain'])
-        ref_strain = species_reps[naming.genus_species(fullname)]
-        family_rep = family_reps[o['subclade']][0]
-        strain_taxid = o['strainncbitaxid']
-        species_taxid = o['speciesncbitaxid']
-        version = o['assemblyversion']
-        idprefix = o['idprefix']
+    for o in organisms:
+        abbrev = datasets.get_row(o, 'abbrev')
+        fullname = datasets.get_row(o, 'fullname')
+        strain_abbrev = naming.abbrev_strain(datasets.get_row(o, 'strain'))
+        ref_strain = species_reps[naming.short_species(fullname)]
+        family_rep = family_reps[datasets.get_row(o, 'subclade')][0]
+        strain_taxid = datasets.get_row(o, 'taxid')
+        species_taxid = datasets.get_row(o, 'speciestaxid')
+        version = datasets.get_row(o, 'version')
+        idprefix = datasets.get_row(o, 'idprefix')
         if idprefix is None:
             idprefix = ""
 
@@ -89,7 +88,7 @@ def main():
         datasets.make_prop(d, "name", "genbank")
         datasets.make_prop(d, "familyRepOrganismAbbrev", "$$familyRepOrganismAbbrev$$")
 
-        if o['speciesrepresentative'] == 'Yes':
+        if datasets.get_row(o, 'isrefstrain') == 'Yes':
             d = datasets.make_dataset(ds, "referenceStrain-dbEST")
             datasets.make_prop(d, "projectName", "$$projectName$$")
             datasets.make_prop(d, "organismAbbrev", "$$organismAbbrev$$")
