@@ -2,12 +2,31 @@ from lxml import etree
 from .. import naming
 import os
 
-DEFAULTS = {
+defaults = {
     "json": os.path.expanduser("~/workspace/FungiDB.json"),
     "xml": os.path.expanduser("~/workspace/FungiDB.xml"),
     "gdoc": "multi-species fungal genome db targets",
     "gsheet": "Target Genomes for Release",
 }
+_rows = {
+    "abbrev": "fungidbabbreviation",
+    "fullname": "fullnamencbi",
+    "species": "speciesnamencbi",
+    "strain": "strain",
+    "subclade": "subclade",
+    "taxid": "strainncbitaxid",
+    "speciestaxid": "speciesncbitaxid",
+    "version": "assemblyversion",
+    "source": "source",
+    "isloaded": "loaded",
+    "isrefstrain": "speciesrepresentative",
+    "isfamrep": "familyrepresentative",
+    "oldabbrevs": "oldabbreviations",
+}
+
+
+def get_row(o, row):
+    return o[_rows[row]]
 
 
 class InvalidSpreadsheetException(Exception):
@@ -44,20 +63,35 @@ def extract_reps(organisms, debug=False):
     species_reps = {}
     family_reps = {}
     for o in organisms:
-        abbrev = o["fungidbabbreviation"]
+        abbrev = get_row(o, 'abbrev')
 
-        genus_species = naming.genus_species(o["fullnamencbi"])
-        if o["speciesrepresentative"] == "Yes":
+        genus_species = naming.short_species(get_row(o, 'fullname'))
+        if get_row(o, 'isrefstrain') == "Yes":
             if debug and genus_species in species_reps:
                 raise InvalidSpreadsheetException("{} species has too many representatives: {}.".format(genus_species, (species_reps[genus_species], abbrev)))
             species_reps[genus_species] = abbrev
         elif debug and genus_species not in species_reps:
             raise InvalidSpreadsheetException("{} species missing representative or out of order (representative must come first).".format(genus_species))
 
-        family = o["subclade"]
-        if o["familyrepresentative"] == "Yes":
+        family = get_row(o, 'subclade')
+        if get_row(o, 'isfamrep') == "Yes":
             if debug and family in family_reps:
                 raise InvalidSpreadsheetException("{} family has too many representatives: {}.".format(family, (family_reps[family][0], abbrev,)))
-            family_reps[family] = (abbrev, o["strainncbitaxid"])
+            family_reps[family] = (abbrev, get_row(o, 'taxid'))
 
     return species_reps, family_reps
+
+
+def old_abbrevs(organisms):
+    sub_abbrev = {}
+
+    for o in organisms:
+        abbrev = get_row(o, 'abbrev')
+        genus_species = naming.short_species(get_row(o, 'fullname'))
+        subclade = get_row(o, 'subclade')
+
+        old_abbrevs = get_row(o, 'oldabbrevs')
+        if old_abbrevs is not None:
+            for old in old_abbrevs.split(','):
+                sub_abbrev[old] = abbrev
+    return sub_abbrev
