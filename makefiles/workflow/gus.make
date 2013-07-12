@@ -23,6 +23,8 @@ else
 endif
 
 
+common: ApiCommonData ApiCommonWorkflow ApiCommonShared
+
 all: $(GUS) $(APIDB)
 
 link:
@@ -43,11 +45,11 @@ checkout:
 	$(SVN_CO) $(SVN_URL)/gus/GusAppFramework/$(BRANCH_DIR) GUS
 	# Checkout gus directories
 	@for TARGET in $(GUS); do \
-	  ${MAKE} $$(TARGET)-gus-checkout; \
+	  ${MAKE} $${TARGET}-gus-checkout; \
 	done
 	# Checkout apidb directories
-	for TARGET in $(APIDB); do \
-	  ${MAKE} $$(TARGET)-apidb-checkout; \
+	@for TARGET in $(APIDB); do \
+	  ${MAKE} $${TARGET}-apidb-checkout; \
 	done
 
 %-gus-checkout:

@@ -69,8 +69,8 @@ link: genome.gbf
 	# Link files to the final directory.
 	mkdir -p ../final
 	cd ../final && \
-	for file in $^; do \
-	  ln -s ../workspace/$$file; \
+	@for file in $^; do \
+	  ln -s ../workspace/$${file}; \
 	done
 
 

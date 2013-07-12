@@ -93,8 +93,8 @@ link: genome.gtf $(CHR_MAP)
 	# Link files to the final directory.
 	mkdir -p ../final
 	cd ../final && \
-	for file in $^; do \
-	  ln -s ../workspace/$$file; \
+	@for file in $^; do \
+	  ln -s ../workspace/$${file}; \
 	done
 
 insertf-c: genome.gff $(CHR_MAP)
