@@ -27,7 +27,7 @@ all: $(GUS) $(APIDB)
 
 link:
 	# Activate this branch as the project home.
-	ln -fs ${CURDIR}/.. -T ~/GUS/current
+	ln -fs $(shell basename $(shell readlink -f ${CURDIR}/..)) -T ~/GUS/current
 
 tuning:
 	tuningManager --instance $(DB) --propfile ${GUS_HOME}/config/tuningManagerProp.xml --doUpdate &

@@ -1,5 +1,5 @@
 BRANCH ?= trunk
-DB     ?= fungbl3n
+DB     ?= fungbl2n
 USER   ?= edliaw
 SITE   = fungidb
 URL    = $(USER).$(SITE).org
@@ -46,7 +46,7 @@ reboot:
 
 link:
 	# Activate this branch as the project home.
-	ln -fs ${CURDIR}/.. -T $(WWW)/project_home
+	ln -fs $(shell basename ${CURDIR}) -T $(WWW)/project_home
 
 cattail:
 	# View all events as they occur to the website -- useful for debugging.
