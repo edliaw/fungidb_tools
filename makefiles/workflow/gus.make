@@ -1,5 +1,5 @@
 BRANCH ?= trunk
-DB     ?= fungbl2n
+DB     ?= fungbl1n
 USER   ?= edliaw
 
 GUS_BLD     ?= CBIL DJob GusSchema ReFlow WDK WSF FgpUtil
@@ -24,6 +24,10 @@ endif
 
 
 all: $(GUS) $(APIDB)
+
+link:
+	# Activate this branch as the project home.
+	ln -fs ${CURDIR}/.. -T ~/GUS/current
 
 tuning:
 	tuningManager --instance $(DB) --propfile ${GUS_HOME}/config/tuningManagerProp.xml --doUpdate &
@@ -69,4 +73,4 @@ $(BLD_DIRS)::
 	@${MAKE} $@-b
 
 
-.PHONY: all tuning sql _clean_ checkout $(ALL_DIRS)
+.PHONY: all link tuning sql _clean_ checkout $(ALL_DIRS)

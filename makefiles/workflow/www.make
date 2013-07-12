@@ -46,7 +46,7 @@ reboot:
 
 link:
 	# Activate this branch as the project home.
-	ln -fs $(WWW)/$(BRANCH) -T $(WWW)/project_home
+	ln -fs ${CURDIR}/.. -T $(WWW)/project_home
 
 cattail:
 	# View all events as they occur to the website -- useful for debugging.
