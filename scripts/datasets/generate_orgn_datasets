@@ -48,6 +48,8 @@ def make_species_xmls(organisms):
         strain_taxid = datasets.get_row(o, 'taxid')
         species_taxid = datasets.get_row(o, 'speciestaxid')
         version = datasets.get_row(o, 'version')
+        soterm = datasets.get_row(o, 'soterm')
+        source = datasets.get_row(o, 'source')
         idprefix = datasets.get_row(o, 'idprefix')
         if idprefix is None:
             idprefix = ""
@@ -69,8 +71,8 @@ def make_species_xmls(organisms):
         datasets.make_constant(ds, "ncbiTaxonId", strain_taxid)
         datasets.make_constant(ds, "speciesNcbiTaxonId", species_taxid)
         datasets.make_constant(ds, "genomeVersion", version)
-        # TODO: datasets.make_constant(ds, "soTerm", )
-        # TODO: datasets.make_constant(ds, "source", )
+        datasets.make_constant(ds, "soTerm", soterm)
+        datasets.make_constant(ds, "source", source)
         datasets.make_constant(ds, "idPrefix", idprefix)
 
         d = datasets.make_dataset(ds, "validateOrganismInfo")

@@ -29,7 +29,7 @@ _rows = {
 }
 
 
-class InvalidSpreadsheetException(Exception):
+class InvalidFormatException(Exception):
     pass
 
 
@@ -59,6 +59,16 @@ def make_dataset(parent, cls):
     return ds
 
 
+def file_format(fmt):
+    fmt = fmt.split(' ')[-1].lower()
+    if fmt in ("gff3", "gff", "gtf"):
+        return "gff3"
+    elif fmt in ("genbank"):
+        return "genbank"
+    else:
+        raise InvalidFormatException("Unknown file format")
+
+
 def extract_reps(organisms, debug=False):
     """Make dictionaries of all the representative species and families. Also,
     perform some checks to ensure that the representative species are unique
@@ -72,15 +82,15 @@ def extract_reps(organisms, debug=False):
         genus_species = naming.short_species(get_row(o, 'fullname'))
         if get_row(o, 'isrefstrain') == "Yes":
             if debug and genus_species in species_reps:
-                raise InvalidSpreadsheetException("{} species has too many representatives: {}.".format(genus_species, (species_reps[genus_species], abbrev)))
+                raise InvalidFormatException("{} species has too many representatives: {}.".format(genus_species, (species_reps[genus_species], abbrev)))
             species_reps[genus_species] = abbrev
         elif debug and genus_species not in species_reps:
-            raise InvalidSpreadsheetException("{} species missing representative or out of order (representative must come first).".format(genus_species))
+            raise InvalidFormatException("{} species missing representative or out of order (representative must come first).".format(genus_species))
 
         family = get_row(o, 'subclade')
         if get_row(o, 'isfamrep') == "Yes":
             if debug and family in family_reps:
-                raise InvalidSpreadsheetException("{} family has too many representatives: {}.".format(family, (family_reps[family][0], abbrev,)))
+                raise InvalidFormatException("{} family has too many representatives: {}.".format(family, (family_reps[family][0], abbrev,)))
             family_reps[family] = (abbrev, get_row(o, 'taxid'))
 
     return species_reps, family_reps

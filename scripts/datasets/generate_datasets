@@ -60,7 +60,7 @@ def make_datasets_xml(organisms, orthomcl, debug=False):
         if strain:
             # Check that strain in full NCBI name matches spreadsheet.
             if debug and strain != o_strain:
-                raise datasets.InvalidSpreadsheetException("{} strain does not match {} in spreadsheet.".format(strain, o_strain))
+                raise datasets.InvalidFormatException("{} strain does not match {} in spreadsheet.".format(strain, o_strain))
         else:
             # NCBI name doesn"t have a strain name: set it to the spreadsheet
             # value.
@@ -71,9 +71,9 @@ def make_datasets_xml(organisms, orthomcl, debug=False):
         # Check that our spreadsheet values are consistent.
         o_abbrev = datasets.get_row(o, 'abbrev')
         if debug and abbrev != o_abbrev:
-            raise datasets.InvalidSpreadsheetException("{} abbreviation does not match {} in spreadsheet.".format(abbrev, o_abbrev))
+            raise datasets.InvalidFormatException("{} abbreviation does not match {} in spreadsheet.".format(abbrev, o_abbrev))
         if debug and " ".join((genus, species)) != genus_species:
-            raise datasets.InvalidSpreadsheetException("{} species name does not match {} in spreadsheet.".format(" ".join((genus, species)), genus_species))
+            raise datasets.InvalidFormatException("{} species name does not match {} in spreadsheet.".format(" ".join((genus, species)), genus_species))
 
         # Representative species and family.
         is_species_rep = (datasets.get_row(o, 'isrefstrain') == "Yes")
@@ -82,9 +82,9 @@ def make_datasets_xml(organisms, orthomcl, debug=False):
         family_name = datasets.get_row(o, 'subclade')
         family_rep, family_rep_taxid = family_reps[family_name]
         if debug and is_species_rep != (species_rep == abbrev):
-            raise datasets.InvalidSpreadsheetException("{} reference strain incorrect for {}".format(species_rep, abbrev))
+            raise datasets.InvalidFormatException("{} reference strain incorrect for {}".format(species_rep, abbrev))
         if debug and is_family_rep != (family_rep == abbrev):
-            raise datasets.InvalidSpreadsheetException("{} family representative incorrect for {}".format(family_rep, abbrev))
+            raise datasets.InvalidFormatException("{} family representative incorrect for {}".format(family_rep, abbrev))
         if not is_family_rep:
             # The family name and taxid are blank for non-representative
             # species.
