@@ -17,13 +17,15 @@ _rows = {
     "subclade": "subclade",
     "taxid": "strainncbitaxid",
     "speciestaxid": "speciesncbitaxid",
-    "version": "assemblyversion",
     "source": "source",
+    "soterm": "soterm",
+    "format": "genomeformat",
+    "version": "assemblyversion",
+    "idprefix": "idprefix",
+    "oldabbrevs": "oldabbreviations",
     "isloaded": "loaded",
     "isrefstrain": "referencestrain",
     "isfamrep": "familyrepresentative",
-    "idprefix": "idprefix",
-    "oldabbrevs": "oldabbreviations",
 }
 
 
