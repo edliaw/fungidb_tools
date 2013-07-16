@@ -8,7 +8,7 @@ Edward Liaw
 from __future__ import print_function
 from warnings import warn
 import argparse
-import re
+import sys
 from fungidb_tools import isf
 from Bio import SeqIO
 
