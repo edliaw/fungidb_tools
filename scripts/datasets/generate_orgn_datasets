@@ -50,9 +50,10 @@ def make_species_xmls(organisms):
         version = datasets.get_row(o, 'version')
         soterm = datasets.get_row(o, 'soterm')
         source = datasets.get_row(o, 'source')
-        idprefix = datasets.get_row(o, 'idprefix')
-        if idprefix is None:
-            idprefix = ""
+        idprefix = datasets.get_row(o, 'idprefix') or ""
+        file_format = datasets.get_row(o, 'format')
+        mito = datasets.ds_to_bool(datasets.get_row(o, 'mito'))
+        products = datasets.ds_to_bool(datasets.get_row(o, 'products'))
 
         try:
             xmlpath = os.path.join(DATASETS_DIR, abbrev + '.xml')
@@ -76,40 +77,176 @@ def make_species_xmls(organisms):
         datasets.make_constant(ds, "idPrefix", idprefix)
 
         d = datasets.make_dataset(ds, "validateOrganismInfo")
+        datasets.make_prop(d, "projectName", "$$projectName$$")
         datasets.make_prop(d, "organismAbbrev", "$$organismAbbrev$$")
         datasets.make_prop(d, "strainAbbrev", "$$strainAbbrev$$")
-        datasets.make_prop(d, "projectName", "$$projectName$$")
         datasets.make_prop(d, "ncbiTaxonId", "$$ncbiTaxonId$$")
         datasets.make_prop(d, "speciesNcbiTaxonId", "$$speciesNcbiTaxonId$$")
         datasets.make_prop(d, "genomeVersion", "$$genomeVersion$$")
 
+        # Genome
+        genome_dataset(d, file_format, mito)
+
+        # Product names
+        if products:
+            d = datasets.make_dataset(ds, "productNames")
+            datasets.make_prop(d, "projectName", "$$projectName$$")
+            datasets.make_prop(d, "organismAbbrev", "$$organismAbbrev$$")
+            datasets.make_prop(d, "version", "$$genomeVersion$$")
+            datasets.make_prop(d, "name", "$$source$$")
+
+        # Cross db references
+        d = datasets.make_dataset(ds, "dbxref_gene2Entrez")
+        datasets.make_prop(d, "projectName", "$$projectName$$")
+        datasets.make_prop(d, "organismAbbrev", "$$organismAbbrev$$")
+        datasets.make_prop(d, "ncbiTaxonId", "$$ncbiTaxonId$$")
+        datasets.make_prop(d, "genomeVersion", "$$genomeVersion$$")
+        datasets.make_prop(d, "version", "2011-11-29")
+
+        d = datasets.make_dataset(ds, "dbxref_gene2Uniprot")
+        datasets.make_prop(d, "projectName", "$$projectName$$")
+        datasets.make_prop(d, "organismAbbrev", "$$organismAbbrev$$")
+        datasets.make_prop(d, "ncbiTaxonId", "$$ncbiTaxonId$$")
+        datasets.make_prop(d, "genomeVersion", "$$genomeVersion$$")
+        datasets.make_prop(d, "version", "2011-11-29")
+
+        d = datasets.make_dataset(ds, "dbxref_gene2PubmedFromNcbi")
+        datasets.make_prop(d, "projectName", "$$projectName$$")
+        datasets.make_prop(d, "organismAbbrev", "$$organismAbbrev$$")
+        datasets.make_prop(d, "ncbiTaxonId", "$$ncbiTaxonId$$")
+        datasets.make_prop(d, "genomeVersion", "$$genomeVersion$$")
+        datasets.make_prop(d, "version", "2011-12-17")
+
+        # From reference strain
         d = datasets.make_dataset(ds, "transcriptsFromReferenceStrain")
         datasets.make_prop(d, "referenceStrainOrganismAbbrev", "$$referenceStrainOrganismAbbrev$$")
 
         d = datasets.make_dataset(ds, "epitopesFromReferenceStrain")
         datasets.make_prop(d, "referenceStrainOrganismAbbrev", "$$referenceStrainOrganismAbbrev$$")
 
+        # From family representative
         d = datasets.make_dataset(ds, "isolatesFromFamilyRepresentative")
         datasets.make_prop(d, "name", "genbank")
         datasets.make_prop(d, "familyRepOrganismAbbrev", "$$familyRepOrganismAbbrev$$")
 
         if datasets.get_row(o, 'isrefstrain') == 'Yes':
-            d = datasets.make_dataset(ds, "referenceStrain-dbEST")
-            datasets.make_prop(d, "projectName", "$$projectName$$")
-            datasets.make_prop(d, "organismAbbrev", "$$organismAbbrev$$")
-            datasets.make_prop(d, "speciesNcbiTaxonId", "$$speciesNcbiTaxonId$$")
-
-            d = datasets.make_dataset(ds, "referenceStrain-epitope_sequences_IEDB")
-            datasets.make_prop(d, "organismAbbrev", "$$organismAbbrev$$")
-            datasets.make_prop(d, "speciesNcbiTaxonId", "$$speciesNcbiTaxonId$$")
-            datasets.make_prop(d, "version", "2.4")
-
-            d = datasets.make_dataset(ds, "referenceStrain-isolatesGenbank")
-            datasets.make_prop(d, "organismAbbrev", "$$organismAbbrev$$")
-            datasets.make_prop(d, "speciesNcbiTaxonId", "$$speciesNcbiTaxonId$$")
+            # Reference strain data
+            ref_strain_datasets(d)
 
         indent(ds)
         yield ds
+
+
+def genome_dataset(d, file_format, mito=False):
+    if file_format == 'Genbank':
+        # Genbank-formatted genome
+        d = datasets.make_dataset(ds, "genbank_primary_genome")
+        datasets.make_prop(d, "projectName", "$$projectName$$")
+        datasets.make_prop(d, "ncbiTaxonId", "$$ncbiTaxonId$$")
+        datasets.make_prop(d, "version", "$$genomeVersion$$")
+        datasets.make_prop(d, "name", "$$source$$")
+        datasets.make_prop(d, "soTerm", "$$soTerm$$")
+        datasets.make_prop(d, "mapFile", "FungiDB/fungiGenbank2gus.xml")
+        if mito:
+            d = datasets.make_dataset(ds, "genbank_organelle_genome")
+            datasets.make_prop(d, "projectName", "$$projectName$$")
+            datasets.make_prop(d, "organismAbbrev", "$$organismAbbrev$$")
+            datasets.make_prop(d, "ncbiTaxonId", "$$ncbiTaxonId$$")
+            datasets.make_prop(d, "version", "$$genomeVersion$$")
+            datasets.make_prop(d, "name", "$$source$$")
+            datasets.make_prop(d, "soTerm", "mitochondrial_chromosome")
+            datasets.make_prop(d, "sourceIdRegex", "^>(\S+)")
+            datasets.make_prop(d, "mapFile", "FungiDB/fungiGenbank2gus.xml")
+            datasets.make_prop(d, "organelle", "mitochondrion")
+            
+    else:
+        # FASTA/GFF-formatted genome
+        d = datasets.make_dataset(ds, "fasta_primary_genome_sequence")
+        datasets.make_prop(d, "projectName", "$$projectName$$")
+        datasets.make_prop(d, "organismAbbrev", "$$organismAbbrev$$")
+        datasets.make_prop(d, "ncbiTaxonId", "$$ncbiTaxonId$$")
+        datasets.make_prop(d, "version", "$$genomeVersion$$")
+        datasets.make_prop(d, "name", "$$source$$")
+        datasets.make_prop(d, "soTerm", "$$soTerm$$")
+        datasets.make_prop(d, "table", "DoTS::ExternalNASequence")
+        datasets.make_prop(d, "sourceIdRegex", "^>(\S+)")
+        if mito:
+            d = datasets.make_dataset(ds, "fasta_organelle_genome")
+            datasets.make_prop(d, "projectName", "$$projectName$$")
+            datasets.make_prop(d, "organismAbbrev", "$$organismAbbrev$$")
+            datasets.make_prop(d, "ncbiTaxonId", "$$ncbiTaxonId$$")
+            datasets.make_prop(d, "version", "$$genomeVersion$$")
+            datasets.make_prop(d, "name", "$$source$$")
+            datasets.make_prop(d, "soTerm", "mitochondrial_chromosome")
+            datasets.make_prop(d, "table", "DoTS::ExternalNASequence")
+            datasets.make_prop(d, "sourceIdRegex", "^>(\S+)")
+            datasets.make_prop(d, "organelle", "mitochondrion")
+
+        # Features
+        if file_format == "Broad GTF":
+            d = datasets.make_dataset(ds, "Broad_GFF_primary_genome_features")
+            datasets.make_prop(d, "projectName", "$$projectName$$")
+            datasets.make_prop(d, "organismAbbrev", "$$organismAbbrev$$")
+            datasets.make_prop(d, "ncbiTaxonId", "$$ncbiTaxonId$$")
+            datasets.make_prop(d, "version", "$$genomeVersion$$")
+            datasets.make_prop(d, "soTerm", "$$soTerm$$")
+            if mito:
+                d = datasets.make_dataset(ds, "FungiDB_GFF_organelle_genome_features")
+                datasets.make_prop(d, "projectName", "$$projectName$$")
+                datasets.make_prop(d, "organismAbbrev", "$$organismAbbrev$$")
+                datasets.make_prop(d, "ncbiTaxonId", "$$ncbiTaxonId$$")
+                datasets.make_prop(d, "version", "$$genomeVersion$$")
+                datasets.make_prop(d, "source", "$$source$$")
+                datasets.make_prop(d, "soTerm", "$$soTerm$$")
+                datasets.make_prop(d, "idPrefix", "$$idPrefix$$")
+        elif file_format == "JGI GFF":
+            d = datasets.make_dataset(ds, "GTF_primary_genome_features")
+            datasets.make_prop(d, "projectName", "$$projectName$$")
+            datasets.make_prop(d, "organismAbbrev", "$$organismAbbrev$$")
+            datasets.make_prop(d, "ncbiTaxonId", "$$ncbiTaxonId$$")
+            datasets.make_prop(d, "version", "$$genomeVersion$$")
+            datasets.make_prop(d, "source", "$$source$$")
+            datasets.make_prop(d, "soTerm", "$$soTerm$$")
+            datasets.make_prop(d, "idPrefix", "$$idPrefix$$")
+            if mito:
+                # TODO
+                warn("Not implemented")
+        elif file_format == "CGD GFF3":
+            d = datasets.make_dataset(ds, "GFF_primary_genome_features")
+            datasets.make_prop(d, "projectName", "$$projectName$$")
+            datasets.make_prop(d, "organismAbbrev", "$$organismAbbrev$$")
+            datasets.make_prop(d, "ncbiTaxonId", "$$ncbiTaxonId$$")
+            datasets.make_prop(d, "version", "$$genomeVersion$$")
+            datasets.make_prop(d, "source", "$$source$$")
+            datasets.make_prop(d, "soTerm", "$$soTerm$$")
+            datasets.make_prop(d, "idPrefix", "$$idPrefix$$")
+            datasets.make_prop(d, "mapFile", "FungiDB/CgdGFF3Gus.xml")
+        elif file_format.endswith("GFF3"):
+            d = datasets.make_dataset(ds, "NoPreprocess_GTF_primary_genome_features")
+            datasets.make_prop(d, "projectName", "$$projectName$$")
+            datasets.make_prop(d, "organismAbbrev", "$$organismAbbrev$$")
+            datasets.make_prop(d, "ncbiTaxonId", "$$ncbiTaxonId$$")
+            datasets.make_prop(d, "version", "$$genomeVersion$$")
+            datasets.make_prop(d, "source", "$$source$$")
+            datasets.make_prop(d, "soTerm", "$$soTerm$$")
+            datasets.make_prop(d, "idPrefix", "$$idPrefix$$")
+            datasets.make_prop(d, "mapFile", "broadGFF32Gus.xml")
+
+
+def ref_strain_datasets(d):
+    d = datasets.make_dataset(ds, "referenceStrain-dbEST")
+    datasets.make_prop(d, "projectName", "$$projectName$$")
+    datasets.make_prop(d, "organismAbbrev", "$$organismAbbrev$$")
+    datasets.make_prop(d, "speciesNcbiTaxonId", "$$speciesNcbiTaxonId$$")
+
+    d = datasets.make_dataset(ds, "referenceStrain-epitope_sequences_IEDB")
+    datasets.make_prop(d, "organismAbbrev", "$$organismAbbrev$$")
+    datasets.make_prop(d, "speciesNcbiTaxonId", "$$speciesNcbiTaxonId$$")
+    datasets.make_prop(d, "version", "2.4")
+
+    d = datasets.make_dataset(ds, "referenceStrain-isolatesGenbank")
+    datasets.make_prop(d, "organismAbbrev", "$$organismAbbrev$$")
+    datasets.make_prop(d, "speciesNcbiTaxonId", "$$speciesNcbiTaxonId$$")
 
 
 def main():
