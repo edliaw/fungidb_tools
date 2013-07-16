@@ -112,4 +112,4 @@ $(BLD_DIRS)::
 	@${MAKE} $@-b
 
 
-.PHONY: reload rebuild reboot link cattail all tuning sql _clean_ checkout $(ALL_DIRS)
+.PHONY: common reload rebuild reboot link cattail all tuning sql _clean_ checkout $(ALL_DIRS)

@@ -23,7 +23,7 @@ else
 endif
 
 
-common: ApiCommonData ApiCommonWorkflow ApiCommonShared
+common: ApiCommonData ApiCommonWorkflow
 
 all: $(GUS) $(APIDB)
 
@@ -75,4 +75,4 @@ $(BLD_DIRS)::
 	@${MAKE} $@-b
 
 
-.PHONY: all link tuning sql _clean_ checkout $(ALL_DIRS)
+.PHONY: common all link tuning sql _clean_ checkout $(ALL_DIRS)
