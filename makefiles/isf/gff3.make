@@ -16,7 +16,7 @@ FORMAT_PAD    ?= 2
 
 # Constants:
 DB_NAME       ?= $(ID)_genome_RSRC
-XML_MAP       ?= ${GUS_HOME}/lib/xml/isf/FungiDB/broadGFF32Gus.xml
+XML_MAP       ?= ${GUS_HOME}/lib/xml/isf/FungiDB/genericGFF2Gus.xml
 LOG           ?= isf.log
 
 
