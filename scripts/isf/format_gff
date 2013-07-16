@@ -7,13 +7,11 @@ Modifies the first two columns.
 Edward Liaw
 """
 from __future__ import print_function
-import re
 import argparse
 import sys
 from warnings import warn
 from fungidb_tools import isf
 from fungidb_tools.isf import parse_gff
-from collections import OrderedDict
 
 
 def parse_arguments():
@@ -46,17 +44,6 @@ def parse_arguments():
 
 
 def format_feature(feature, snoRNA, args):
-    try:
-        feat.seqid = renamer.rename(feat.seqid)
-        if feat.soterm.lower() in ('chromosome', 'contig', 'supercontig'):
-            feat.attr['ID'] = feat.seqid
-            feat.attr['Name'] = feat.seqid
-    except isf.NoMatchException:
-        warn("SKIPPED: re fails to match component of {}".format(feat.seqid))
-    except AttributeError:
-        warn("SKIPPED: re does not match {}".format(feat.seqid))
-        continue
-
     # Modify the provider
     if args.provider:
         feature.source = args.provider
@@ -94,6 +81,18 @@ def main():
     with args.infile as infile, args.outfile as outfile:
         for feat in parser.parse_features(infile, outfile):
             if args.nostart and feat.soterm in ('start_codon', 'stop_codon'):
+                continue
+
+            try:
+                feat.seqid = renamer.rename(feat.seqid)
+                if feat.soterm.lower() in ('chromosome', 'contig', 'supercontig'):
+                    feat.attr['ID'] = feat.seqid
+                    feat.attr['Name'] = feat.seqid
+            except isf.NoMatchException:
+                warn("SKIPPED: re fails to match component of {}".format(feat.seqid))
+                continue
+            except AttributeError:
+                warn("SKIPPED: re does not match {}".format(feat.seqid))
                 continue
 
             # Fix other feature information
