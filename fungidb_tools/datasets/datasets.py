@@ -26,6 +26,8 @@ _rows = {
     "isloaded": "loaded",
     "isrefstrain": "referencestrain",
     "isfamrep": "familyrepresentative",
+    "mito": "mitochondrialchromosomesloaded",
+    "products": "productsloaded",
 }
 
 
@@ -35,6 +37,11 @@ class InvalidFormatException(Exception):
 
 def get_row(o, row):
     return o[_rows[row]]
+
+
+def ds_to_bool(b):
+    """Check if a spreadsheet entry is equivalent to True (Yes, Reload)."""
+    return (b in ("Yes", "Reload"))
 
 
 def xml_bool(b):
