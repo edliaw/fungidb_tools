@@ -46,6 +46,8 @@ class GFFParser(object):
         val_d = self.delim['val']
 
         for line in infile:
+            line = line.rstrip()
+
             # Comments
             if line.startswith('#'):
                 if line.startswith('##'):
@@ -56,7 +58,8 @@ class GFFParser(object):
                     print(line, file=commentfile)
                 continue
 
-            cols = line.rstrip().split(col_d, 9)
+            # Columns
+            cols = line.split(col_d, 9)
             # Attributes column
             attr_col = cols.pop()
             attr = OrderedDict()
