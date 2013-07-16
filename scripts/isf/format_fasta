@@ -2,35 +2,50 @@
 # -*- coding: utf-8 -*-
 """Reformat fasta file for ISF.
 
-2013/04/11
+2013/07/16
 Edward Liaw
 """
 from __future__ import print_function
-import warnings
+from warnings import warn
+import argparse
+import re
 from fungidb_tools import isf
 from Bio import SeqIO
 
+RE_DEFAULT = r'(?P<species>\w+)_(?P<type>Chr|SC)(?:(?P<number>\d+)|(?P<letter>[A-Z]+))'
+
 
 def parse_arguments():
-    parser = isf.init_argparse()
+    parser = argparse.ArgumentParser(description=__doc__,
+                                     fromfile_prefix_chars='@')
+    parser.add_argument('infile',
+                        type=argparse.FileType('r'), nargs='?',
+                        default=sys.stdin, help='input file')
+    parser.add_argument('outfile',
+                        type=argparse.FileType('w'), nargs='?',
+                        default=sys.stdout, help='output file')
+    # TODO: Handle mitochondrial sequences differently
+    parser.add_argument('-m', '--mito',
+                        help='output mitochondrial contigs')
+    isf.add_rename_args(parser)
     return parser.parse_args()
 
 
 def main():
     args = parse_arguments()
-    formatter = isf.ContigFormatter.from_args(args)
+    renamer = isf.ContigRenamer.from_args(args)
 
     with args.infile as infile, args.outfile as outfile:
         for record in SeqIO.parse(infile, 'fasta'):
             try:
-                record.id = formatter.format(record.id)
+                record.id = renamer.rename(record.id)
                 record.description = ''
                 SeqIO.write(record, outfile, 'fasta')
             except isf.NoMatchException:
-                warnings.warn("SKIPPED: re fails to match component of {line}".format(line=record.id))
+                warn("SKIPPED: re fails to match component of {}".format(record.id))
                 continue
             except AttributeError:
-                warnings.warn("SKIPPED: re does not match {line}".format(line=record.id))
+                warn("SKIPPED: re does not match {}".format(record.id))
                 continue
 
 
