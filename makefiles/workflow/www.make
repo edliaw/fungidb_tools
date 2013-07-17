@@ -79,11 +79,11 @@ checkout:
 	# Checkout GUS
 	$(SVN_CO) $(SVN_URL)/gus/GusAppFramework/$(BRANCH_DIR) GUS
 	# Checkout gus directories
-	@for TARGET in $(GUS); do \
+	for TARGET in $(GUS); do \
 	  ${MAKE} $${TARGET}-gus-checkout; \
 	done
 	# Checkout apidb directories
-	@for TARGET in $(APIDB); do \
+	for TARGET in $(APIDB); do \
 	  ${MAKE} $${TARGET}-apidb-checkout; \
 	done
 
