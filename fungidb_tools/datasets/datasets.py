@@ -1,3 +1,10 @@
+"""Common functions used to generate xml dataset configurations
+from the FungiDB Genomes spreadsheet.
+
+2013-07-16
+Edward Liaw
+"""
+
 from lxml import etree
 from .. import naming
 import os
@@ -8,6 +15,8 @@ defaults = {
     "gdoc": "FungiDB Genomes",
     "gsheet": "Edit",
 }
+# If a dataset column is renamed we can alter the value in
+# _row and use the same key to access it using get_row().
 _rows = {
     "abbrev": "abbreviation",
     "fullname": "ncbiname",
@@ -62,11 +71,13 @@ def make_prop(parent, name, text):
 
 
 def make_dataset(parent, cls):
+    """Create an xml dataset subelement."""
     ds = etree.SubElement(parent, "dataset", **{"class": cls})
     return ds
 
 
 def file_format(fmt):
+    """Return generic naming conventions used to call file formats in EuPathDB."""
     fmt = fmt.split(' ')[-1].lower()
     if fmt in ("gff3", "gff", "gtf"):
         return "gff3"
@@ -89,11 +100,13 @@ def extract_reps(organisms, debug=False):
         genus_species = naming.short_species(get_row(o, 'fullname'))
         if get_row(o, 'isrefstrain') == "Yes":
             if debug and genus_species in species_reps:
-                raise InvalidFormatException("{} species has too many representatives: {}.".format(genus_species, (species_reps[genus_species], abbrev)))
+                raise InvalidFormatException("{} species has too many reference strains: {}.".format(genus_species, (species_reps[genus_species], abbrev)))
             species_reps[genus_species] = abbrev
         elif debug and genus_species not in species_reps:
             raise InvalidFormatException("{} species missing representative or out of order (representative must come first).".format(genus_species))
 
+        # We arbitrarily use the "subclade" as the "family" grouping.
+        # Doesn't really map to the taxonomic family.
         family = get_row(o, 'subclade')
         if get_row(o, 'isfamrep') == "Yes":
             if debug and family in family_reps:
@@ -104,6 +117,9 @@ def extract_reps(organisms, debug=False):
 
 
 def old_abbrevs(organisms):
+    """Create a dictionary the maps old abbreviations to their new one.
+    Useful for changing organisms' abbrevation with scripts.
+    """
     sub_abbrev = {}
 
     for o in organisms:
