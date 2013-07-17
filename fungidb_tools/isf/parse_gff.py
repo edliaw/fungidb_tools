@@ -1,3 +1,14 @@
+"""Relatively dumb GTF/GFF2/GFF3 parser and Feature class to encapsulate it.
+Assumes each line is a "feature".
+
+Not implemented:
+    Multi-line attributes
+    Inheritance
+
+2013-07-16
+Edward Liaw
+"""
+
 from __future__ import print_function
 import sys
 from warnings import warn
@@ -15,6 +26,7 @@ class Feature(object):
 
 
 class GFFParser(object):
+    """GTF/GFF2/GFF3 parser.  Initialize with options then parse file."""
     def __init__(self, filetype, fasta=False, comments=True):
         self.delim = self._set_filetype(filetype)
         self.fasta = fasta
@@ -74,6 +86,7 @@ class GFFParser(object):
             yield cols, attr
 
     def parse_features(self, infile, commentfile=sys.stdout):
+        """Parse lines as Features instead of (columns, attributes)."""
         for cols, attr in self.parse(infile, commentfile):
             yield Feature(cols, attr)
 
