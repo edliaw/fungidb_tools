@@ -100,10 +100,10 @@ def webenv_post(db, id):
         id = ','.join(id)
 
     post_handle = Entrez.epost(db=db, id=id)
-    etree = etree.parse(post_handle)
+    et = etree.parse(post_handle)
     post_handle.close()
 
-    root = etree.getroot()
+    root = et.getroot()
     webenv = root.find('WebEnv').text
     query_key = root.find('QueryKey').text
     return webenv, query_key
@@ -127,10 +127,10 @@ def webenv_search(db, term=None, field=None, webenv=None, query_key=None):
     search_handle = Entrez.esearch(db=db, term=term, field=field, retmax=0,
                                    webenv=webenv, query_key=query_key,
                                    usehistory='y')
-    etree = etree.parse(search_handle)
+    et = etree.parse(search_handle)
     search_handle.close()
 
-    root = etree.getroot()
+    root = et.getroot()
     webenv = root.find('WebEnv').text
     query_key = root.find('QueryKey').text
     count = int(root.find('Count').text)
@@ -164,10 +164,10 @@ def webenv_link(db, dbfrom, id=None, webenv=None, query_key=None,
     link_handle = Entrez.elink(db=db, dbfrom=dbfrom, id=id, linkname=linkname,
                                webenv=webenv, query_key=query_key,
                                cmd='neighbor_history')
-    etree = etree.parse(link_handle)
+    et = etree.parse(link_handle)
     link_handle.close()
 
-    root = etree.getroot()
+    root = et.getroot()
     webenv = root.find('LinkSet/WebEnv').text
     query_key = root.find('LinkSet/LinkSetDbHistory/QueryKey').text
     return webenv, query_key
@@ -197,10 +197,10 @@ def idlist_search(db, term=None, field=None, webenv=None, query_key=None,
                                        retstart=start, retmax=retmax,
                                        webenv=webenv, query_key=query_key,
                                        usehistory='y')
-        etree = etree.parse(search_handle)
+        et = etree.parse(search_handle)
         search_handle.close()
 
-        root = etree.getroot()
+        root = et.getroot()
         count = int(root.find('Count').text)
         webenv = root.find('WebEnv').text
         query_key = root.find('QueryKey').text
@@ -234,11 +234,11 @@ def idlist_link(db, dbfrom, id=None, webenv=None, query_key=None, linkname=None)
 
     link_handle = Entrez.elink(db=db, dbfrom=dbfrom, id=id, linkname=linkname,
                                webenv=webenv, query_key=query_key)
-    etree = etree.parse(link_handle)
+    et = etree.parse(link_handle)
     link_handle.close()
 
-    root = etree.getroot()
-    return [id.text for id in root.findall('LinkSet/LinkSetDb/Link/Id')]
+    root = et.getroot()
+    return [_id.text for _id in root.findall('LinkSet/LinkSetDb/Link/Id')]
 
 
 def etree_summary(db, id=None, webenv=None, query_key=None, out=None):
@@ -262,12 +262,12 @@ def etree_summary(db, id=None, webenv=None, query_key=None, out=None):
 
     summary_handle = Entrez.esummary(db=db, id=id,
                                      webenv=webenv, query_key=query_key)
-    etree = etree.parse(summary_handle)
+    et = etree.parse(summary_handle)
     summary_handle.close()
 
     if out is not None:
-        etree.write(out)
-    root = etree.getroot()
+        et.write(out)
+    root = et.getroot()
     return root
 
 
@@ -292,10 +292,10 @@ def etree_fetch(db, id=None, webenv=None, query_key=None, out=None):
 
     fetch_handle = Entrez.efetch(db=db, id=id,
                                  webenv=webenv, query_key=query_key)
-    etree = etree.parse(fetch_handle)
+    et = etree.parse(fetch_handle)
     fetch_handle.close()
 
     if out is not None:
-        etree.write(out)
-    root = etree.getroot()
+        et.write(out)
+    root = et.getroot()
     return root
