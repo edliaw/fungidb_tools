@@ -74,7 +74,7 @@ report.txt: genome.gff
 	# Generate feature qualifiers for genome.gff.
 	reportFeatureQualifiers --format gff3 --file_or_dir $< >| $@
 
-link: genome.gff3 $(CHR_MAP)
+link: genome.gff $(CHR_MAP)
 	# Link files to the final directory.
 	mkdir -p ../final
 	cd ../final && \
