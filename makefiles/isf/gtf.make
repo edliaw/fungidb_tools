@@ -17,10 +17,10 @@ PREFIX_TERM   ?=
 
 # Constants:
 DB_NAME       ?= $(ID)_genome_RSRC
-ifeq ($(SOURCE), JGI)
-  XML_MAP     ?= ${GUS_HOME}/lib/xml/isf/FungiDB/genericGFF2Gus.xml
+ifeq ($(SOURCE), Broad)
+  XML_MAP     ?= ${GUS_HOME}/lib/xml/isf/broadGFF32Gus.xml
 else
-  XML_MAP     ?= ${GUS_HOME}/lib/xml/isf/FungiDB/broadGFF32Gus.xml
+  XML_MAP     ?= ${GUS_HOME}/lib/xml/isf/FungiDB/genericGFF2Gus.xml
 endif
 LOG           ?= isf.log
 
@@ -69,12 +69,12 @@ genome.gtf:
 	$(CAT) $(PROVIDER_FILE) | $(FORMAT_GTF) $(FORMAT_GTF_OPTS) >| $@
 
 genome.gff3: genome.gtf
-ifeq ($(SOURCE), JGI)
-	# JGI GTF transcript ids need to be prefixed when converting.
-	gtf2gff3_3level.pl -prefix $(PREFIX_TERM) $< >| $@
-else
+ifeq ($(SOURCE), Broad)
         # Convert Broad GTF to GFF3 format.
 	convertGTFToGFF3 $< >| $@
+else
+	# JGI GTF transcript ids need to be prefixed when converting.
+	gtf2gff3_3level.pl -prefix $(PREFIX_TERM) $< >| $@
 endif
 
 genome.gff: genome.gff3
