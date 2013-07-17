@@ -17,11 +17,7 @@ PREFIX_TERM   ?=
 
 # Constants:
 DB_NAME       ?= $(ID)_genome_RSRC
-ifeq ($(SOURCE), Broad)
-  XML_MAP     ?= ${GUS_HOME}/lib/xml/isf/broadGFF32Gus.xml
-else
-  XML_MAP     ?= ${GUS_HOME}/lib/xml/isf/FungiDB/genericGFF2Gus.xml
-endif
+XML_MAP       ?= ${GUS_HOME}/lib/xml/isf/FungiDB/genericGFF2Gus.xml
 LOG           ?= isf.log
 
 
