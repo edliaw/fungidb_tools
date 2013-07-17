@@ -15,7 +15,7 @@ class NoMatchException(Exception):
 
 
 class ContigRenamer(object):
-    def __init__(self, abbrev, soterm, padding, is_roman=False, regex=None):
+    def __init__(self, abbrev, soterm, padding, regex=None, is_roman=False):
         self.abbrev = abbrev
         self.soterm = soterm
         self.padding = "{{:0{:d}d}}".format(padding)
@@ -32,7 +32,7 @@ class ContigRenamer(object):
 
     @classmethod
     def from_args(cls, args):
-        return cls(args.species, args.type, args.padding, args.roman, args.regex)
+        return cls(args.species, args.type, args.padding, args.regex, args.roman)
 
     def _format_number(self, number):
         return self.padding.format(int(number))
