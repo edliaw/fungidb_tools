@@ -26,4 +26,20 @@ Modules
   * naming: for naming organisms according to stricter specifications than is enforced by EuPathDB.
 * NCBI
   * aspera: for downloading SRA datasets from NCBI.
-  * simple_eutils: for wrapping NCBI eutils to interface with NCBI
+  * simple_eutils: for wrapping NCBI eutils to interface with NCBI.
+
+Scripts
+-------
+
+* ISF (Insert Sequence Features)
+  * Reformatters, data extraction for various filetypes.
+* Datasets
+  * Interact with data from the FungiDB Genomes spreadsheet.
+
+Makefiles
+---------
+
+* ISF
+  * Process genomic files for loading.
+* Workflow
+  * Shortcuts to interact with the workflow and EuPath toolchain.
