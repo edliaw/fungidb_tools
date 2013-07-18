@@ -7,9 +7,11 @@ Edward Liaw
 from __future__ import print_function
 import sys
 import argparse
+from fungidb_tools import isf
+from fungidb_tools.isf.roman import roman_to_int
 import re
 
-RE_DEFAULT = r'Chr(?:(?P<number>\d+)|(?P<letter>[A-Z]))'
+RE_DEFAULT = r'Chr(?:(?P<number>\d+)|(?P<letter>[A-Z]+))'
 
 
 def parse_arguments():
@@ -25,7 +27,10 @@ def parse_arguments():
     parser.add_argument('outfile',
                         type=argparse.FileType('w'), nargs='?',
                         default=sys.stdout, help='output file')
-    parser.add_argument('-r', '--regex',
+    parser.add_argument('--roman',
+                        action='store_true',
+                        help='if chromosomes are enumerated by roman numerals')
+    parser.add_argument('--regex',
                         default=RE_DEFAULT,
                         help='regular expression for the fasta header')
     return parser.parse_args()
@@ -58,7 +63,10 @@ def main():
             if value['number']:
                 number = int(value['number'])
             elif value['letter']:
-                number = value['letter']
+                if args.roman:
+                    number = roman_to_int(value['letter'])
+                else:
+                    number = value['letter']
             else:
                 raise Exception(header)
 
