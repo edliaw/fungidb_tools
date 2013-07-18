@@ -12,8 +12,6 @@ import sys
 from fungidb_tools import isf
 from Bio import SeqIO
 
-RE_DEFAULT = r'(?P<species>\w+)_(?P<type>Chr|SC)(?:(?P<number>\d+)|(?P<letter>[A-Z]+))'
-
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description=__doc__,
@@ -26,7 +24,7 @@ def parse_arguments():
                         default=sys.stdout, help='output file')
     # TODO: Handle mitochondrial sequences differently
     parser.add_argument('-m', '--mito',
-                        help='output mitochondrial contigs')
+                        help='mitochondrial regex')
     isf.add_rename_args(parser)
     return parser.parse_args()
 

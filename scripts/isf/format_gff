@@ -37,7 +37,7 @@ def parse_arguments():
                         help='remove start and stop codons')
     # TODO: Handle mitochondrial sequences differently
     parser.add_argument('-m', '--mito',
-                        help='output mitochondrial contigs')
+                        help='mitochondrial regex')
     isf.add_rename_args(parser)
     parse_gff.add_gff_args(parser)
     return parser.parse_args()
