@@ -13,6 +13,7 @@ MAP_FILE      ?= ../../../*_$(SOURCE)_fasta/$(VERSION)/final/chromosomeMap.txt
 FORMAT_RE     ?= Chromosome_$(VERSION)\.(?:(?P<number>\d+)|(?P<letter>[A-Z]))
 FORMAT_PAD    ?= 2
 PREFIX_TERM   ?= 
+FORMAT_ROMAN  ?=
 
 
 # Constants:
@@ -47,6 +48,10 @@ UNDO              = GUS::Supported::Plugin::InsertSequenceFeaturesUndo
 
 ifeq ($(SOURCE), JGI)
   FORMAT_GTF_OPTS += --nostart
+endif
+
+ifeq ($(FORMAT_ROMAN), true)
+  FORMAT_GTF_OPTS += --roman
 endif
 
 

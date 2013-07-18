@@ -11,6 +11,7 @@ ZIP           ?=
 ## Formatting:
 FORMAT_RE     ?= (?P<type>Chr)(?:(?P<number>\d+)|(?P<letter>[A-Z]))_(?P<species>\w+)
 FORMAT_PAD    ?= 2
+FORMAT_ROMAN  ?=
 
 
 # Constants:
@@ -44,6 +45,11 @@ INSERT_RI_OPTS    ?= --databaseName $(DB_NAME) --databaseVersion $(VERSION)
 LOAD_SEQS         = GUS::Supported::Plugin::LoadFastaSequences
 LOAD_SEQS_OPTS    ?= --externalDatabaseName $(DB_NAME) --ncbiTaxId $(TAXID) --externalDatabaseVersion $(VERSION) --SOTermName $(LONG_TYPE) --regexSourceId '>(\S+)' --tableName DoTS::ExternalNASequence --sqlVerbose --debug $(CHR_MAP_OPT)
 UNDO              = GUS::Community::Plugin::Undo
+
+ifeq ($(FORMAT_ROMAN), true)
+  FORMAT_GTF_OPTS += --roman
+  GENERATE_MAP_OPTS += --roman
+endif
 
 
 files: genome.fasta $(CHR_MAP)

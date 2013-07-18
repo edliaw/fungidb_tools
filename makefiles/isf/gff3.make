@@ -12,6 +12,7 @@ MAP_FILE      ?= ../../../*_$(SOURCE)_fasta/$(VERSION)/final/chromosomeMap.txt
 ## Formatting:
 FORMAT_RE     ?= $(TYPE)(?:(?P<number>\d+)|(?P<letter>[A-Z]))
 FORMAT_PAD    ?= 2
+FORMAT_ROMAN  ?=
 
 
 # Constants:
@@ -46,6 +47,10 @@ GREP_ALGIDS_OPTS  ?= $(LOG)
 INSERT_FEAT       = GUS::Supported::Plugin::InsertSequenceFeatures
 INSERT_FEAT_OPTS  ?= --extDbName $(DB_NAME) --extDbRlsVer $(VERSION) --mapFile $(XML_MAP) --inputFileExtension gff --fileFormat gff3 --soCvsVersion 1.417 --organism $(TAXID) --seqSoTerm $(LONG_TYPE) --seqIdColumn source_id --naSequenceSubclass ExternalNASequence --sqlVerbose $(CHR_MAP_OPT)
 UNDO              = GUS::Supported::Plugin::InsertSequenceFeaturesUndo
+
+ifeq ($(FORMAT_ROMAN), true)
+  FORMAT_GTF_OPTS += --roman
+endif
 
 
 files: report.txt $(CHR_MAP)
