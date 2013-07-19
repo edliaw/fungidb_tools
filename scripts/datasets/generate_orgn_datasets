@@ -9,7 +9,7 @@ from fungidb_tools import naming
 from fungidb_tools import datasets
 from fungidb_tools.xml import indent
 
-DATASETS_DIR = os.path.expanduser("~/GUS/trunk/project_home/FungiDBDatasets/Datasets/lib/xml/datasets/FungiDB")
+DATASETS_DIR = os.path.expanduser("~/GUS/current/project_home/FungiDBDatasets/Datasets/lib/xml/datasets/FungiDB")
 MD_DIR = "/eupath/data/EuPathDB/manualDelivery/FungiDB"
 DEFAULT_JSON = os.path.expanduser("~/workspace/FungiDB.json")
 DEFAULT_XML = os.path.expanduser("~/workspace/FungiDB.xml")
@@ -23,6 +23,8 @@ def parse_arguments():
     """
     parser = argparse.ArgumentParser(description=__doc__,
                                      fromfile_prefix_chars='@')
+    parser.add_argument('outdir',
+                        help='output directory')
     parser.add_argument('--jsonfile',
                         type=argparse.FileType('r'),
                         default=open(datasets.defaults['json'], 'r'),
@@ -54,14 +56,15 @@ def make_species_xmls(organisms):
         file_format = datasets.get_row(o, 'format')
         mito = datasets.ds_to_bool(datasets.get_row(o, 'mito'))
         products = datasets.ds_to_bool(datasets.get_row(o, 'products'))
+        is_ref_strain = datasets.ds_to_bool(datasets.get_row(o, 'isrefstrain'))
 
         try:
             xmlpath = os.path.join(DATASETS_DIR, abbrev + '.xml')
             xml = etree.parse(xmlpath)
             # rep = xml.xpath('constant[@name="familyRepOrganismAbbrev"]')
-        except OSError:
-            warn("Failed to load xml file:", xmlpath)
-            break
+        except IOError:
+            warn("Failed to load xml file: %s" % xmlpath)
+            xml = etree.Element("datasets")
 
         ds = etree.Element("datasets")
         datasets.make_constant(ds, "organismAbbrev", abbrev)
@@ -85,15 +88,20 @@ def make_species_xmls(organisms):
         datasets.make_prop(d, "genomeVersion", "$$genomeVersion$$")
 
         # Genome
-        genome_dataset(d, file_format, mito)
+        genome_dataset(ds, file_format, mito)
 
-        # Product names
+        # Function
         if products:
             d = datasets.make_dataset(ds, "productNames")
             datasets.make_prop(d, "projectName", "$$projectName$$")
             datasets.make_prop(d, "organismAbbrev", "$$organismAbbrev$$")
             datasets.make_prop(d, "version", "$$genomeVersion$$")
             datasets.make_prop(d, "name", "$$source$$")
+
+        # We'll assume that the current file is correct for all of these and just append them.
+        for cls in ('geneName', 'aliases', 'EnzymeCommissionAssociations', 'GeneOntologyAssociations', 'yeastTwoHybrid', 'microarrayPlatform', 'microarrayExpressionExperiment', 'microarrayPlatformWithProviderMapping', 'rnaSeqExperiment', 'SNPs_HTS_Experiment'):
+            for c in xml.iterfind('dataset[@class="{}"]'.format(cls)):
+                ds.append(c)
 
         # Cross db references
         d = datasets.make_dataset(ds, "dbxref_gene2Entrez")
@@ -117,6 +125,10 @@ def make_species_xmls(organisms):
         datasets.make_prop(d, "genomeVersion", "$$genomeVersion$$")
         datasets.make_prop(d, "version", "2011-12-17")
 
+        # Custom cross-reference links
+        for c in xml.iterfind('dataset[@class="dbxref_unity"]'):
+            ds.append(c)
+
         # From reference strain
         d = datasets.make_dataset(ds, "transcriptsFromReferenceStrain")
         datasets.make_prop(d, "referenceStrainOrganismAbbrev", "$$referenceStrainOrganismAbbrev$$")
@@ -129,15 +141,36 @@ def make_species_xmls(organisms):
         datasets.make_prop(d, "name", "genbank")
         datasets.make_prop(d, "familyRepOrganismAbbrev", "$$familyRepOrganismAbbrev$$")
 
-        if datasets.get_row(o, 'isrefstrain') == 'Yes':
+        if is_ref_strain:
             # Reference strain data
-            ref_strain_datasets(d)
+            d = xml.find('dataset[@class="referenceStrain-ESTsFromFasta"]')
+            if d is not None:
+                ds.append(d)
+            else:
+                d = datasets.make_dataset(ds, "referenceStrain-dbEST")
+                datasets.make_prop(d, "projectName", "$$projectName$$")
+                datasets.make_prop(d, "organismAbbrev", "$$organismAbbrev$$")
+                datasets.make_prop(d, "speciesNcbiTaxonId", "$$speciesNcbiTaxonId$$")
+
+            d = datasets.make_dataset(ds, "referenceStrain-epitope_sequences_IEDB")
+            datasets.make_prop(d, "organismAbbrev", "$$organismAbbrev$$")
+            datasets.make_prop(d, "speciesNcbiTaxonId", "$$speciesNcbiTaxonId$$")
+            datasets.make_prop(d, "version", "2.4")
+
+            d = datasets.make_dataset(ds, "referenceStrain-isolatesGenbank")
+            datasets.make_prop(d, "organismAbbrev", "$$organismAbbrev$$")
+            datasets.make_prop(d, "speciesNcbiTaxonId", "$$speciesNcbiTaxonId$$")
+
+        attribs = [d.attrib['class'] for d in ds.findall('dataset')]
+        for c in xml.iterfind('dataset'):
+            if c.attrib['class'] not in attribs:
+                warn(c.attrib['class'])
 
         indent(ds)
-        yield ds
+        yield ds, abbrev
 
 
-def genome_dataset(d, file_format, mito=False):
+def genome_dataset(ds, file_format, mito=False):
     if file_format == 'Genbank':
         # Genbank-formatted genome
         d = datasets.make_dataset(ds, "genbank_primary_genome")
@@ -200,27 +233,13 @@ def genome_dataset(d, file_format, mito=False):
             datasets.make_prop(d, "mapFile", "FungiDB/genericGFF2Gus.xml")
 
 
-def ref_strain_datasets(d):
-    d = datasets.make_dataset(ds, "referenceStrain-dbEST")
-    datasets.make_prop(d, "projectName", "$$projectName$$")
-    datasets.make_prop(d, "organismAbbrev", "$$organismAbbrev$$")
-    datasets.make_prop(d, "speciesNcbiTaxonId", "$$speciesNcbiTaxonId$$")
-
-    d = datasets.make_dataset(ds, "referenceStrain-epitope_sequences_IEDB")
-    datasets.make_prop(d, "organismAbbrev", "$$organismAbbrev$$")
-    datasets.make_prop(d, "speciesNcbiTaxonId", "$$speciesNcbiTaxonId$$")
-    datasets.make_prop(d, "version", "2.4")
-
-    d = datasets.make_dataset(ds, "referenceStrain-isolatesGenbank")
-    datasets.make_prop(d, "organismAbbrev", "$$organismAbbrev$$")
-    datasets.make_prop(d, "speciesNcbiTaxonId", "$$speciesNcbiTaxonId$$")
-
-
 def main():
     args = parse_arguments()
     with args.jsonfile as jsonfile:
         organisms = json.load(jsonfile)
-    make_species_xmls(organisms)
+    for ds, abbrev in make_species_xmls(organisms):
+        with open(os.path.join(args.outdir, abbrev + '.xml'), 'w') as outfile:
+            print(etree.tostring(ds), file=outfile)
 
 
 if __name__ == "__main__":
