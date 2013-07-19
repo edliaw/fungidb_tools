@@ -50,7 +50,7 @@ def get_row(o, row):
 
 def ds_to_bool(b):
     """Check if a spreadsheet entry is equivalent to True (Yes, Reload)."""
-    return (b in ("Yes", "Reload"))
+    return (b in ("Yes", "Ready", "Reload"))
 
 
 def xml_bool(b):
