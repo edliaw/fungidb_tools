@@ -55,7 +55,7 @@ files: report.txt $(CHR_MAP)
 all: isf
 	${MAKE} link
 
-isf: insertf-c
+isf: insf-c
 
 clean:
 	rm genome.* report.txt $(CHR_MAP)
@@ -93,10 +93,10 @@ link: genome.gff $(CHR_MAP)
 	  ln -s ../workspace/$${file}; \
 	done
 
-insertf-c: genome.gff $(CHR_MAP)
+insf-c: genome.gff $(CHR_MAP)
 	ga $(INSERT_FEAT) $(INSERT_FEAT_OPTS) --inputFileOrDir $< --validationLog val.log --bioperlTreeOutput bioperlTree.out --commit >> $(LOG) 2>&1
 
-insertf: genome.gff $(CHR_MAP)
+insf: genome.gff $(CHR_MAP)
 	# Run ISF to insert features.
 	ga $(INSERT_FEAT) $(INSERT_FEAT_OPTS) --inputFileOrDir $< --validationLog val.log --bioperlTreeOutput bioperlTree.out >| error.log 2>&1
 
@@ -105,12 +105,12 @@ insertf: genome.gff $(CHR_MAP)
 algid:
 	$(GREP_ALGIDS) $(GREP_ALGIDS_OPTS)
 
-insertf-u%-c:
+insf-u%-c:
 	ga $(UNDO) --mapfile $(XML_MAP) --algInvocationId $* --commit
 
-insertf-u%:
+insf-u%:
 	# Undo feature insertion.
 	ga $(UNDO) --mapfile $(XML_MAP) --algInvocationId $*
 
 
-.PHONY: files all isf clean link algid insertf insertf-c insertf-u% insertf-u%-c
+.PHONY: files all isf clean link algid insf insf-c

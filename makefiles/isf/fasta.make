@@ -39,8 +39,8 @@ GREP_ALGIDS_OPTS  ?= $(LOG)
 # ga:
 INSERT_DB         = GUS::Supported::Plugin::InsertExternalDatabase
 INSERT_DB_OPTS    ?= --name $(DB_NAME)
-INSERT_RI         = GUS::Supported::Plugin::InsertExternalDatabaseRls
-INSERT_RI_OPTS    ?= --databaseName $(DB_NAME) --databaseVersion $(VERSION)
+INSERT_RL         = GUS::Supported::Plugin::InsertExternalDatabaseRls
+INSERT_RL_OPTS    ?= --databaseName $(DB_NAME) --databaseVersion $(VERSION)
 LOAD_SEQS         = GUS::Supported::Plugin::LoadFastaSequences
 LOAD_SEQS_OPTS    ?= --externalDatabaseName $(DB_NAME) --ncbiTaxId $(TAXID) --externalDatabaseVersion $(VERSION) --SOTermName $(LONG_TYPE) --regexSourceId '>(\S+)' --tableName DoTS::ExternalNASequence --sqlVerbose --debug $(CHR_MAP_OPT)
 UNDO              = GUS::Community::Plugin::Undo
@@ -52,9 +52,9 @@ all: isf
 	${MAKE} link
 
 isf:
-	${MAKE} insertdb-c
-	${MAKE} insertri-c
-	${MAKE} loadseqs-c
+	${MAKE} insdb-c
+	${MAKE} insv-c
+	${MAKE} load-c
 
 clean:
 	rm genome.* $(CHR_MAP)
@@ -77,52 +77,52 @@ link: genome.fasta $(CHR_MAP)
 
 
 # ISF:
-insertdb-c:
+insdb-c:
 	ga $(INSERT_DB) $(INSERT_DB_OPTS) --commit >> $(LOG) 2>&1
 
-insertdb:
+insdb:
 	# Insert species table.
 	ga $(INSERT_DB) $(INSERT_DB_OPTS)
 
-insertri-c:
-	ga $(INSERT_RI) $(INSERT_RI_OPTS) --commit >> $(LOG) 2>&1
+insv-c:
+	ga $(INSERT_RL) $(INSERT_RL_OPTS) --commit >> $(LOG) 2>&1
 
-insertri:
+insv:
 	# Add version to table.
-	ga $(INSERT_RI) $(INSERT_RI_OPTS)
+	ga $(INSERT_RL) $(INSERT_RL_OPTS)
 
-loadseqs-c: genome.fasta $(CHR_MAP)
-	ga $(LOAD_SEQS) $(LOAD_SEQS_OPTS) --sequenceFile genome.fasta --commit >> $(LOG) 2>&1
+load-c: genome.fasta $(CHR_MAP)
+	ga $(LOAD_SEQS) $(LOAD_SEQS_OPTS) --sequenceFile $< --commit >> $(LOG) 2>&1
 
-loadseqs: genome.fasta $(CHR_MAP)
+load: genome.fasta $(CHR_MAP)
 	# Load data into table.
-	ga $(LOAD_SEQS) $(LOAD_SEQS_OPTS) --sequenceFile genome.fasta >| error.log 2>&1
+	ga $(LOAD_SEQS) $(LOAD_SEQS_OPTS) --sequenceFile $< >| error.log 2>&1
 
 
 # Undoing:
 algid:
 	$(GREP_ALGIDS) $(GREP_ALGIDS_OPTS)
 
-loadseqs-u%-c:
+load-u%-c:
 	ga $(UNDO) --plugin $(LOAD_SEQS) --algInvocationId $* --commit
 
-loadseqs-u%:
+load-u%:
 	# Undo sequence loading.
 	ga $(UNDO) --plugin $(LOAD_SEQS) --algInvocationId $*
 
-insertri-u%-c:
-	ga $(UNDO) --plugin $(INSERT_RI) --algInvocationId $* --commit
+insv-u%-c:
+	ga $(UNDO) --plugin $(INSERT_RL) --algInvocationId $* --commit
 
-insertri-u%:
+insv-u%:
 	# Undo versioning.
-	ga $(UNDO) --plugin $(INSERT_RI) --algInvocationId $*
+	ga $(UNDO) --plugin $(INSERT_RL) --algInvocationId $*
 
-insertdb-u%-c:
+insdb-u%-c:
 	ga $(UNDO) --plugin $(INSERT_DB) --algInvocationId $* --commit
 
-insertdb-u%:
+insdb-u%:
 	# Undo species table.
 	ga $(UNDO) --plugin $(INSERT_DB) --algInvocationId $*
 
 
-.PHONY: files all isf clean link algid insertdb insertdb-c insertdb-u% insertdb-u%-c insertri insertri-c insertri-u% insertri-u%-c loadseqs loadseqs-c loadseqs-u% loadseqs-u%-c
+.PHONY: files all isf clean link algid insdb insdb-c insv insv-c load load-c
