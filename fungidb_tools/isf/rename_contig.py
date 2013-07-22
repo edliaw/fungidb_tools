@@ -49,7 +49,7 @@ class ContigRenamer(object):
                     raise Exception("Regex {} doesn't contain a number, letter, or roman numeral field.".format(rx.pattern))
                 return "{}_{}{}".format(self.abbrev, so, contig)
         else:
-            raise NoMatchException("No regular expression matched.")
+            raise NoMatchException("{} doesn't match any regular expression.".format(target))
 
 
 def add_rename_args(parser):
