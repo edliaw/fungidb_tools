@@ -4,8 +4,8 @@ USER   ?= edliaw
 
 GUS_BLD     ?= CBIL DJob GusSchema ReFlow WDK WSF FgpUtil
 GUS_NOBLD   ?= WSFTemplate install
-APIDB_BLD   ?= DoTS ApiCommonShared ApiCommonData ApiCommonWorkflow GGTools EuPathDatasets EuPathPresenters
-APIDB_NOBLD ?= FungiDBDatasets FungiDBPresenters
+APIDB_BLD   ?= DoTS ApiCommonShared ApiCommonData ApiCommonWorkflow GGTools EuPathDatasets FungiDBDatasets
+APIDB_NOBLD ?= EuPathPresenters FungiDBPresenters
 
 GUS        = $(GUS_BLD) $(GUS_NOBLD)
 APIDB      = $(APIDB_BLD) $(APIDB_NOBLD)
