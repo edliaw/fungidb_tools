@@ -85,7 +85,7 @@ def main():
                 if feat.soterm.lower() in ('chromosome', 'contig', 'supercontig'):
                     feat.attr['ID'] = feat.seqid
             except isf.NoMatchException:
-                warn("SKIPPED: re fails to match component of {}".format(feat.seqid))
+                warn("SKIPPED: {} doesn't match any provided regex".format(feat.seqid))
                 continue
 
             # Fix other feature information
