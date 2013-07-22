@@ -35,9 +35,6 @@ def parse_arguments():
     parser.add_argument('--nostart',
                         action='store_true',
                         help='remove start and stop codons')
-    # TODO: Handle mitochondrial sequences differently
-    parser.add_argument('-m', '--mito',
-                        help='mitochondrial regex')
     isf.add_rename_args(parser)
     parse_gff.add_gff_args(parser)
     return parser.parse_args()
@@ -87,12 +84,8 @@ def main():
                 feat.seqid = renamer.rename(feat.seqid)
                 if feat.soterm.lower() in ('chromosome', 'contig', 'supercontig'):
                     feat.attr['ID'] = feat.seqid
-                    feat.attr['Name'] = feat.seqid
             except isf.NoMatchException:
                 warn("SKIPPED: re fails to match component of {}".format(feat.seqid))
-                continue
-            except AttributeError:
-                warn("SKIPPED: re does not match {}".format(feat.seqid))
                 continue
 
             # Fix other feature information

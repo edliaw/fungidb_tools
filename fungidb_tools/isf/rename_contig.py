@@ -9,60 +9,58 @@ Output:
 Edward Liaw
 """
 import re
+from .roman import roman_to_int
+
+RE_DEFAULT = (r'Chr_(?:(?P<number>\d+)|(?:P<roman>[XIV]+)|(?P<letter>[A-Z]))',)
+
 
 class NoMatchException(Exception):
     pass
 
 
 class ContigRenamer(object):
-    def __init__(self, abbrev, soterm, padding, regex=None, is_roman=False):
+    def __init__(self, abbrev, padding, soterm, regex):
         self.abbrev = abbrev
-        self.soterm = soterm
         self.padding = "{{:0{:d}d}}".format(padding)
 
-        if is_roman:
-            from .roman import roman_to_int
-            def format_letter(self, letter):
-                return self._format_number(roman_to_int(letter))
-            self._format_letter = format_letter
-
-        if regex is None:
-            regex = r'_(?:(?P<number>\d+)|(?P<letter>[A-Z]+))'
-        self.regex = re.compile(regex)
+        assert len(soterm) == len(regex), "Every regular expression should be provided a SO term"
+        self.soterm = soterm
+        self.regex = [re.compile(rx) for rx in regex]
 
     @classmethod
     def from_args(cls, args):
-        return cls(args.species, args.type, args.padding, args.regex, args.roman)
+        return cls(args.species, args.padding, args.soterm, args.regex)
 
     def _format_number(self, number):
         return self.padding.format(int(number))
 
-    def _format_letter(self, letter):
-        return letter.upper()
-
     def rename(self, target):
-        match = self.regex.search(target).groupdict()
-        if 'number' in match:
-            contig = self._format_number(match['number'])
-        elif 'letter' in match:
-            contig = self._format_letter(match['letter'])
+        for rx, so in zip(self.regex, self.soterm):
+            match = rx.search(target)
+            if match is not None:
+                match = match.groupdict()
+                if 'number' in match:
+                    contig = self._format_number(match['number'])
+                elif 'roman' in match:
+                    contig = match['roman']
+                elif 'letter' in match:
+                    contig = match['letter'].upper()
+                else:
+                    raise Exception("Regex {} doesn't contain a number, letter, or roman numeral field.".format(rx.pattern))
+                return "{}_{}{}".format(self.abbrev, so, contig)
         else:
-            raise NoMatchException("Regular expression didn't find a number or letter.")
-
-        return "{}_{}{}".format(self.abbrev, self.soterm, contig)
+            raise NoMatchException("No regular expression matched.")
 
 
 def add_rename_args(parser):
     parser.add_argument('--species',
                         help='species abbreviation')
-    parser.add_argument('--type',
-                        choices=('Chr', 'SC'),
-                        help='SO term')
     parser.add_argument('--padding',
                         type=int, default=2,
                         help='number padding adds 0s to fix the width')
-    parser.add_argument('--roman',
-                        action='store_true',
-                        help='if chromosomes are enumerated by roman numerals')
+    parser.add_argument('--soterm',
+                        nargs='*', choices=('Chr', 'SC'), default=('Chr',),
+                        help='SO terms (per regular expression)')
     parser.add_argument('--regex',
-                        help='regular expression to search the contig identifier')
+                        nargs='*', default=RE_DEFAULT,
+                        help='regular expressions to search the contig identifier')

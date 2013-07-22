@@ -11,7 +11,7 @@ from fungidb_tools import isf
 from fungidb_tools.isf.roman import roman_to_int
 import re
 
-RE_DEFAULT = r'Chr(?:(?P<number>\d+)|(?P<letter>[A-Z]+))'
+RE_DEFAULT = (r'Chr(?:(?P<number>\d+)|(?:P<roman>[XIV]+)|(?P<letter>[A-Z]))',)
 
 
 def parse_arguments():
@@ -27,11 +27,8 @@ def parse_arguments():
     parser.add_argument('outfile',
                         type=argparse.FileType('w'), nargs='?',
                         default=sys.stdout, help='output file')
-    parser.add_argument('--roman',
-                        action='store_true',
-                        help='if chromosomes are enumerated by roman numerals')
     parser.add_argument('--regex',
-                        default=RE_DEFAULT,
+                        nargs='*', default=RE_DEFAULT,
                         help='regular expression for the fasta header')
     return parser.parse_args()
 
@@ -50,25 +47,24 @@ def parse_headers(infile):
 def main():
     args = parse_arguments()
 
-    target = re.compile(args.regex)
+    regex = [re.compile(rx) for rx in args.regex]
 
     # Handle I/O.
     with args.infile as infile, args.outfile as outfile:
         for i, header in enumerate(parse_headers(infile)):
-            try:
-                value = target.search(header).groupdict()
-            except AttributeError:
-                raise Exception("Not an expected header format: {}".format(header))
-
-            if value['number']:
-                number = int(value['number'])
-            elif value['letter']:
-                if args.roman:
-                    number = roman_to_int(value['letter'])
-                else:
-                    number = value['letter']
+            for rx in regex:
+                match = rx.search(header)
+                if match is not None:
+                    if 'number' in match:
+                        number = int(match['number'])
+                    elif 'roman' in match:
+                        number = roman_to_int(match['letter'])
+                    elif 'letter' in match:
+                        number = match['letter']
+                    else:
+                        raise Exception("Regex {} doesn't contain a number, letter, or roman numeral field.".format(rx.pattern))
             else:
-                raise Exception(header)
+                raise Exception("Not an expected header format: {}".format(header))
 
             output = (str(col) for col in (header, number, i + 1))
             print('\t'.join(output), file=outfile)

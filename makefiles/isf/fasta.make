@@ -3,15 +3,14 @@ ID            ?= AfumAF293B
 TAXID         ?= 330879
 ## Source/Data downloaded from:
 SOURCE        ?= AspGD
-TYPE          ?= Chr
 VERSION       ?= s03-m02-r18
 ## Target file:
 PROVIDER_FILE ?= ../fromProvider/*.fasta
 ZIP           ?= 
 ## Formatting:
-FORMAT_RE     ?= (?P<type>Chr)(?:(?P<number>\d+)|(?P<letter>[A-Z]))_(?P<species>\w+)
+TYPE          ?= Chr
+FORMAT_RE     ?= "(?P<type>Chr)(?:(?P<number>\d+)|(?P<roman>[XIV]+)|(?P<letter>[A-Z]))_(?P<species>\w+)"
 FORMAT_PAD    ?= 2
-FORMAT_ROMAN  ?=
 
 
 # Constants:
@@ -32,7 +31,7 @@ endif
 DB_NAME           ?= $(ID)_genome_RSRC
 LOG               ?= isf.log
 FORMAT_FASTA      = format_fasta
-FORMAT_FASTA_OPTS ?= --species $(ID) --type $(TYPE) --regex "$(FORMAT_RE)" --padding $(FORMAT_PAD)
+FORMAT_FASTA_OPTS ?= --species $(ID) --padding $(FORMAT_PAD) --soterm $(TYPE) --regex $(FORMAT_RE)
 GENERATE_MAP      = generate_chr_map
 GENERATE_MAP_OPTS ?= genome.fasta
 GREP_ALGIDS       = grep_algids
@@ -45,11 +44,6 @@ INSERT_RI_OPTS    ?= --databaseName $(DB_NAME) --databaseVersion $(VERSION)
 LOAD_SEQS         = GUS::Supported::Plugin::LoadFastaSequences
 LOAD_SEQS_OPTS    ?= --externalDatabaseName $(DB_NAME) --ncbiTaxId $(TAXID) --externalDatabaseVersion $(VERSION) --SOTermName $(LONG_TYPE) --regexSourceId '>(\S+)' --tableName DoTS::ExternalNASequence --sqlVerbose --debug $(CHR_MAP_OPT)
 UNDO              = GUS::Community::Plugin::Undo
-
-ifeq ($(FORMAT_ROMAN), true)
-  FORMAT_GTF_OPTS += --roman
-  GENERATE_MAP_OPTS += --roman
-endif
 
 
 files: genome.fasta $(CHR_MAP)

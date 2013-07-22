@@ -3,16 +3,15 @@ ID            ?= AfumAF293B
 TAXID         ?= 330879
 ## Source/Data downloaded from:
 SOURCE        ?= AspGD
-TYPE          ?= Chr
 VERSION       ?= s03-m02-r18
 ## Target file:
 PROVIDER_FILE ?= ../fromProvider/*.gff3
 ZIP           ?= 
 MAP_FILE      ?= ../../../*_$(SOURCE)_fasta/$(VERSION)/final/chromosomeMap.txt
 ## Formatting:
-FORMAT_RE     ?= $(TYPE)(?:(?P<number>\d+)|(?P<letter>[A-Z]))
+TYPE          ?= Chr
+FORMAT_RE     ?= "$(firstword $(TYPE))(?:(?P<number>\d+)|(?P<roman>[XIV]+)|(?P<letter>[A-Z]))"
 FORMAT_PAD    ?= 2
-FORMAT_ROMAN  ?=
 
 
 # Constants:
@@ -22,11 +21,11 @@ LOG           ?= isf.log
 
 
 # Derived:
-ifeq ($(TYPE), Chr)
+ifeq ($(firstword $(TYPE)), Chr)
   LONG_TYPE     = chromosome
   CHR_MAP       = chromosomeMap.txt
   CHR_MAP_OPT   = --chromosomeMapFile $(CHR_MAP)
-else ifeq ($(TYPE), SC)
+else ifeq ($(firstword $(TYPE)), SC)
   LONG_TYPE     = supercontig
 endif
 
@@ -37,7 +36,7 @@ else
 endif
 
 FORMAT_GFF3       = format_gff
-FORMAT_GFF3_OPTS  ?= --filetype gff3 --species $(ID) --type $(TYPE) --provider $(SOURCE) --regex "$(FORMAT_RE)" --padding $(FORMAT_PAD) --comments
+FORMAT_GFF3_OPTS  ?= --filetype gff3 --species $(ID) --provider $(SOURCE) --padding $(FORMAT_PAD) --soterm $(TYPE) --regex $(FORMAT_RE) --comments
 ifdef PREFIX
   FORMAT_GFF3_OPTS  += --prefix $(PREFIX)
 endif
@@ -47,10 +46,6 @@ GREP_ALGIDS_OPTS  ?= $(LOG)
 INSERT_FEAT       = GUS::Supported::Plugin::InsertSequenceFeatures
 INSERT_FEAT_OPTS  ?= --extDbName $(DB_NAME) --extDbRlsVer $(VERSION) --mapFile $(XML_MAP) --inputFileExtension gff --fileFormat gff3 --soCvsVersion 1.417 --organism $(TAXID) --seqSoTerm $(LONG_TYPE) --seqIdColumn source_id --naSequenceSubclass ExternalNASequence --sqlVerbose $(CHR_MAP_OPT)
 UNDO              = GUS::Supported::Plugin::InsertSequenceFeaturesUndo
-
-ifeq ($(FORMAT_ROMAN), true)
-  FORMAT_GTF_OPTS += --roman
-endif
 
 
 files: report.txt $(CHR_MAP)

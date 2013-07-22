@@ -22,9 +22,6 @@ def parse_arguments():
     parser.add_argument('outfile',
                         type=argparse.FileType('w'), nargs='?',
                         default=sys.stdout, help='output file')
-    # TODO: Handle mitochondrial sequences differently
-    parser.add_argument('-m', '--mito',
-                        help='mitochondrial regex')
     isf.add_rename_args(parser)
     return parser.parse_args()
 
@@ -35,16 +32,9 @@ def main():
 
     with args.infile as infile, args.outfile as outfile:
         for record in SeqIO.parse(infile, 'fasta'):
-            try:
-                record.id = renamer.rename(record.id)
-                record.description = ''
-                SeqIO.write(record, outfile, 'fasta')
-            except isf.NoMatchException:
-                warn("SKIPPED: re fails to match component of {}".format(record.id))
-                continue
-            except AttributeError:
-                warn("SKIPPED: re does not match {}".format(record.id))
-                continue
+            record.id = renamer.rename(record.id)
+            record.description = ''
+            SeqIO.write(record, outfile, 'fasta')
 
 
 if __name__ == "__main__":

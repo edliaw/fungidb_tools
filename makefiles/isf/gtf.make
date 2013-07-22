@@ -3,17 +3,16 @@ ID            ?= CcinOk7h130
 TAXID         ?= 240176
 ## Source/Data downloaded from:
 SOURCE        ?= Broad
-TYPE          ?= Chr
 VERSION       ?= 3
 ## Target file:
 PROVIDER_FILE ?= ../fromProvider/*.gtf
 ZIP           ?= 
 MAP_FILE      ?= ../../../*_$(SOURCE)_fasta/$(VERSION)/final/chromosomeMap.txt
 ## Formatting:
-FORMAT_RE     ?= Chromosome_$(VERSION)\.(?:(?P<number>\d+)|(?P<letter>[A-Z]))
+TYPE          ?= Chr
+FORMAT_RE     ?= "_$(VERSION)\.(?:(?P<number>\d+)|(?P<roman>[XIV]+)|(?P<letter>[A-Z]))"
 FORMAT_PAD    ?= 2
 PREFIX_TERM   ?= 
-FORMAT_ROMAN  ?=
 
 
 # Constants:
@@ -38,7 +37,7 @@ else
 endif
 
 FORMAT_GTF        = format_gff
-FORMAT_GTF_OPTS   ?= --filetype gtf --species $(ID) --type $(TYPE) --provider $(SOURCE) --regex "$(FORMAT_RE)" --padding $(FORMAT_PAD)
+FORMAT_GTF_OPTS   ?= --filetype gtf --species $(ID) --provider $(SOURCE) --padding $(FORMAT_PAD) --soterm $(TYPE) --regex $(FORMAT_RE)
 GREP_ALGIDS       = grep_algids
 GREP_ALGIDS_OPTS  ?= $(LOG)
 # ga:
@@ -48,10 +47,6 @@ UNDO              = GUS::Supported::Plugin::InsertSequenceFeaturesUndo
 
 ifeq ($(SOURCE), JGI)
   FORMAT_GTF_OPTS += --nostart
-endif
-
-ifeq ($(FORMAT_ROMAN), true)
-  FORMAT_GTF_OPTS += --roman
 endif
 
 
