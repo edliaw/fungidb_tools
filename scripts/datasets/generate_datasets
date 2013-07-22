@@ -45,7 +45,7 @@ def make_datasets_xml(organisms, orthomcl, debug=False):
     Args:
         organisms: pulled in as a JSON object from the FungiDB spreadsheet.
     """
-    organisms = [o for o in organisms if datasets.get_row(o, 'isloaded') in ("Yes", "Reload")]
+    organisms = [o for o in organisms if datasets.ds_to_bool(datasets.get_row(o, 'isloaded'))]
     species_reps, family_reps = datasets.extract_reps(organisms, debug)
 
     ds = etree.Element("datasets")

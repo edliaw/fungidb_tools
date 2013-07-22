@@ -38,7 +38,7 @@ def make_species_xmls(organisms):
     Args:
         organisms: pulled in as a JSON object from the FungiDB spreadsheet
     """
-    organisms = [o for o in organisms if datasets.get_row(o, 'isloaded') in ('Yes', 'Reload')]
+    organisms = [o for o in organisms if datasets.ds_to_bool(datasets.get_row(o, 'isloaded'))]
     species_reps, family_reps = datasets.extract_reps(organisms)
 
     for o in organisms:
@@ -164,7 +164,7 @@ def make_species_xmls(organisms):
         attribs = [d.attrib['class'] for d in ds.findall('dataset')]
         for c in xml.iterfind('dataset'):
             if c.attrib['class'] not in attribs:
-                warn(c.attrib['class'])
+                warn("{}: {}".format(abbrev, c.attrib['class']))
 
         indent(ds)
         yield ds, abbrev
