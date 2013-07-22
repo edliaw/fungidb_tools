@@ -32,9 +32,13 @@ def main():
 
     with args.infile as infile, args.outfile as outfile:
         for record in SeqIO.parse(infile, 'fasta'):
-            record.id = renamer.rename(record.id)
-            record.description = ''
-            SeqIO.write(record, outfile, 'fasta')
+            try:
+                record.id = renamer.rename(record.id)
+                record.description = ''
+                SeqIO.write(record, outfile, 'fasta')
+            except isf.NoMatchException:
+                warn("SKIPPED: {} matches no provided regex.".format(record.id))
+                continue
 
 
 if __name__ == "__main__":
