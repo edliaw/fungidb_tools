@@ -56,19 +56,22 @@ def main():
                 match = rx.search(header)
                 if match is not None:
                     match = match.groupdict()
-                    if 'number' in match:
-                        number = int(match['number'])
-                    elif 'roman' in match:
-                        number = roman_to_int(match['letter'])
-                    elif 'letter' in match:
-                        number = match['letter']
+                    number = match.get('number', None)
+                    roman = match.get('roman', None)
+                    letter = match.get('letter', None)
+                    if number is not None:
+                        contig = int(match['number'])
+                    elif roman is not None:
+                        contig = roman_to_int(match['roman'])
+                    elif letter is not None:
+                        contig = match['letter']
                     else:
                         raise Exception("Regex {} doesn't contain a number, letter, or roman numeral field.".format(rx.pattern))
                     break
             else:
                 raise Exception("Not an expected header format: {}".format(header))
 
-            output = (str(col) for col in (header, number, i + 1))
+            output = (str(col) for col in (header, contig, i + 1))
             print('\t'.join(output), file=outfile)
 
 

@@ -39,11 +39,14 @@ class ContigRenamer(object):
             match = rx.search(target)
             if match is not None:
                 match = match.groupdict()
-                if 'number' in match:
+                number = match.get('number', None)
+                roman = match.get('roman', None)
+                letter = match.get('letter', None)
+                if number is not None:
                     contig = self._format_number(match['number'])
-                elif 'roman' in match:
+                elif roman is not None:
                     contig = match['roman']
-                elif 'letter' in match:
+                elif letter is not None:
                     contig = match['letter'].upper()
                 else:
                     raise Exception("Regex {} doesn't contain a number, letter, or roman numeral field.".format(rx.pattern))
