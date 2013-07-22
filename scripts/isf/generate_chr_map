@@ -55,6 +55,7 @@ def main():
             for rx in regex:
                 match = rx.search(header)
                 if match is not None:
+                    match = match.groupdict()
                     if 'number' in match:
                         number = int(match['number'])
                     elif 'roman' in match:
@@ -63,6 +64,7 @@ def main():
                         number = match['letter']
                     else:
                         raise Exception("Regex {} doesn't contain a number, letter, or roman numeral field.".format(rx.pattern))
+                    break
             else:
                 raise Exception("Not an expected header format: {}".format(header))
 
