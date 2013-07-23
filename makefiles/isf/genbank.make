@@ -36,8 +36,8 @@ GREP_ALGIDS_OPTS  ?= $(LOG)
 # ga:
 INSERT_DB         = GUS::Supported::Plugin::InsertExternalDatabase
 INSERT_DB_OPTS    ?= --name $(DB_NAME)
-INSERT_RI         = GUS::Supported::Plugin::InsertExternalDatabaseRls
-INSERT_RI_OPTS    ?= --databaseName $(DB_NAME) --databaseVersion $(VERSION)
+INSERT_RL         = GUS::Supported::Plugin::InsertExternalDatabaseRls
+INSERT_RL_OPTS    ?= --databaseName $(DB_NAME) --databaseVersion $(VERSION)
 INSERT_FEAT       = GUS::Supported::Plugin::InsertSequenceFeatures
 INSERT_FEAT_OPTS  ?= --extDbName $(DB_NAME) --extDbRlsVer $(VERSION) --mapFile $(XML_MAP) --fileFormat genbank --soCvsVersion 1.417 --organism $(TAXID) --seqSoTerm $(LONG_TYPE) --seqIdColumn source_id --sqlVerbose
 UNDO              = GUS::Community::Plugin::Undo
@@ -83,11 +83,11 @@ insdb:
 	ga $(INSERT_DB) $(INSERT_DB_OPTS)
 
 insv-c:
-	ga $(INSERT_RI) $(INSERT_RI_OPTS) --commit >> $(LOG) 2>&1
+	ga $(INSERT_RL) $(INSERT_RL_OPTS) --commit >> $(LOG) 2>&1
 
 insv:
 	# Add version to table.
-	ga $(INSERT_RI) $(INSERT_RI_OPTS)
+	ga $(INSERT_RL) $(INSERT_RL_OPTS)
 
 insf-c: genome.gbf
 	ga $(INSERT_FEAT) $(INSERT_FEAT_OPTS) --inputFileOrDir $< --validationLog val.log --bioperlTreeOutput bioperlTree.out --commit >> $(LOG) 2>&1
@@ -109,11 +109,11 @@ insf-u%:
 	ga $(UNDO_insf) --mapfile $(XML_MAP) --algInvocationId $*
 
 insv-u%-c:
-	ga $(UNDO) --plugin $(INSERT_RI) --algInvocationId $* --commit
+	ga $(UNDO) --plugin $(INSERT_RL) --algInvocationId $* --commit
 
 insv-u%:
 	# Undo versioning.
-	ga $(UNDO) --plugin $(INSERT_RI) --algInvocationId $*
+	ga $(UNDO) --plugin $(INSERT_RL) --algInvocationId $*
 
 insdb-u%-c:
 	ga $(UNDO) --plugin $(INSERT_DB) --algInvocationId $* --commit
