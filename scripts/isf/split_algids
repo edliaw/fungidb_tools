@@ -1,0 +1,71 @@
+#!/usr/bin/env python2.7
+# -*- coding: utf-8 -*-
+"""Parse the first algorithm invocation id and plugin name from a ga's logging output stream.
+
+2013-07-23
+Edward Liaw
+"""
+from __future__ import print_function
+import sys
+import argparse
+
+
+def parse_arguments():
+    """Handle command-line arguments.
+
+    Returns:
+        args: Arguments passed in from the command-line."""
+    parser = argparse.ArgumentParser(description=__doc__,
+                                     fromfile_prefix_chars='@')
+    parser.add_argument('infile',
+                        type=argparse.FileType('r'), nargs='?',
+                        default=sys.stdin, help='input file')
+    parser.add_argument('outfile',
+                        type=argparse.FileType('w'), nargs='?',
+                        default=sys.stdout, help='output file')
+    parser.add_argument('--algfile',
+                        type=argparse.FileType('a'),
+                        default=sys.stderr, help='algid output file')
+    parser.add_argument('-a', '--all',
+                        action='store_true',
+                        help='retrieve all unique algids in input')
+    return parser.parse_args()
+
+
+def write_algfile(algid, plugin, undo):
+    return '\t'.join((algid, plugin, undo))
+
+
+def main():
+    args = parse_arguments()
+
+    # Handle I/O.
+    ids = set()
+    plugin = ''
+    with args.infile as infile, args.outfile as outfile, args.algfile as algfile:
+        for line in infile:
+            spline = line.split('\t', 2)
+            if len(spline) == 3:
+                if spline[1] == 'PLUGIN':
+                    plugin = spline[2].rstrip()
+                elif spline[1] == 'AlgInvocationId':
+                    id = spline[2].rstrip()
+                    if id not in ids:
+                        print(write_algfile(id, plugin, ""), file=algfile)
+                        ids.add(id)
+                    if not args.all:
+                        outfile.write(line)
+                        break
+            outfile.write(line)
+        else:
+            return
+
+        # Finish writing file.
+        # For performance reasons we stop checking lines once we find
+        # the first algid.
+        for line in infile:
+            outfile.write(line)
+
+
+if __name__ == "__main__":
+    main()
