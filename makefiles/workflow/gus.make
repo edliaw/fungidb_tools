@@ -38,7 +38,7 @@ sql:
 	sqlplus $(USER)@$(DB)
 
 _clean_:
-	rm -rf $(ALL_DIRS)
+	-rm -rf $(ALL_DIRS)
 
 checkout:
 	# Checkout GUS
