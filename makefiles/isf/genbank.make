@@ -6,23 +6,24 @@ SOURCE        ?= JGI
 TYPE          ?= SC
 VERSION       ?= 2
 ## Target file:
-PROVIDER_FILE ?= ../fromProvider/*.gbk.gz
+PROVIDER_FILE ?= ../fromProvider/*.gbk
 ZIP           ?= 
 
 
 # Constants:
 DB_NAME       ?= $(ID)_genome_RSRC
-LOG           ?= isf.log
 XML_MAP       ?= ${PROJECT_HOME}/ApiCommonData/Load/lib/xml/isf/FungiDB/fungiGenbank2gus.xml
+ALGFILE       ?= algids
+LOG           ?= isf.log
 
 
 # Derived:
 ifeq ($(TYPE), Chr)
-  LONG_TYPE     = chromosome
-  CHR_MAP       = chromosomeMap.txt
-  CHR_MAP_OPT   = --chromosomeMapFile $(CHR_MAP)
+  LONG_TYPE    = chromosome
+  CHR_MAP      = chromosomeMap.txt
+  CHR_MAP_OPT  = --chromosomeMapFile $(CHR_MAP)
 else ifeq ($(TYPE), SC)
-  LONG_TYPE     = supercontig
+  LONG_TYPE    = supercontig
 endif
 
 ifeq ($(ZIP), true)
@@ -31,17 +32,24 @@ else
   CAT := cat
 endif
 
-GREP_ALGIDS       = grep_algids
-GREP_ALGIDS_OPTS  ?= $(LOG)
-# ga:
+SPLIT_ALGIDS      = split_algids --algfile $(ALGFILE)
+UNDO_ALGIDS       = undo_algids $(ALGFILE)
+MAKE_ALGIDS       = cat $(LOG) | $(SPLIT_ALGIDS) -a > /dev/null
+# ISF:
+COMMIT            = --commit | $(SPLIT_ALGIDS) >> $(LOG) 2>&1
+TEST              = >| error.log 2>&1
 INSERT_DB         = GUS::Supported::Plugin::InsertExternalDatabase
-INSERT_DB_OPTS    ?= --name $(DB_NAME)
+INSERT_DB_OPTS   ?= --name $(DB_NAME)
 INSERT_RL         = GUS::Supported::Plugin::InsertExternalDatabaseRls
-INSERT_RL_OPTS    ?= --databaseName $(DB_NAME) --databaseVersion $(VERSION)
+INSERT_RL_OPTS   ?= --databaseName $(DB_NAME) --databaseVersion $(VERSION)
 INSERT_FEAT       = GUS::Supported::Plugin::InsertSequenceFeatures
-INSERT_FEAT_OPTS  ?= --extDbName $(DB_NAME) --extDbRlsVer $(VERSION) --mapFile $(XML_MAP) --fileFormat genbank --soCvsVersion 1.417 --organism $(TAXID) --seqSoTerm $(LONG_TYPE) --seqIdColumn source_id --sqlVerbose
+INSERT_FEAT_OPTS ?= --extDbName $(DB_NAME) --extDbRlsVer $(VERSION) --mapFile $(XML_MAP) --fileFormat genbank --soCvsVersion 1.417 --organism $(TAXID) --seqSoTerm $(LONG_TYPE) --seqIdColumn source_id --sqlVerbose --inputFileOrDir $< --validationLog val.log --bioperlTreeOutput bioperlTree.out
+# Undo:
 UNDO              = GUS::Community::Plugin::Undo
-UNDO_insf      = GUS::Supported::Plugin::InsertSequenceFeaturesUndo
+UNDO_FEAT         = GUS::Supported::Plugin::InsertSequenceFeaturesUndo
+UNDO_STR          = $(shell $(UNDO_ALGIDS))
+UNDO_ALGID        = $(firstword $(UNDO_STR))
+UNDO_PLUGIN       = $(lastword $(UNDO_STR))
 
 
 files: report.txt
@@ -55,7 +63,7 @@ isf:
 	${MAKE} insf-c
 
 clean:
-	rm genome.* report.txt
+	-rm genome.* report.txt
 
 genome.gbf:
 	# Concatenate files and filter out mitochondrial contigs.
@@ -68,59 +76,46 @@ report.txt: genome.gbf
 link: genome.gbf
 	# Link files to the final directory.
 	mkdir -p ../final
-	cd ../final && \
+	-cd ../final && \
 	for file in $^; do \
-	  ln -s ../workspace/$${file}; \
+	  ln -fs ../workspace/$${file}; \
 	done
 
 
 # ISF:
 insdb-c:
-	ga $(INSERT_DB) $(INSERT_DB_OPTS) --commit >> $(LOG) 2>&1
+	ga $(INSERT_DB) $(INSERT_DB_OPTS) $(COMMIT)
 
 insdb:
 	# Create species table.
 	ga $(INSERT_DB) $(INSERT_DB_OPTS)
 
 insv-c:
-	ga $(INSERT_RL) $(INSERT_RL_OPTS) --commit >> $(LOG) 2>&1
+	ga $(INSERT_RL) $(INSERT_RL_OPTS) $(COMMIT)
 
 insv:
 	# Add version to table.
 	ga $(INSERT_RL) $(INSERT_RL_OPTS)
 
 insf-c: genome.gbf
-	ga $(INSERT_FEAT) $(INSERT_FEAT_OPTS) --inputFileOrDir $< --validationLog val.log --bioperlTreeOutput bioperlTree.out --commit >> $(LOG) 2>&1
+	ga $(INSERT_FEAT) $(INSERT_FEAT_OPTS) $(COMMIT)
 
 insf: genome.gbf
 	# Insert features and sequences.
-	ga $(INSERT_FEAT) $(INSERT_FEAT_OPTS) --inputFileOrDir $< --validationLog val.log --bioperlTreeOutput bioperlTree.out >| error.log 2>&1
+	ga $(INSERT_FEAT) $(INSERT_FEAT_OPTS) $(TEST)
 
 
 # Undoing:
-algid:
-	$(GREP_ALGIDS) $(GREP_ALGIDS_OPTS)
+$(ALGFILE): $(LOG)
+	$(MAKE_ALGIDS)
 
-insf-u%-c:
-	ga $(UNDO_insf) --mapfile $(XML_MAP) --algInvocationId $* --commit
-
-insf-u%:
-	# Undo feature insertion.
-	ga $(UNDO_insf) --mapfile $(XML_MAP) --algInvocationId $*
-
-insv-u%-c:
-	ga $(UNDO) --plugin $(INSERT_RL) --algInvocationId $* --commit
-
-insv-u%:
-	# Undo versioning.
-	ga $(UNDO) --plugin $(INSERT_RL) --algInvocationId $*
-
-insdb-u%-c:
-	ga $(UNDO) --plugin $(INSERT_DB) --algInvocationId $* --commit
-
-insdb-u%:
-	# Undo species table.
-	ga $(UNDO) --plugin $(INSERT_DB) --algInvocationId $*
+undo:
+ifeq ($(UNDO_PLUGIN),$(INSERT_FEAT))
+	ga $(UNDO_FEAT) --mapfile $(XML_MAP) --algInvocationId $(UNDO_ALGID) --commit
+else
+	ga $(UNDO) --plugin $(UNDO_PLUGIN) --algInvocationId $(UNDO_ALGID) --commit
+endif
+	$(UNDO_ALGIDS) --mark $(UNDO_ALGID)
 
 
-.PHONY: files all isf clean link algid insdb insdb-c insv insv-c insf insf-c
+.PHONY: files all isf clean link undo

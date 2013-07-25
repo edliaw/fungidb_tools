@@ -18,16 +18,17 @@ PREFIX_TERM   ?=
 # Constants:
 DB_NAME       ?= $(ID)_genome_RSRC
 XML_MAP       ?= ${GUS_HOME}/lib/xml/isf/FungiDB/genericGFF2Gus.xml
+ALGFILE       ?= algids
 LOG           ?= isf.log
 
 
 # Derived:
-ifeq ($(TYPE), Chr)
-  LONG_TYPE     = chromosome
-  CHR_MAP       = chromosomeMap.txt
-  CHR_MAP_OPT   = --chromosomeMapFile $(CHR_MAP)
-else ifeq ($(TYPE), SC)
-  LONG_TYPE     = supercontig
+ifeq ($(firstword $(TYPE)), Chr)
+  LONG_TYPE    = chromosome
+  CHR_MAP      = chromosomeMap.txt
+  CHR_MAP_OPT  = --chromosomeMapFile $(CHR_MAP)
+else ifeq ($(firstword $(TYPE)), SC)
+  LONG_TYPE    = supercontig
 endif
 
 ifeq ($(ZIP), true)
@@ -36,17 +37,23 @@ else
   CAT := cat
 endif
 
-FORMAT_GTF        = format_gff
-FORMAT_GTF_OPTS   ?= --filetype gtf --species $(ID) --provider $(SOURCE) --padding $(FORMAT_PAD) --soterm $(TYPE) --regex $(FORMAT_RE)
-GREP_ALGIDS       = grep_algids
-GREP_ALGIDS_OPTS  ?= $(LOG)
-# ga:
+FORMAT_GTF        = format_gff --filetype gtf --species $(ID) --provider $(SOURCE) --padding $(FORMAT_PAD) --soterm $(TYPE) --regex $(FORMAT_RE)
+SPLIT_ALGIDS      = split_algids --algfile $(ALGFILE)
+UNDO_ALGIDS       = undo_algids $(ALGFILE)
+MAKE_ALGIDS       = cat $(LOG) | $(SPLIT_ALGIDS) -a > /dev/null
+# ISF:
+COMMIT            = --commit | $(SPLIT_ALGIDS) >> $(LOG) 2>&1
+TEST              = >| error.log 2>&1
 INSERT_FEAT       = GUS::Supported::Plugin::InsertSequenceFeatures
-INSERT_FEAT_OPTS  ?= --extDbName $(DB_NAME) --extDbRlsVer $(VERSION) --mapFile $(XML_MAP) --inputFileExtension gff --fileFormat gff3 --soCvsVersion 1.417 --organism $(TAXID) --seqSoTerm $(LONG_TYPE) --seqIdColumn source_id --naSequenceSubclass ExternalNASequence --sqlVerbose $(CHR_MAP_OPT) 
+INSERT_FEAT_OPTS ?= --extDbName $(DB_NAME) --extDbRlsVer $(VERSION) --mapFile $(XML_MAP) --inputFileExtension gff --fileFormat gff3 --soCvsVersion 1.417 --organism $(TAXID) --seqSoTerm $(LONG_TYPE) --seqIdColumn source_id --naSequenceSubclass ExternalNASequence --sqlVerbose $(CHR_MAP_OPT) --inputFileOrDir $< --validationLog val.log --bioperlTreeOutput bioperlTree.out
+# Undo:
 UNDO              = GUS::Supported::Plugin::InsertSequenceFeaturesUndo
+UNDO_STR          = $(shell $(UNDO_ALGIDS))
+UNDO_ALGID        = $(firstword $(UNDO_STR))
+UNDO_PLUGIN       = $(lastword $(UNDO_STR))
 
 ifeq ($(SOURCE), JGI)
-  FORMAT_GTF_OPTS += --nostart
+  FORMAT_GTF += --nostart
 endif
 
 
@@ -58,11 +65,11 @@ all: isf
 isf: insf-c
 
 clean:
-	rm genome.* report.txt $(CHR_MAP)
+	-rm genome.* report.txt $(CHR_MAP)
 
 genome.gtf:
 	# Copy provider file and rename the id and source (first two columns).
-	$(CAT) $(PROVIDER_FILE) | $(FORMAT_GTF) $(FORMAT_GTF_OPTS) >| $@
+	$(CAT) $(PROVIDER_FILE) | $(FORMAT_GTF) >| $@
 
 genome.gff3: genome.gtf
 ifeq ($(SOURCE), Broad)
@@ -88,29 +95,26 @@ report.txt: genome.gff
 link: genome.gff $(CHR_MAP)
 	# Link files to the final directory.
 	mkdir -p ../final
-	cd ../final && \
+	-cd ../final && \
 	for file in $^; do \
-	  ln -s ../workspace/$${file}; \
+	  ln -fs ../workspace/$${file}; \
 	done
 
 insf-c: genome.gff $(CHR_MAP)
-	ga $(INSERT_FEAT) $(INSERT_FEAT_OPTS) --inputFileOrDir $< --validationLog val.log --bioperlTreeOutput bioperlTree.out --commit >> $(LOG) 2>&1
+	ga $(INSERT_FEAT) $(INSERT_FEAT_OPTS) $(COMMIT)
 
-insf: genome.gff $(CHR_MAP)
+insf: genome.gff $(CHR_MAP)algid 
 	# Run ISF to insert features.
-	ga $(INSERT_FEAT) $(INSERT_FEAT_OPTS) --inputFileOrDir $< --validationLog val.log --bioperlTreeOutput bioperlTree.out >| error.log 2>&1
+	ga $(INSERT_FEAT) $(INSERT_FEAT_OPTS) $(TEST)
 
 
 # Undoing:
-algid:
-	$(GREP_ALGIDS) $(GREP_ALGIDS_OPTS)
+$(ALGFILE): $(LOG)
+	$(MAKE_ALGIDS)
 
-insf-u%-c:
-	ga $(UNDO) --mapfile $(XML_MAP) --algInvocationId $* --commit
-
-insf-u%:
-	# Undo feature insertion.
-	ga $(UNDO) --mapfile $(XML_MAP) --algInvocationId $*
+undo:
+	ga $(UNDO) --mapfile $(XML_MAP) --algInvocationId $(UNDO_ALGID) --commit
+	$(UNDO_ALGIDS) --mark $(UNDO_ALGID)
 
 
-.PHONY: files all isf clean link algid insf insf-c
+.PHONY: files all isf clean link undo

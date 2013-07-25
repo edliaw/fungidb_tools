@@ -1,40 +1,49 @@
-# Organism: 
+## Organism: 
 ID            ?=
-# Source/Data downloaded from:
+## Source/Data downloaded from:
 SOURCE        ?=
 VERSION       ?=
-# Target file:
+## Target file:
 PROVIDER_FILE ?=
 ZIP           ?=
 FORMAT        ?=
 
 
 # Constants:
+DB_NAME       ?= $(ID)_genome_RSRC
+ALGFILE       ?= algids
+LOG           ?= isf.log
+
+
+# Derived:
 ifeq ($(ZIP), true)
   CAT := zcat
 else
   CAT := cat
 endif
 
+SCRIPTS           = extract_products
+SPLIT_ALGIDS      = split_algids --algfile $(ALGFILE)
+UNDO_ALGIDS       = undo_algids $(ALGFILE)
+MAKE_ALGIDS       = cat $(LOG) | $(SPLIT_ALGIDS) -a > /dev/null
+# ISF:
+COMMIT            = --commit | $(SPLIT_ALGIDS) >> $(LOG) 2>&1
+TEST              = >| error.log 2>&1
+INSERT_P          = ApiCommonData::Load::Plugin::InsertGeneFeatProductFromTabFile
+INSERT_P_OPTS     = --productDbName $(DB_NAME) --productDbVer $(VERSION) --sqlVerbose --file $<
+# Undo:
+UNDO              = GUS::Community::Plugin::Undo
+UNDO_STR          = $(shell $(UNDO_ALGIDS))
+UNDO_ALGID        = $(firstword $(UNDO_STR))
+UNDO_PLUGIN       = $(lastword $(UNDO_STR))
+
 ifeq ($(FORMAT), gbf)
   EXTRACT_PRODUCTS = $(SCRIPTS)/extract_products_genbank.py
 else ifeq ($(SOURCE), Broad)
   EXTRACT_PRODUCTS = $(SCRIPTS)/extract_products_broad.py
 else ifeq ($(SOURCE), JGI)
-  EXTRACT_PRODUCTS = $(SCRIPTS)/extract_products_jgi.py
-  EXTRACT_PRODUCTS_OPTS = -i transcriptId -s kogdefline -p $(PREFIX_TERM)
+  EXTRACT_PRODUCTS = $(SCRIPTS)/extract_products_jgi.py -i transcriptId -s kogdefline -p $(PREFIX_TERM)
 endif
-
-DB_NAME           ?= $(ID)_genome_RSRC
-LOG               ?= isf.log
-SCRIPT_ROOT       = /home/edliaw/repo/fungidb-tools/isf
-SCRIPTS           = $(SCRIPT_ROOT)/extract_products
-GREP_ALGIDS       = $(SCRIPT_ROOT)/format_features/grep_algids.py
-GREP_ALGIDS_OPTS  ?= $(LOG)
-# ga
-INSERT_P          = ApiCommonData::Load::Plugin::InsertGeneFeatProductFromTabFile
-INSERT_P_OPTS     = --productDbName $(DB_NAME) --productDbVer $(VERSION) --sqlVerbose
-UNDO              = GUS::Community::Plugin::Undo
 
 
 all: isf
@@ -48,33 +57,31 @@ clean:
 	rm products.txt
 
 products.txt:
-	$(CAT) "$(PROVIDER_FILE)" | $(EXTRACT_PRODUCTS) $(EXTRACT_PRODUCTS_OPTS) >| $@
+	$(CAT) "$(PROVIDER_FILE)" | $(EXTRACT_PRODUCTS) >| $@
 
 link: products.txt
 	# Link files to the final directory.
 	mkdir -p ../final
-	cd ../final && \
+	-cd ../final && \
 	for file in $^; do \
-	  ln -s ../workspace/$${file}; \
+	  ln -fs ../workspace/$${file}; \
 	done
 
 insertp-c: products.txt
-	ga $(INSERT_P) $(INSERT_P_OPTS) --file $< >> $(LOG) 2>&1
+	ga $(INSERT_P) $(INSERT_P_OPTS) $(COMMIT)
 
 insertp: products.txt
 	# Insert products into table.
-	ga $(INSERT_P) $(INSERT_P_OPTS) --file $< >| error.log 2>&1
+	ga $(INSERT_P) $(INSERT_P_OPTS) $(TEST)
 
 
 # Undoing:
-algid:
-	$(GREP_ALGIDS) $(GREP_ALGIDS_OPTS)
+$(ALGFILE): $(LOG)
+	$(MAKE_ALGIDS)
 
-insertp-u%-c:
-	ga $(UNDO) --plugin $(INSERT_P) --algInvocationId $* --commit
-
-insertp-u%:
-	ga $(UNDO) --plugin $(INSERT_P) --algInvocationId $*
+undo:
+	ga $(UNDO) --plugin $(UNDO_PLUGIN) --algInvocationId $(UNDO_ALGID) --commit
+	$(UNDO_ALGIDS) --mark $(UNDO_ALGID)
 
 
-.PHONY: all isf files clean link algid insertp insertp-c insertp-u% insertp-u%-c
+.PHONY: all isf files clean link undo

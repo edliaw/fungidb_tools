@@ -9,17 +9,23 @@ PROVIDER_FILE ?= ../fromProvider/*.fasta
 ZIP           ?= 
 ## Formatting:
 TYPE          ?= Chr
-FORMAT_RE     ?= "(?P<type>Chr)(?:(?P<number>\d+)|(?P<roman>[XIV]+)|(?P<letter>[A-Z]))_(?P<species>\w+)"
+FORMAT_RE     ?= "$(firstword $(TYPE))(?:(?P<number>\d+)|(?P<roman>[XIV]+)|(?P<letter>[A-Z]))_"
 FORMAT_PAD    ?= 2
 
 
 # Constants:
-ifeq ($(TYPE), Chr)
-  LONG_TYPE     = chromosome
-  CHR_MAP       = chromosomeMap.txt
-  CHR_MAP_OPT   = --chromosomeMapFile $(CHR_MAP)
-else ifeq ($(TYPE), SC)
-  LONG_TYPE     = supercontig
+DB_NAME       ?= $(ID)_genome_RSRC
+ALGFILE       ?= algids
+LOG           ?= isf.log
+
+
+# Derived:
+ifeq ($(firstword $(TYPE)), Chr)
+  LONG_TYPE    = chromosome
+  CHR_MAP      = chromosomeMap.txt
+  CHR_MAP_OPT  = --chromosomeMapFile $(CHR_MAP)
+else ifeq ($(firstword $(TYPE)), SC)
+  LONG_TYPE    = supercontig
 endif
 
 ifeq ($(ZIP), true)
@@ -28,22 +34,25 @@ else
   CAT := cat
 endif
 
-DB_NAME           ?= $(ID)_genome_RSRC
-LOG               ?= isf.log
-FORMAT_FASTA      = format_fasta
-FORMAT_FASTA_OPTS ?= --species $(ID) --padding $(FORMAT_PAD) --soterm $(TYPE) --regex $(FORMAT_RE)
+FORMAT_FASTA      = format_fasta --species $(ID) --padding $(FORMAT_PAD) --soterm $(TYPE) --regex $(FORMAT_RE)
 GENERATE_MAP      = generate_chr_map
-GENERATE_MAP_OPTS ?= genome.fasta
-GREP_ALGIDS       = grep_algids
-GREP_ALGIDS_OPTS  ?= $(LOG)
-# ga:
+SPLIT_ALGIDS      = split_algids --algfile $(ALGFILE)
+UNDO_ALGIDS       = undo_algids $(ALGFILE)
+MAKE_ALGIDS       = cat $(LOG) | $(SPLIT_ALGIDS) -a > /dev/null
+# ISF:
+COMMIT            = --commit | $(SPLIT_ALGIDS) >> $(LOG) 2>&1
+TEST              = >| error.log 2>&1
 INSERT_DB         = GUS::Supported::Plugin::InsertExternalDatabase
-INSERT_DB_OPTS    ?= --name $(DB_NAME)
+INSERT_DB_OPTS   ?= --name $(DB_NAME)
 INSERT_RL         = GUS::Supported::Plugin::InsertExternalDatabaseRls
-INSERT_RL_OPTS    ?= --databaseName $(DB_NAME) --databaseVersion $(VERSION)
+INSERT_RL_OPTS   ?= --databaseName $(DB_NAME) --databaseVersion $(VERSION)
 LOAD_SEQS         = GUS::Supported::Plugin::LoadFastaSequences
-LOAD_SEQS_OPTS    ?= --externalDatabaseName $(DB_NAME) --ncbiTaxId $(TAXID) --externalDatabaseVersion $(VERSION) --SOTermName $(LONG_TYPE) --regexSourceId '>(\S+)' --tableName DoTS::ExternalNASequence --sqlVerbose --debug $(CHR_MAP_OPT)
+LOAD_SEQS_OPTS   ?= --externalDatabaseName $(DB_NAME) --ncbiTaxId $(TAXID) --externalDatabaseVersion $(VERSION) --SOTermName $(LONG_TYPE) --regexSourceId '>(\S+)' --tableName DoTS::ExternalNASequence --sqlVerbose --debug $(CHR_MAP_OPT) --sequenceFile $<
+# Undo:
 UNDO              = GUS::Community::Plugin::Undo
+UNDO_STR          = $(shell $(UNDO_ALGIDS))
+UNDO_ALGID        = $(firstword $(UNDO_STR))
+UNDO_PLUGIN       = $(lastword $(UNDO_STR))
 
 
 files: genome.fasta $(CHR_MAP)
@@ -57,72 +66,55 @@ isf:
 	${MAKE} load-c
 
 clean:
-	rm genome.* $(CHR_MAP)
+	-rm genome.* $(CHR_MAP)
 
 genome.fasta:
 	# Filter out mitochondrial contigs and reformatted headers.
-	$(CAT) $(PROVIDER_FILE) | $(FORMAT_FASTA) $(FORMAT_FASTA_OPTS) >| $@
+	$(CAT) $(PROVIDER_FILE) | $(FORMAT_FASTA) >| $@
 
 chromosomeMap.txt: genome.fasta
 	# Generate chromosome map file.
-	$(GENERATE_MAP) $(GENERATE_MAP_OPTS) >| $@
+	$(GENERATE_MAP) $< >| $@
 
 link: genome.fasta $(CHR_MAP)
 	# Link files to the final directory.
 	mkdir -p ../final
-	cd ../final && \
+	-cd ../final && \
 	for file in $^; do \
-	  ln -s ../workspace/$${file}; \
+	  ln -fs ../workspace/$${file}; \
 	done
 
 
 # ISF:
 insdb-c:
-	ga $(INSERT_DB) $(INSERT_DB_OPTS) --commit >> $(LOG) 2>&1
+	ga $(INSERT_DB) $(INSERT_DB_OPTS) $(COMMIT)
 
 insdb:
 	# Insert species table.
 	ga $(INSERT_DB) $(INSERT_DB_OPTS)
 
 insv-c:
-	ga $(INSERT_RL) $(INSERT_RL_OPTS) --commit >> $(LOG) 2>&1
+	ga $(INSERT_RL) $(INSERT_RL_OPTS) $(COMMIT)
 
 insv:
 	# Add version to table.
 	ga $(INSERT_RL) $(INSERT_RL_OPTS)
 
 load-c: genome.fasta $(CHR_MAP)
-	ga $(LOAD_SEQS) $(LOAD_SEQS_OPTS) --sequenceFile $< --commit >> $(LOG) 2>&1
+	ga $(LOAD_SEQS) $(LOAD_SEQS_OPTS) $(COMMIT)
 
 load: genome.fasta $(CHR_MAP)
 	# Load data into table.
-	ga $(LOAD_SEQS) $(LOAD_SEQS_OPTS) --sequenceFile $< >| error.log 2>&1
+	ga $(LOAD_SEQS) $(LOAD_SEQS_OPTS) $(TEST)
 
 
 # Undoing:
-algid:
-	$(GREP_ALGIDS) $(GREP_ALGIDS_OPTS)
+$(ALGFILE): $(LOG)
+	$(MAKE_ALGIDS)
 
-load-u%-c:
-	ga $(UNDO) --plugin $(LOAD_SEQS) --algInvocationId $* --commit
-
-load-u%:
-	# Undo sequence loading.
-	ga $(UNDO) --plugin $(LOAD_SEQS) --algInvocationId $*
-
-insv-u%-c:
-	ga $(UNDO) --plugin $(INSERT_RL) --algInvocationId $* --commit
-
-insv-u%:
-	# Undo versioning.
-	ga $(UNDO) --plugin $(INSERT_RL) --algInvocationId $*
-
-insdb-u%-c:
-	ga $(UNDO) --plugin $(INSERT_DB) --algInvocationId $* --commit
-
-insdb-u%:
-	# Undo species table.
-	ga $(UNDO) --plugin $(INSERT_DB) --algInvocationId $*
+undo:
+	ga $(UNDO) --plugin $(UNDO_PLUGIN) --algInvocationID $(UNDO_ALGID) --commit
+	$(UNDO_ALGIDS) --mark $(UNDO_ALGID)
 
 
-.PHONY: files all isf clean link algid insdb insdb-c insv insv-c load load-c
+.PHONY: files all isf clean link undo
