@@ -3,15 +3,16 @@ TAXID         ?=
 ## Target file:
 PROVIDER_FILE ?= ../fromProvider/*.gbk
 ZIP           ?= 
-TYPE          ?= SC
+TYPE          ?= 
 
 
 # Functions:
-from_end       = $(word $(shell echo $(words $(1))-$(2) | bc),$(1))
+end_word       = $(word $(shell echo $(words $(2))-$(1)+1 | bc),$(2))
 PWDLIST       := $(subst /, ,$(PWD))
-ID             = $(call from_end,$(PWDLIST),4)
-VERSION        = $(call from_end,$(PWDLIST),1)
-SOURCE         = $(word 2,$(subst _, ,$(call from_end,$(PWDLIST),2)))
+ID             = $(call end_word,5,$(PWDLIST))
+VERSION        = $(call end_word,2,$(PWDLIST))
+SOURCE         = $(call end_word,2,$(subst _, ,$(call end_word,3,$(PWDLIST))))
+LONG_TYPE      = $(call end_word,3,$(subst _, ,$(call end_word,3,$(PWDLIST))))
 
 
 # Constants:
@@ -22,12 +23,12 @@ LOG           ?= isf.log
 
 
 # Derived:
-ifeq ($(TYPE), Chr)
-  LONG_TYPE    = chromosome
+ifeq ($(LONG_TYPE),chromosome)
+  TYPE        ?= Chr
   CHR_MAP      = chromosomeMap.txt
   CHR_MAP_OPT  = --chromosomeMapFile $(CHR_MAP)
-else ifeq ($(TYPE), SC)
-  LONG_TYPE    = supercontig
+else ifeq ($(LONG_TYPE),supercontig)
+  TYPE        ?= SC
 endif
 
 ifeq ($(ZIP), true)

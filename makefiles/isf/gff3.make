@@ -3,19 +3,20 @@ TAXID         ?=
 ## Target file:
 PROVIDER_FILE ?= ../fromProvider/*.gff3
 ZIP           ?= 
-MAP_FILE      ?= ../../../*_$(SOURCE)_fasta/$(VERSION)/final/chromosomeMap.txt
+MAP_FILE      ?= ../../../$(LONG_TYPE)_$(SOURCE)_fasta/$(VERSION)/final/chromosomeMap.txt
 ## Formatting:
-TYPE          ?= Chr
+TYPE          ?= 
 FORMAT_RE     ?= "$(firstword $(TYPE))(?:(?P<number>\d+)|(?P<roman>[XIV]+)|(?P<letter>[A-Z]))"
 FORMAT_PAD    ?= 2
 
 
 # Functions:
-from_end       = $(word $(shell echo $(words $(1))-$(2) | bc),$(1))
+end_word       = $(word $(shell echo $(words $(2))-$(1)+1 | bc),$(2))
 PWDLIST       := $(subst /, ,$(PWD))
-ID             = $(call from_end,$(PWDLIST),4)
-VERSION        = $(call from_end,$(PWDLIST),1)
-SOURCE         = $(word 2,$(subst _, ,$(call from_end,$(PWDLIST),2)))
+ID             = $(call end_word,5,$(PWDLIST))
+VERSION        = $(call end_word,2,$(PWDLIST))
+SOURCE         = $(call end_word,2,$(subst _, ,$(call end_word,3,$(PWDLIST))))
+LONG_TYPE      = $(call end_word,3,$(subst _, ,$(call end_word,3,$(PWDLIST))))
 
 
 # Constants:
@@ -26,12 +27,12 @@ LOG           ?= isf.log
 
 
 # Derived:
-ifeq ($(firstword $(TYPE)), Chr)
-  LONG_TYPE    = chromosome
+ifeq ($(LONG_TYPE),chromosome)
+  TYPE        ?= Chr
   CHR_MAP      = chromosomeMap.txt
   CHR_MAP_OPT  = --chromosomeMapFile $(CHR_MAP)
-else ifeq ($(firstword $(TYPE)), SC)
-  LONG_TYPE    = supercontig
+else ifeq ($(LONG_TYPE),supercontig)
+  TYPE        ?= SC
 endif
 
 ifeq ($(ZIP), true)
@@ -80,7 +81,7 @@ genome.gff: genome.gff3
 
 chromosomeMap.txt:
 	# Copy the chromosome map file
-	cp $(MAP_FILE) $@
+	cp $(MAP_FILE) .
 
 report.txt: genome.gff
 	# Generate feature qualifiers for genome.gff.
