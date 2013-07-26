@@ -31,7 +31,7 @@ SPLIT_ALGIDS      = split_algids --algfile $(ALGFILE)
 UNDO_ALGIDS       = undo_algids $(ALGFILE)
 MAKE_ALGIDS       = cat $(LOG) | $(SPLIT_ALGIDS) --all > /dev/null
 # ISF:
-COMMIT            = --commit | $(SPLIT_ALGIDS) >> $(LOG) 2>&1
+COMMIT            = --commit 2>&1 | $(SPLIT_ALGIDS) >> $(LOG) 2>&1
 TEST              = >| error.log 2>&1
 INSERT_P          = ApiCommonData::Load::Plugin::InsertGeneFeatProductFromTabFile
 INSERT_P_OPTS     = --productDbName $(DB_NAME) --productDbVer $(VERSION) --sqlVerbose --file $<
