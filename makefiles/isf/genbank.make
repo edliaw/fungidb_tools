@@ -1,13 +1,17 @@
-## Organism: Trichoderma reesei QM6a
-ID            ?= TreeQM6a
-TAXID         ?= 431241
-## Source/Data downloaded from:
-SOURCE        ?= JGI
-TYPE          ?= SC
-VERSION       ?= 2
+## Organism:
+TAXID         ?= 
 ## Target file:
 PROVIDER_FILE ?= ../fromProvider/*.gbk
 ZIP           ?= 
+TYPE          ?= SC
+
+
+# Functions:
+from_end       = $(word $(shell echo $(words $(1))-$(2) | bc),$(1))
+PWDLIST       := $(subst /, ,$(PWD))
+ID             = $(call from_end,$(PWDLIST),4)
+VERSION        = $(call from_end,$(PWDLIST),1)
+SOURCE         = $(word 2,$(subst _, ,$(call from_end,$(PWDLIST),2)))
 
 
 # Constants:

@@ -1,9 +1,5 @@
-## Organism: Coprinopsis cinerea okayama7#130
-ID            ?= CcinOk7h130
-TAXID         ?= 240176
-## Source/Data downloaded from:
-SOURCE        ?= Broad
-VERSION       ?= 3
+## Organism:
+TAXID         ?= 
 ## Target file:
 PROVIDER_FILE ?= ../fromProvider/*.gtf
 ZIP           ?= 
@@ -13,6 +9,14 @@ TYPE          ?= Chr
 FORMAT_RE     ?= "_$(VERSION)\.(?:(?P<number>\d+)|(?P<roman>[XIV]+)|(?P<letter>[A-Z]))"
 FORMAT_PAD    ?= 2
 PREFIX_TERM   ?= 
+
+
+# Functions:
+from_end       = $(word $(shell echo $(words $(1))-$(2) | bc),$(1))
+PWDLIST       := $(subst /, ,$(PWD))
+ID             = $(call from_end,$(PWDLIST),4)
+VERSION        = $(call from_end,$(PWDLIST),1)
+SOURCE         = $(word 2,$(subst _, ,$(call from_end,$(PWDLIST),2)))
 
 
 # Constants:

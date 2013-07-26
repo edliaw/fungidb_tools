@@ -1,9 +1,5 @@
-## Organism: Aspergillus fumigatus Af293
-ID            ?= AfumAF293B
-TAXID         ?= 330879
-## Source/Data downloaded from:
-SOURCE        ?= AspGD
-VERSION       ?= s03-m02-r18
+## Organism:
+TAXID         ?= 
 ## Target file:
 PROVIDER_FILE ?= ../fromProvider/*.gff3
 ZIP           ?= 
@@ -12,6 +8,14 @@ MAP_FILE      ?= ../../../*_$(SOURCE)_fasta/$(VERSION)/final/chromosomeMap.txt
 TYPE          ?= Chr
 FORMAT_RE     ?= "$(firstword $(TYPE))(?:(?P<number>\d+)|(?P<roman>[XIV]+)|(?P<letter>[A-Z]))"
 FORMAT_PAD    ?= 2
+
+
+# Functions:
+from_end       = $(word $(shell echo $(words $(1))-$(2) | bc),$(1))
+PWDLIST       := $(subst /, ,$(PWD))
+ID             = $(call from_end,$(PWDLIST),4)
+VERSION        = $(call from_end,$(PWDLIST),1)
+SOURCE         = $(word 2,$(subst _, ,$(call from_end,$(PWDLIST),2)))
 
 
 # Constants:

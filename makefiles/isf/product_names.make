@@ -1,12 +1,16 @@
 ## Organism: 
-ID            ?=
-## Source/Data downloaded from:
-SOURCE        ?=
-VERSION       ?=
 ## Target file:
 PROVIDER_FILE ?=
 ZIP           ?=
 FORMAT        ?=
+
+
+# Functions:
+from_end       = $(word $(shell echo $(words $(1))-$(2) | bc),$(1))
+PWDLIST       := $(subst /, ,$(PWD))
+ID             = $(call from_end,$(PWDLIST),4)
+VERSION        = $(call from_end,$(PWDLIST),1)
+SOURCE         = $(word 2,$(subst _, ,$(call from_end,$(PWDLIST),2)))
 
 
 # Constants:
