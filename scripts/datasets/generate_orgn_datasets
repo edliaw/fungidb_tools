@@ -12,7 +12,6 @@ from fungidb_tools.xml import indent
 DATASETS_DIR = os.path.expanduser("~/GUS/current/project_home/FungiDBDatasets/Datasets/lib/xml/datasets/FungiDB")
 MD_DIR = "/eupath/data/EuPathDB/manualDelivery/FungiDB"
 DEFAULT_JSON = os.path.expanduser("~/workspace/FungiDB.json")
-DEFAULT_XML = os.path.expanduser("~/workspace/FungiDB.xml")
 
 
 def parse_arguments():
@@ -24,6 +23,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description=__doc__,
                                      fromfile_prefix_chars='@')
     parser.add_argument('outdir',
+                        default=datasets.defaults['datasets'],
                         help='output directory')
     parser.add_argument('--jsonfile',
                         type=argparse.FileType('r'),
@@ -32,7 +32,7 @@ def parse_arguments():
     return parser.parse_args()
 
 
-def make_species_xmls(organisms):
+def make_species_xmls(organisms, outdir):
     """Generate xml files for each species.
 
     Args:
@@ -59,7 +59,7 @@ def make_species_xmls(organisms):
         is_ref_strain = datasets.ds_to_bool(datasets.get_row(o, 'isrefstrain'))
 
         try:
-            xmlpath = os.path.join(DATASETS_DIR, abbrev + '.xml')
+            xmlpath = os.path.join(outdir, abbrev + '.xml')
             xml = etree.parse(xmlpath)
             # rep = xml.xpath('constant[@name="familyRepOrganismAbbrev"]')
         except IOError:
@@ -237,7 +237,7 @@ def main():
     args = parse_arguments()
     with args.jsonfile as jsonfile:
         organisms = json.load(jsonfile)
-    for ds, abbrev in make_species_xmls(organisms):
+    for ds, abbrev in make_species_xmls(organisms, args.outdir):
         with open(os.path.join(args.outdir, abbrev + '.xml'), 'w') as outfile:
             print(etree.tostring(ds), file=outfile)
 
