@@ -6,13 +6,11 @@
 Edward Liaw
 """
 from __future__ import print_function
-import sys
 import argparse
 import shutil
 import os
-from sh import ga
+from warnings import warn
 from mmap import mmap
-from collections import OrderedDict
 
 
 def parse_arguments():
@@ -53,28 +51,39 @@ def write_algfile(algid, plugin, undo):
     return '\t'.join((algid, plugin, undo))
 
 
-def main():
-    args = parse_arguments()
-    if args.mark is not None:
-        ids = OrderedDict()
-        backup = args.algfile + '~'
-        dup = args.algfile + '#'
+def mark(args):
+    backup = args.algfile + '~'
+    dup = args.algfile + '#'
+    try:
         shutil.copy2(args.algfile, backup)
-        with open(args.algfile, 'r') as algfile, open(dup, 'w') as outfile:
-            for algid, plugin, undo in read_algfile(algfile):
-                if int(algid) == args.mark:
-                    undo = 'u'
-                print(write_algfile(algid, plugin, undo), file=outfile)
-        shutil.move(dup, args.algfile)
-        os.remove(backup)
-    else:
+    with open(args.algfile, 'r') as algfile, open(dup, 'w') as outfile:
+        for algid, plugin, undo in read_algfile(algfile):
+            if int(algid) == args.mark:
+                undo = 'u'
+            print(write_algfile(algid, plugin, undo), file=outfile)
+    shutil.move(dup, args.algfile)
+    os.remove(backup)
+
+
+def print_algs(args):
+    try:
         with open(args.algfile, 'r+') as algfile:
             for algid, plugin, undo in read_algfile(reverse_file(algfile)):
                 if not undo:
                     print(algid, plugin)
                     if not args.all:
                         return
+    except IOError:
+        warn("Could not open file: {}".format(args.algfile))
+        return
 
+
+def main():
+    args = parse_arguments()
+    if args.mark is not None:
+        mark(args)
+    else:
+        print_algs(args)
 
 
 if __name__ == "__main__":
