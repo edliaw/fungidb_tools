@@ -29,7 +29,7 @@ endif
 SCRIPTS           = extract_products
 SPLIT_ALGIDS      = split_algids --algfile $(ALGFILE)
 UNDO_ALGIDS       = undo_algids $(ALGFILE)
-MAKE_ALGIDS       = cat $(LOG) | $(SPLIT_ALGIDS) -a > /dev/null
+MAKE_ALGIDS       = cat $(LOG) | $(SPLIT_ALGIDS) --all > /dev/null
 # ISF:
 COMMIT            = --commit | $(SPLIT_ALGIDS) >> $(LOG) 2>&1
 TEST              = >| error.log 2>&1
@@ -83,7 +83,7 @@ insertp: products.txt
 $(ALGFILE): $(LOG)
 	$(MAKE_ALGIDS)
 
-undo:
+undo: $(ALGFILE)
 	ga $(UNDO) --plugin $(UNDO_PLUGIN) --algInvocationId $(UNDO_ALGID) --commit
 	$(UNDO_ALGIDS) --mark $(UNDO_ALGID)
 

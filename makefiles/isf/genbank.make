@@ -38,7 +38,7 @@ endif
 
 SPLIT_ALGIDS      = split_algids --algfile $(ALGFILE)
 UNDO_ALGIDS       = undo_algids $(ALGFILE)
-MAKE_ALGIDS       = cat $(LOG) | $(SPLIT_ALGIDS) -a > /dev/null
+MAKE_ALGIDS       = cat $(LOG) | $(SPLIT_ALGIDS) --all > /dev/null
 # ISF:
 COMMIT            = --commit | $(SPLIT_ALGIDS) >> $(LOG) 2>&1
 TEST              = >| error.log 2>&1
@@ -113,7 +113,7 @@ insf: genome.gbf
 $(ALGFILE): $(LOG)
 	$(MAKE_ALGIDS)
 
-undo:
+undo: $(ALGFILE)
 ifeq ($(UNDO_PLUGIN),$(INSERT_FEAT))
 	ga $(UNDO_FEAT) --mapfile $(XML_MAP) --algInvocationId $(UNDO_ALGID) --commit
 else
