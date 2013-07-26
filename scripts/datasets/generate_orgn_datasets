@@ -190,7 +190,7 @@ def genome_dataset(ds, file_format, mito=False):
             datasets.make_prop(d, "soTerm", "mitochondrial_chromosome")
             datasets.make_prop(d, "mapFile", "FungiDB/fungiGenbank2gus.xml")
             datasets.make_prop(d, "organelle", "mitochondrion")
-            
+
     else:
         # FASTA/GFF-formatted genome
         d = datasets.make_dataset(ds, "fasta_primary_genome_sequence")

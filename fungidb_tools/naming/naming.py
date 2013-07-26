@@ -5,13 +5,45 @@ Edward Liaw
 """
 import re
 from warnings import warn
-from decorator import decorator
 import unicodedata
 
 RE_WHITESPACE = re.compile(r'\s+')
 RE_UNFRIENDLY = re.compile(r'[^\w\s]+')
 RE_LONG_WORDS = re.compile(r'[a-zA-Z][a-z]{3,}')
 RE_NON_ALPHA = re.compile(r'[^a-zA-Z]+')
+
+
+class OrthoAbbrev(object):
+    """Generate a unique 4-letter orthomcl abbreviation for the organism.
+
+    >>> ortho = OrthoAbbrev()
+    >>> ortho.abbrev('Mucor', 'circinelloides f. lusitanicus', 'CBS 277.49')
+    'mcir'
+    >>> ortho.abbrev('Mucor', 'circinelloides f. lusitanicus', 'CBS 277.50')
+    'mcis'
+    """
+    def __init__(self, seed=None):
+        self.abbrevs = {} if seed is None else seed
+
+    def abbrev(self, genus, species, strain):
+        if (genus, species, strain) in self.abbrevs:
+            return self.abbrevs[(genus, species, strain)]
+        else:
+            abbrevs = self.abbrevs.values()
+
+            long_name = genus[0] + species + strain
+            long_name = RE_NON_ALPHA.sub("", long_name).lower()
+
+            length = 4
+            prefix = long_name[:length - 1]
+            mod = ord(long_name[length - 1])
+            for i in range(26):
+                name = prefix + chr(mod + i)
+                if name not in abbrevs:
+                    self.abbrevs[(genus, species, strain)] = name
+                    return name
+            else:
+                raise Exception("Couldn't find a unique abbreviation for {} {} {}".format(genus, species, strain))
 
 
 def slugify(string, whitespace="_", unfriendly="-"):
@@ -23,48 +55,6 @@ def slugify(string, whitespace="_", unfriendly="-"):
         unicodedata.normalize('NFKD', unicode(string)).encode('ascii', 'ignore')
     )
     string = RE_WHITESPACE.sub(whitespace, string)
-    return string
-
-
-def _unique_abbrev(func, *args, **kwargs):
-    """Decorator: Uses caching to check that we only generate unique names
-    of length 4 (by default).
-    """
-    long_name = func(*args, **kwargs)
-    mod = func.length - 1
-    for i in range(len(long_name) - mod):
-        name = long_name[:mod] + long_name[i + mod]
-        if name not in func.cache:
-            break
-    else:
-        # Should only be raised if there are more than 26 organisms that
-        # have the same 3-letter prefix.
-        raise Exception("Couldn't find a unique abbreviation for " + name)
-    func.cache.add(name)
-    return name
-
-
-def unique_abbrev(f, length=4):
-    """Decorator: Uses caching to check that we only generate unique names
-    of length 4 (by default).
-    """
-    f.cache = set()
-    f.length = length
-    return decorator(_unique_abbrev, f)
-
-
-@unique_abbrev
-def orthomcl(genus, species, strain):
-    """Returns a unique 4-letter orthomcl abbreviation each time it is called.
-    Context sensitive.
-
-    >>> orthomcl('Mucor', 'circinelloides f. lusitanicus', 'CBS 277.49')
-    'mcir'
-    >>> orthomcl('Mucor', 'circinelloides f. lusitanicus', 'CBS 277.50')
-    'mcis'
-    """
-    string = (genus[0] + species + strain).replace(" ", "")
-    string = RE_NON_ALPHA.sub("", string).lower()
     return string
 
 
