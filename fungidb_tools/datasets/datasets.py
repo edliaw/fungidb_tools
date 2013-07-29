@@ -11,7 +11,8 @@ import os
 
 defaults = {
     "json": os.path.expanduser("~/workspace/FungiDB.json"),
-    "xml": os.path.expanduser("~/workspace/FungiDB.xml"),
+    "xml": os.path.expanduser("~/GUS/current/project_home/FungiDBDatasets/Datasets/lib/xml/datasets/FungiDB.xml"),
+    "datasets": os.path.expanduser("~/GUS/current/project_home/FungiDBDatasets/Datasets/lib/xml/datasets/FungiDB"),
     "gdoc": "FungiDB Genomes",
     "gsheet": "Edit",
 }
