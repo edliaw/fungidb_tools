@@ -63,7 +63,7 @@ class GFFParser(object):
             # Comments
             if line.startswith('#'):
                 if line.startswith('##'):
-                    if self.fasta and line.startswith('##FASTA'):
+                    if not self.fasta and line.startswith('##FASTA'):
                         break
                     print(line, file=commentfile)
                 elif self.comments:
@@ -81,7 +81,10 @@ class GFFParser(object):
                     # Try to cut out comments; warn in case it's a bug
                     warn("WARNING: inline comment present:\n{}".format(line))
                     break
-                key, val = pair.split(key_d, 2)
+                try:
+                    key, val = pair.split(key_d, 2)
+                except:
+                    raise Exception(pair)
                 attr[key] = val.strip(val_d)
             yield cols, attr
 
