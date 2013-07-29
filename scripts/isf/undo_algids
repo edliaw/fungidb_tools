@@ -54,8 +54,7 @@ def write_algfile(algid, plugin, undo):
 def mark(args):
     backup = args.algfile + '~'
     dup = args.algfile + '#'
-    try:
-        shutil.copy2(args.algfile, backup)
+    shutil.copy2(args.algfile, backup)
     with open(args.algfile, 'r') as algfile, open(dup, 'w') as outfile:
         for algid, plugin, undo in read_algfile(algfile):
             if int(algid) == args.mark:
