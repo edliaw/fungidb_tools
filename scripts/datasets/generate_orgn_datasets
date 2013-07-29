@@ -23,7 +23,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description=__doc__,
                                      fromfile_prefix_chars='@')
     parser.add_argument('outdir',
-                        default=datasets.defaults['datasets'],
+                        nargs='?', default=datasets.defaults['datasets'],
                         help='output directory')
     parser.add_argument('--jsonfile',
                         type=argparse.FileType('r'),
