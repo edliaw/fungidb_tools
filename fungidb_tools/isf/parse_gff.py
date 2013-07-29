@@ -84,7 +84,7 @@ class GFFParser(object):
                 try:
                     key, val = pair.split(key_d, 2)
                 except:
-                    raise Exception(pair)
+                    raise Exception("FAILED to split: " + pair)
                 attr[key] = val.strip(val_d)
             yield cols, attr
 
