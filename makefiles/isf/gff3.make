@@ -45,7 +45,7 @@ endif
 
 FORMAT_GFF3       = format_gff --filetype gff3 --species $(ID) --provider $(SOURCE) --padding $(FORMAT_PAD) --soterm $(TYPE) --regex $(FORMAT_RE) --comments
 ifdef PREFIX
-  FORMAT_GFF3 += --prefix $(PREFIX)
+  FORMAT_GFF3 += --prefix '$(PREFIX)'
 endif
 SPLIT_ALGIDS      = split_algids --algfile $(ALGFILE)
 UNDO_ALGIDS       = undo_algids $(ALGFILE)
