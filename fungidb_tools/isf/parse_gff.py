@@ -16,10 +16,6 @@ from collections import OrderedDict
 from functools import total_ordering
 
 
-class NotChildException(Exception):
-    pass
-
-
 class Feature(object):
     def __init__(self, cols, attr, comment="", children=None):
         self.seqid, self.source, self.soterm, start, end, self.score, self.strand, self.phase = cols
@@ -142,7 +138,7 @@ class GFFParser(object):
     def parse_3level(self, infile, commentfile=sys.stdout):
         features = {}
         for feat in self.parse_features(infile, commentfile):
-            added = Fals
+            added = False
             try:
                 added = features[feat.attr['Parent']].append(feat)
             except KeyError:
