@@ -8,11 +8,13 @@ MAP_FILE      ?= ../../../$(LONG_TYPE)_$(SOURCE)_fasta/$(VERSION)/final/chromoso
 TYPE          ?= 
 FORMAT_RE     ?= "$(firstword $(TYPE))(?:(?P<number>\d+)|(?P<roman>[XIV]+)|(?P<letter>[A-Z]))"
 FORMAT_PAD    ?= 2
+PREFIX        ?=
 
 
 # Functions:
 end_word       = $(word $(shell echo $(words $(2))-$(1)+1 | bc),$(2))
 PWDLIST       := $(subst /, ,$(PWD))
+
 ID             = $(call end_word,5,$(PWDLIST))
 VERSION        = $(call end_word,2,$(PWDLIST))
 SOURCE         = $(call end_word,2,$(subst _, ,$(call end_word,3,$(PWDLIST))))
@@ -35,13 +37,16 @@ else ifeq ($(LONG_TYPE),supercontig)
   TYPE        ?= SC
 endif
 
-ifeq ($(ZIP), true)
+ifdef ZIP
   CAT := zcat
 else
   CAT := cat
 endif
 
 FORMAT_GFF3       = format_gff --filetype gff3 --species $(ID) --provider $(SOURCE) --padding $(FORMAT_PAD) --soterm $(TYPE) --regex $(FORMAT_RE) --comments
+ifdef PREFIX
+  FORMAT_GFF3 += --prefix $(PREFIX)
+endif
 SPLIT_ALGIDS      = split_algids --algfile $(ALGFILE)
 UNDO_ALGIDS       = undo_algids $(ALGFILE)
 MAKE_ALGIDS       = cat $(LOG) | $(SPLIT_ALGIDS) --all > /dev/null
@@ -55,10 +60,6 @@ UNDO              = GUS::Supported::Plugin::InsertSequenceFeaturesUndo
 UNDO_STR          = $(shell $(UNDO_ALGIDS))
 UNDO_ALGID        = $(firstword $(UNDO_STR))
 UNDO_PLUGIN       = $(lastword $(UNDO_STR))
-
-ifdef PREFIX
-  FORMAT_GFF3 += --prefix '$(PREFIX)'
-endif
 
 
 files: report.txt $(CHR_MAP)
