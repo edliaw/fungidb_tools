@@ -57,7 +57,7 @@ UNDO_ALGID        = $(firstword $(UNDO_STR))
 UNDO_PLUGIN       = $(lastword $(UNDO_STR))
 
 ifdef PREFIX
-  FORMAT_GFF3 += --prefix $(PREFIX)
+  FORMAT_GFF3 += --prefix '$(PREFIX)'
 endif
 
 
