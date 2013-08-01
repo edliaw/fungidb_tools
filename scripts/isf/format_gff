@@ -55,7 +55,7 @@ def format_feature(feature, modified, args):
     # Prefix target SO terms
     if feature.soterm in args.prefix:
         old = feature.attr['ID']
-        new = args.prefix[old] + old
+        new = args.prefix[feature.soterm] + old
         feature.attr['ID'] = new
         modified[old] = new
     if feature.attr.get('Parent') in modified:
