@@ -92,7 +92,8 @@ def main():
             format_feature(feat, snoRNA, args)
 
             # Print to file
-            print(parser.join_feature(feat), file=outfile)
+            for f in parser.join_feature(feat):
+                print(f, file=outfile)
 
 
 if __name__ == "__main__":

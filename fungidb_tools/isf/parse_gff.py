@@ -13,7 +13,6 @@ from __future__ import print_function
 import sys
 from warnings import warn
 from collections import OrderedDict
-from functools import total_ordering
 
 
 class Feature(object):
@@ -93,13 +92,12 @@ class GFFParser(object):
         for line in infile:
             # Comments
             if line.startswith('#'):
-                if line.startswith('##'):
-                    if line.startswith('##FASTA'):
-                        if self.fasta:
-                            commentfile.write(line)
-                            for line in infile:
-                                commentfile.write(line)
-                        break
+                if line.startswith('##FASTA'):
+                    if self.fasta:
+                        commentfile.write(line)
+                        commentfile.writelines(infile)
+                    break
+                elif line.startswith('##'):
                     commentfile.write(line)
                 elif self.comments:
                     commentfile.write(line)
@@ -149,11 +147,11 @@ class GFFParser(object):
 
     def join(self, cols, attr, comment=""):
         attrs = (self.delim['key'].join((key, surround(val, self.delim['val']))) for key, val in attr.items())
-        cols = cols + [self.delim['attr'].join(attrs),]
+        cols = cols + [self.delim['attr'].join(attrs)]
         return self.delim['col'].join(cols) + comment
 
     def join_feature(self, feature):
-        for cols, attr, comment in feature.to_gff:
+        for cols, attr, comment in feature.to_gff():
             yield self.join(cols, attr, comment)
 
     def join_all(self, rows):
