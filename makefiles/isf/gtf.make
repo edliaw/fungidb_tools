@@ -14,6 +14,7 @@ PREFIX_TERM   ?=
 # Functions:
 end_word       = $(word $(shell echo $(words $(2))-$(1)+1 | bc),$(2))
 PWDLIST       := $(subst /, ,$(PWD))
+
 ID             = $(call end_word,5,$(PWDLIST))
 VERSION        = $(call end_word,2,$(PWDLIST))
 SOURCE         = $(call end_word,2,$(subst _, ,$(call end_word,3,$(PWDLIST))))
@@ -36,13 +37,16 @@ else ifeq ($(LONG_TYPE),supercontig)
   TYPE        ?= SC
 endif
 
-ifeq ($(ZIP), true)
+ifdef ZIP
   CAT := zcat
 else
   CAT := cat
 endif
 
 FORMAT_GTF        = format_gff --filetype gtf --species $(ID) --provider $(SOURCE) --padding $(FORMAT_PAD) --soterm $(TYPE) --regex $(FORMAT_RE)
+ifeq ($(SOURCE), JGI)
+  FORMAT_GTF += --nostart
+endif
 SPLIT_ALGIDS      = split_algids --algfile $(ALGFILE)
 UNDO_ALGIDS       = undo_algids $(ALGFILE)
 MAKE_ALGIDS       = cat $(LOG) | $(SPLIT_ALGIDS) --all > /dev/null
@@ -56,10 +60,6 @@ UNDO              = GUS::Supported::Plugin::InsertSequenceFeaturesUndo
 UNDO_STR          = $(shell $(UNDO_ALGIDS))
 UNDO_ALGID        = $(firstword $(UNDO_STR))
 UNDO_PLUGIN       = $(lastword $(UNDO_STR))
-
-ifeq ($(SOURCE), JGI)
-  FORMAT_GTF += --nostart
-endif
 
 
 files: report.txt $(CHR_MAP)

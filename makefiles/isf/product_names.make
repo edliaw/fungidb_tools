@@ -8,6 +8,7 @@ FORMAT        ?=
 # Functions:
 end_word       = $(word $(shell echo $(words $(2))-$(1)+1 | bc),$(2))
 PWDLIST       := $(subst /, ,$(PWD))
+
 ID             = $(call end_word,5,$(PWDLIST))
 VERSION        = $(call end_word,2,$(PWDLIST))
 SOURCE         = $(call end_word,2,$(subst _, ,$(call end_word,3,$(PWDLIST))))
@@ -20,7 +21,7 @@ LOG           ?= isf.log
 
 
 # Derived:
-ifeq ($(ZIP), true)
+ifdef ZIP
   CAT := zcat
 else
   CAT := cat
