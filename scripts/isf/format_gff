@@ -9,6 +9,7 @@ Edward Liaw
 from __future__ import print_function
 import argparse
 import sys
+import json
 from warnings import warn
 from fungidb_tools import isf
 from fungidb_tools.isf import parse_gff
@@ -30,28 +31,35 @@ def parse_arguments():
                         default=sys.stdout, help='output file')
     parser.add_argument('--provider',
                         help='provider name')
-    parser.add_argument('--prefix',
-                        help='unique feature prefix for organism')
     parser.add_argument('--nostart',
                         action='store_true',
                         help='remove start and stop codons')
-    isf.add_rename_args(parser)
-    parse_gff.add_gff_args(parser)
+    parser.add_argument('-p', '--prefix',
+                        type=json.loads, metavar="DICT",
+                        help='prefix specific soterms')
+
+    rename = parser.add_argument_group('renaming', 'Chromosome renaming')
+    isf.add_rename_args(rename)
+
+    gff = parser.add_argument_group('gff', 'GFF parser options')
+    parse_gff.add_gff_args(gff)
+
     return parser.parse_args()
 
 
-def format_feature(feature, snoRNA, args):
+def format_feature(feature, modified, args):
     # Modify the provider
     if args.provider:
         feature.source = args.provider
 
-    # Tag snoRNAs with prefix to make them unique
-    if args.prefix:
-        if feature.soterm == 'snoRNA':
-            snoRNA.append(feature.attr['ID'])
-            feature.attr['ID'] = '_'.join((args.prefix, feature.attr['ID']))
-        elif feature.soterm in ('noncoding_exon', 'intron') and feature.attr.get('Parent') in snoRNA:
-            feature.attr['Parent'] = '_'.join((args.prefix, feature.attr['Parent']))
+    # Prefix target SO terms
+    if feature.soterm in args.prefix:
+        old = feature.attr['ID']
+        new = args.prefix[old] + old
+        feature.attr['ID'] = new
+        modified[old] = new
+    if feature.attr.get('Parent') in modified:
+        feature.attr['Parent'] = modified[feature.attr['Parent']]
 
     try:
         # Remove _mRNA from IDs
@@ -73,23 +81,25 @@ def main():
     renamer = isf.ContigRenamer.from_args(args)
     parser = parse_gff.GFFParser.from_args(args)
 
-    snoRNA = []
+    so_contigs = frozenset(('chromosome', 'contig', 'supercontig'))
+    so_ends = frozenset(('start_codon', 'stop_codon'))
+    modified = {}
 
     with args.infile as infile, args.outfile as outfile:
         for feat in parser.parse_features(infile, outfile):
-            if args.nostart and feat.soterm in ('start_codon', 'stop_codon'):
+            if args.nostart and feat.soterm in so_ends:
                 continue
 
             try:
                 feat.seqid = renamer.rename(feat.seqid)
-                if feat.soterm.lower() in ('chromosome', 'contig', 'supercontig'):
+                if feat.soterm.lower() in so_contigs:
                     feat.attr['ID'] = feat.seqid
             except isf.NoMatchException:
                 warn("SKIPPED: {} doesn't match any provided regex".format(feat.seqid))
                 continue
 
             # Fix other feature information
-            format_feature(feat, snoRNA, args)
+            format_feature(feat, modified, args)
 
             # Print to file
             for f in parser.join_feature(feat):
