@@ -55,13 +55,13 @@ def format_feature(feature, snoRNA, args):
 
     try:
         # Remove _mRNA from IDs
-        feature.attr['ID'] = feature.attr['ID'].replace('_mRNA', '')
+        feature.attr['ID'] = feature.attr['ID'].replace('_mRNA', '-T')
     except KeyError:
         pass
 
     try:
         # Remove _mRNA from parent IDs
-        feature.attr['Parent'] = feature.attr['Parent'].replace('_mRNA', '')
+        feature.attr['Parent'] = feature.attr['Parent'].replace('_mRNA', '-T')
         # Remove duplicate parents
         feature.attr['Parent'] = feature.attr['Parent'].split(',')[0]
     except KeyError:
