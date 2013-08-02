@@ -10,7 +10,7 @@ import argparse
 from fungidb_tools.isf.roman import roman_to_int
 import re
 
-RE_DEFAULT = (r'(Chr|SC)(?:(?P<number>\d+)|(?:P<roman>[XIV]+)|(?P<letter>[A-Z]+))$',)
+RE_DEFAULT = (r'(?:Chr|SC)(?:(?P<number>\d+)|(?P<roman>[XIV]+)|(?P<letter>\S+))$',)
 
 
 def parse_arguments():
@@ -55,9 +55,9 @@ def main():
                 match = rx.search(header)
                 if match is not None:
                     match = match.groupdict()
-                    number = match.get('number', None)
-                    roman = match.get('roman', None)
-                    letter = match.get('letter', None)
+                    number = match.get('number')
+                    roman = match.get('roman')
+                    letter = match.get('letter')
                     if number is not None:
                         contig = int(match['number'])
                     elif roman is not None:
@@ -68,7 +68,7 @@ def main():
                         raise Exception("Regex {} doesn't contain a number, letter, or roman numeral field.".format(rx.pattern))
                     break
             else:
-                raise Exception("Not an expected header format: {}".format(header))
+                raise Exception("Not an expected header format: {}\n{}".format(header, args.regex))
 
             output = (str(col) for col in (header, contig, i + 1))
             print('\t'.join(output), file=outfile)
