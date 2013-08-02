@@ -75,7 +75,7 @@ clean:
 	-rm genome.* $(CHR_MAP)
 
 genome.fasta:
-	# Filter out mitochondrial contigs and reformatted headers.
+	# Copy provider file and reformat headers
 	$(CAT) $(PROVIDER_FILE) | $(FORMAT_FASTA) >| $@
 
 chromosomeMap.txt: genome.fasta

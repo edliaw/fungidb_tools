@@ -73,7 +73,7 @@ clean:
 	-rm genome.* report.txt
 
 genome.gbf:
-	# Concatenate files and filter out mitochondrial contigs.
+	# Concatenate provider files.
 	$(CAT) $(PROVIDER_FILE) >| $@
 
 #chromosomeMap.txt: genome.gbf
@@ -81,7 +81,7 @@ genome.gbf:
 	#$(GENERATE_MAP) $< >| $@
 
 report.txt: genome.gbf
-	# Generate feature report.
+	# View feature qualifiers for genome.gbk.
 	reportFeatureQualifiers --format genbank --file_or_dir $< >| $@
 
 link: genome.gbf $(CHR_MAP)

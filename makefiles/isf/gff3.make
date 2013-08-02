@@ -73,7 +73,7 @@ clean:
 	-rm genome.* report.txt $(CHR_MAP)
 
 genome.gff3:
-	# Copy provider file and rename the id and source (first two columns).
+	# Copy provider file and reformat names
 	$(CAT) $(PROVIDER_FILE) | $(FORMAT_GFF3) >| $@
 
 genome.gff: genome.gff3
@@ -81,11 +81,11 @@ genome.gff: genome.gff3
 	preprocessGFF3 --input_gff $< --output_gff $@
 
 chromosomeMap.txt:
-	# Copy the chromosome map file
+	# Copy the chromosome map file from the fasta directory.
 	cp $(MAP_FILE) .
 
 report.txt: genome.gff
-	# Generate feature qualifiers for genome.gff.
+	# View feature qualifiers for genome.gff.
 	reportFeatureQualifiers --format gff3 --file_or_dir $< >| $@
 
 link: genome.gff $(CHR_MAP)
