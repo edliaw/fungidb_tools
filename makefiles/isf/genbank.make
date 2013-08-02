@@ -38,6 +38,7 @@ else
   CAT := cat
 endif
 
+GENERATE_MAP      = generate_chr_map
 SPLIT_ALGIDS      = split_algids --algfile $(ALGFILE)
 UNDO_ALGIDS       = undo_algids $(ALGFILE)
 MAKE_ALGIDS       = cat $(LOG) | $(SPLIT_ALGIDS) --all > /dev/null
@@ -49,7 +50,7 @@ INSERT_DB_OPTS   ?= --name $(DB_NAME)
 INSERT_RL         = GUS::Supported::Plugin::InsertExternalDatabaseRls
 INSERT_RL_OPTS   ?= --databaseName $(DB_NAME) --databaseVersion $(VERSION)
 INSERT_FEAT       = GUS::Supported::Plugin::InsertSequenceFeatures
-INSERT_FEAT_OPTS ?= --extDbName $(DB_NAME) --extDbRlsVer $(VERSION) --mapFile $(XML_MAP) --fileFormat genbank --soCvsVersion 1.417 --organism $(TAXID) --seqSoTerm $(LONG_TYPE) --seqIdColumn source_id --sqlVerbose --inputFileOrDir $< --validationLog val.log --bioperlTreeOutput bioperlTree.out
+INSERT_FEAT_OPTS ?= --extDbName $(DB_NAME) --extDbRlsVer $(VERSION) --mapFile $(XML_MAP) --fileFormat genbank --soCvsVersion 1.417 --organism $(TAXID) --seqSoTerm $(LONG_TYPE) --seqIdColumn source_id --sqlVerbose $(CHR_MAP_OPT) --inputFileOrDir $< --validationLog val.log --bioperlTreeOutput bioperlTree.out
 # Undo:
 UNDO              = GUS::Community::Plugin::Undo
 UNDO_FEAT         = GUS::Supported::Plugin::InsertSequenceFeaturesUndo
@@ -58,7 +59,7 @@ UNDO_ALGID        = $(firstword $(UNDO_STR))
 UNDO_PLUGIN       = $(lastword $(UNDO_STR))
 
 
-files: report.txt
+files: report.txt $(CHR_MAP)
 
 all: isf
 	${MAKE} link
@@ -75,11 +76,15 @@ genome.gbf:
 	# Concatenate files and filter out mitochondrial contigs.
 	$(CAT) $(PROVIDER_FILE) >| $@
 
+#chromosomeMap.txt: genome.gbf
+	# Generate chromosome map file.
+	#$(GENERATE_MAP) $< >| $@
+
 report.txt: genome.gbf
 	# Generate feature report.
 	reportFeatureQualifiers --format genbank --file_or_dir $< >| $@
 
-link: genome.gbf
+link: genome.gbf $(CHR_MAP)
 	# Link files to the final directory.
 	mkdir -p ../final
 	-cd ../final && \
@@ -103,10 +108,10 @@ insv:
 	# Add version to table.
 	ga $(INSERT_RL) $(INSERT_RL_OPTS)
 
-insf-c: genome.gbf
+insf-c: genome.gbf $(CHR_MAP)
 	ga $(INSERT_FEAT) $(INSERT_FEAT_OPTS) $(COMMIT)
 
-insf: genome.gbf
+insf: genome.gbf $(CHR_MAP)
 	# Insert features and sequences.
 	ga $(INSERT_FEAT) $(INSERT_FEAT_OPTS) $(TEST)
 
