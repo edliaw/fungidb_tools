@@ -104,6 +104,9 @@ class GFFParser(object):
                 continue
 
             line = line.rstrip()
+            if not line:
+                warn("Empty line in file.")
+                continue
             # Columns
             cols = line.split(col_d, 9)
             # Attributes column
@@ -124,7 +127,7 @@ class GFFParser(object):
                 try:
                     key, val = pair.split(key_d, 2)
                 except:
-                    raise Exception("FAILED to split: " + pair)
+                    raise Exception("FAILED to split: %s" % line)
                 attr[key] = val.strip(val_d)
             yield cols, attr, comment
 
