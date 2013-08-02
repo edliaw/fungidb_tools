@@ -35,7 +35,7 @@ def parse_arguments():
                         action='store_true',
                         help='remove start and stop codons')
     parser.add_argument('-p', '--prefix',
-                        type=json.loads, metavar="DICT",
+                        type=json.loads, metavar="DICT", default={},
                         help='prefix specific soterms')
 
     rename = parser.add_argument_group('renaming', 'Chromosome renaming')
