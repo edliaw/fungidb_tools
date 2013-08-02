@@ -23,7 +23,7 @@ LONG_TYPE      = $(call end_word,3,$(subst _, ,$(call end_word,3,$(PWDLIST))))
 
 # Constants:
 DB_NAME       ?= $(ID)_genome_RSRC
-XML_MAP       ?= ${GUS_HOME}/lib/xml/isf/FungiDB/genericGFF2Gus.xml
+XML_MAP       ?= ${PROJECT_HOME}/ApiCommonData/Load/lib/xml/isf/FungiDB/genericGFF2Gus.xml
 ALGFILE       ?= algids
 LOG           ?= isf.log
 
