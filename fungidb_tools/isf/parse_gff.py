@@ -23,19 +23,23 @@ class Feature(object):
         self.comment = comment
         self.children = [] if children is None else children
 
-    def to_gff(self):
+    def to_gff(self, dup=False):
         for start, end in self.pos:
             cols = [self.seqid, self.source, self.soterm, start, end, self.score, self.strand, self.phase]
-            yield cols, self.attr, self.comment
+            if dup and 'Parent' in self.attr:
+                for parent in self.attr['Parent'].split(','):
+                    yield cols, self.attr, self.comment
+            else:
+                yield cols, self.attr, self.comment
         for child in self.children:
             for sub in child.to_gff():
                 yield sub
 
     def append(self, other):
         added = False
-        if self.attr['ID'] == other.attr['ID'] and self.soterm == other.soterm:
+        if self.attr['ID'] == other.attr['ID']:
             self.pos += other.pos
-            warn("Multi-line feature: %s" % self)
+            warn("Multi-line feature:\n{}\n{}".format(self, other))
             added = True
         else:
             for parent in other.attr['Parent'].split(','):

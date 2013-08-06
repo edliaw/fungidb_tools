@@ -48,32 +48,26 @@ def parse_arguments():
 
 
 def format_feature(feature, modified, args):
+    old_id = feature.attr['ID']
+    new_id = old_id
+
+    # Prefix target SO terms
+    if feature.soterm in args.prefix:
+        new_id = args.prefix[feature.soterm] + new_id
+
+    # Use a T suffix instead of _mRNA
+    new_id = new_id.replace('_mRNA', '-T')
+
     # Modify the provider
     if args.provider:
         feature.source = args.provider
 
-    # Prefix target SO terms
-    if feature.soterm in args.prefix:
-        old = feature.attr['ID']
-        new = args.prefix[feature.soterm] + old
-        feature.attr['ID'] = new
-        modified[old] = new
     if feature.attr.get('Parent') in modified:
         feature.attr['Parent'] = modified[feature.attr['Parent']]
 
-    try:
-        # Remove _mRNA from IDs
-        feature.attr['ID'] = feature.attr['ID'].replace('_mRNA', '-T')
-    except KeyError:
-        pass
-
-    try:
-        # Remove _mRNA from parent IDs
-        feature.attr['Parent'] = feature.attr['Parent'].replace('_mRNA', '-T')
-        # Remove duplicate parents
-        feature.attr['Parent'] = feature.attr['Parent'].split(',')[0]
-    except KeyError:
-        pass
+    if old_id != new_id:
+        assert old_id not in modified, "Multiple modifications made to %s" % old_id
+        modified[old_id] = new_id
 
 
 def main():
