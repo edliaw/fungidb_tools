@@ -153,9 +153,11 @@ class GFFParser(object):
         return features
 
     def join(self, cols, attr, comment=""):
-        attrs = (self.delim['key'].join((key, surround(val, self.delim['val']))) for key, val in attr.items())
+        attrs = [self.delim['key'].join((key, surround(val, self.delim['val']))) for key, val in attr.items()]
+        if comment:
+            attrs.append(comment)
         cols = cols + [self.delim['attr'].join(attrs)]
-        return self.delim['col'].join(cols) + comment
+        return self.delim['col'].join(cols)
 
     def join_feature(self, feature):
         for cols, attr, comment in feature.to_gff():
