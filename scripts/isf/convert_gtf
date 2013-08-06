@@ -1,0 +1,69 @@
+#!/usr/bin/env python
+"""\
+Convert a gtf file into 3-level gff3.
+
+2013-08-05
+Edward Liaw
+"""
+from __future__ import print_function
+import argparse
+import sys
+from warnings import warn
+from fungidb_tools.isf import parse_gff
+
+
+def parse_arguments():
+    parser = argparse.ArgumentParser(description=__doc__,
+                                     fromfile_prefix_chars='@')
+    parser.add_argument('infile',
+                        type=argparse.FileType('r'), nargs='?',
+                        default=sys.stdin, help='input file')
+    parser.add_argument('outfile',
+                        type=argparse.FileType('w'), nargs='?',
+                        default=sys.stdout, help='output file')
+    parser.add_argument('-p', '--prefix',
+                        help='gene prefixes')
+    parser.add_argument('-tp', '--transprefix',
+                        help='transcript prefixes')
+
+    gff = parser.add_argument_group('gff', 'GFF parser options')
+    parse_gff.add_gff_args(gff)
+
+    return parser.parse_args()
+
+
+def main():
+    args = parse_arguments()
+    parser = parse_gff.GFFParser.from_args(args)
+
+    targets = frozenset(('CDS', 'exon', 'stop_codon', 'start_codon'))
+
+    last_tid = None
+
+    with args.infile as infile, args.outfile as outfile:
+        for feat in parser.parse_features(infile, outfile):
+            if feat.soterm not in targets:
+                continue
+
+            tid = feat.attr.get('transcript_id') or feat.attr.get('transcriptId') or last_tid
+            # Prefix JGI tids
+            if args.prefix and tid is not None and tid.isdigit():
+                tid = '_'.join(args.prefix, tid)
+
+            gid = feat.attr.get('gene_id') or tid
+            pid = feat.attr.get('protein_id') or feat.attr.get('proteinId')
+            tname = feat.attr.get('transcript_name')
+            gname = feat.attr.get('gene_name') or feat.attr.get('name')
+
+            assert gid is not None or tid is not None, "ERROR: No GID or TID, %s" % feat
+
+            # TODO: Fix
+
+            if gname:
+
+
+            last_tid = tid
+
+
+if __name__ == "__main__":
+    main()
