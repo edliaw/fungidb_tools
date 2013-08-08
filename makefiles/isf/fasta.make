@@ -119,8 +119,12 @@ $(ALGFILE): $(LOG)
 	$(MAKE_ALGIDS)
 
 undo: $(ALGFILE)
+ifeq ($(UNDO_ALGID),)
+	@echo "Nothing to undo."
+else
 	ga $(UNDO) --plugin $(UNDO_PLUGIN) --algInvocationID $(UNDO_ALGID) --commit
 	$(UNDO_ALGIDS) --mark $(UNDO_ALGID)
+endif
 
 
 .PHONY: files all isf clean link undo
