@@ -1,5 +1,4 @@
-"""\
-Common functions used to generate xml dataset configurations
+"""Common functions used to generate xml dataset configurations
 from the FungiDB Genomes spreadsheet.
 
 2013-07-16
