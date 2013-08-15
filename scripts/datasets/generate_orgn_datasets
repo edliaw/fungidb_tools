@@ -49,6 +49,7 @@ def make_species_xmls(organisms, outdir):
         family_rep = family_reps[datasets.get_row(o, 'subclade')][0]
         strain_taxid = datasets.get_row(o, 'taxid')
         species_taxid = datasets.get_row(o, 'speciestaxid')
+        family_taxid = datasets.get_row(o, 'familytaxid')
         version = datasets.get_row(o, 'version')
         soterm = datasets.get_row(o, 'soterm')
         source = datasets.get_row(o, 'source')
@@ -57,6 +58,7 @@ def make_species_xmls(organisms, outdir):
         mito = datasets.ds_to_bool(datasets.get_row(o, 'mito'))
         products = datasets.ds_to_bool(datasets.get_row(o, 'products'))
         is_ref_strain = datasets.ds_to_bool(datasets.get_row(o, 'isrefstrain'))
+        is_fam_rep = datasets.ds_to_bool(datasets.get_row(o, 'isfamrep'))
 
         try:
             xmlpath = os.path.join(outdir, abbrev + '.xml')
@@ -74,6 +76,7 @@ def make_species_xmls(organisms, outdir):
         datasets.make_constant(ds, "projectName", "FungiDB")
         datasets.make_constant(ds, "ncbiTaxonId", strain_taxid)
         datasets.make_constant(ds, "speciesNcbiTaxonId", species_taxid)
+        datasets.make_constant(ds, "familyNcbiTaxonIds", family_taxid)
         datasets.make_constant(ds, "genomeVersion", version)
         datasets.make_constant(ds, "soTerm", soterm)
         datasets.make_constant(ds, "source", source)
@@ -156,6 +159,11 @@ def make_species_xmls(organisms, outdir):
             datasets.make_prop(d, "organismAbbrev", "$$organismAbbrev$$")
             datasets.make_prop(d, "speciesNcbiTaxonId", "$$speciesNcbiTaxonId$$")
             datasets.make_prop(d, "version", "2.4")
+
+        if is_fam_rep:
+            d = datasets.make_dataset(ds, "familyRepresentative-isolatesGenbank")
+            datasets.make_prop(d, "organismAbbrev", "$$organismAbbrev$$")
+            datasets.make_prop(d, "ncbiTaxonId", "$$familyNcbiTaxonIds$$")
 
         attribs = [d.attrib['class'] for d in ds.findall('dataset')]
         for c in xml.iterfind('dataset'):
