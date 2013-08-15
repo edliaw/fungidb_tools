@@ -157,10 +157,6 @@ def make_species_xmls(organisms, outdir):
             datasets.make_prop(d, "speciesNcbiTaxonId", "$$speciesNcbiTaxonId$$")
             datasets.make_prop(d, "version", "2.4")
 
-            d = datasets.make_dataset(ds, "referenceStrain-isolatesGenbank")
-            datasets.make_prop(d, "organismAbbrev", "$$organismAbbrev$$")
-            datasets.make_prop(d, "speciesNcbiTaxonId", "$$speciesNcbiTaxonId$$")
-
         attribs = [d.attrib['class'] for d in ds.findall('dataset')]
         for c in xml.iterfind('dataset'):
             if c.attrib['class'] not in attribs:
