@@ -27,6 +27,7 @@ _rows = {
     "subclade": "subclade",
     "taxid": "strainncbitaxid",
     "speciestaxid": "speciesncbitaxid",
+    "familytaxid": "familyncbitaxid",
     "source": "source",
     "soterm": "soterm",
     "format": "genomeformat",
@@ -125,8 +126,8 @@ def old_abbrevs(organisms):
 
     for o in organisms:
         abbrev = get_row(o, 'abbrev')
-        genus_species = naming.short_species(get_row(o, 'fullname'))
-        subclade = get_row(o, 'subclade')
+        #genus_species = naming.short_species(get_row(o, 'fullname'))
+        #subclade = get_row(o, 'subclade')
 
         old_abbrevs = get_row(o, 'oldabbrevs')
         if old_abbrevs is not None:
