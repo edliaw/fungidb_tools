@@ -48,15 +48,16 @@ def parse_arguments():
 
 
 def format_feature(feature, modified, args):
-    old_id = feature.attr['ID']
+    old_id = feature.attr.get('ID')
     new_id = old_id
 
-    # Prefix target SO terms
-    if feature.soterm in args.prefix:
-        new_id = args.prefix[feature.soterm] + new_id
+    if new_id is not None:
+        # Prefix target SO terms
+        if feature.soterm in args.prefix:
+            new_id = args.prefix[feature.soterm] + new_id
 
-    # Use a T suffix instead of _mRNA
-    new_id = new_id.replace('_mRNA', '-T')
+        # Use a T suffix instead of _mRNA
+        new_id = new_id.replace('_mRNA', '-T')
 
     # Modify the provider
     if args.provider:
@@ -80,7 +81,7 @@ def main():
     modified = {}
 
     with args.infile as infile, args.outfile as outfile:
-        for feat in parser.parse_features(infile, outfile):
+        for feat in parser.parse(infile, outfile):
             if args.nostart and feat.soterm in so_ends:
                 continue
 
@@ -96,7 +97,7 @@ def main():
             format_feature(feat, modified, args)
 
             # Print to file
-            for f in parser.join_feature(feat):
+            for f in parser.join(feat):
                 print(f, file=outfile)
 
 

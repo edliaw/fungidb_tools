@@ -1,6 +1,5 @@
 #!/usr/bin/env python
-"""\
-Convert a gtf file into 3-level gff3.
+"""Convert a gtf file into 3-level gff3.
 
 2013-08-05
 Edward Liaw
@@ -26,22 +25,19 @@ def parse_arguments():
     parser.add_argument('-tp', '--transprefix',
                         help='transcript prefixes')
 
-    gff = parser.add_argument_group('gff', 'GFF parser options')
-    parse_gff.add_gff_args(gff)
-
     return parser.parse_args()
 
 
 def main():
     args = parse_arguments()
-    parser = parse_gff.GFFParser.from_args(args)
 
     targets = frozenset(('CDS', 'exon', 'stop_codon', 'start_codon'))
 
+    parser = parse_gff.GFFParser('gtf')
     last_tid = None
-
-    with args.infile as infile, args.outfile as outfile:
-        for feat in parser.parse_features(infile, outfile):
+    features = {}
+    with args.infile as infile:
+        for feat in parser.parse_features(infile):
             if feat.soterm not in targets:
                 continue
 
@@ -58,9 +54,8 @@ def main():
             assert gid is not None or tid is not None, "ERROR: No GID or TID, %s" % feat
 
             # TODO: Fix
-
-            if gname:
-
+            if tid:
+                gid = tid + 'G'
 
             last_tid = tid
 
