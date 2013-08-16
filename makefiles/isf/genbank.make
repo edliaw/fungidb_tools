@@ -40,7 +40,7 @@ endif
 
 GENERATE_MAP      = generate_chr_map
 SPLIT_ALGIDS      = split_algids --algfile $(ALGFILE)
-UNDO_ALGIDS       = undo_algids $(ALGFILE)
+UNDO_ALGIDS       = undo_algids $(ALGFILE) 2> /dev/null
 MAKE_ALGIDS       = cat $(LOG) | $(SPLIT_ALGIDS) --all > /dev/null
 # ISF:
 COMMIT            = --commit 2>&1 | $(SPLIT_ALGIDS) >> $(LOG) 2>&1
@@ -121,12 +121,15 @@ $(ALGFILE): $(LOG)
 	$(MAKE_ALGIDS)
 
 undo: $(ALGFILE)
-ifeq ($(UNDO_PLUGIN),$(INSERT_FEAT))
+ifeq ($(UNDO_ALGID),)
+	@echo "Nothing to undo."
+else ifeq ($(UNDO_PLUGIN),$(INSERT_FEAT))
 	ga $(UNDO_FEAT) --mapfile $(XML_MAP) --algInvocationId $(UNDO_ALGID) --commit
+	$(UNDO_ALGIDS) --mark $(UNDO_ALGID)
 else
 	ga $(UNDO) --plugin $(UNDO_PLUGIN) --algInvocationId $(UNDO_ALGID) --commit
-endif
 	$(UNDO_ALGIDS) --mark $(UNDO_ALGID)
+endif
 
 
 .PHONY: files all isf clean link undo

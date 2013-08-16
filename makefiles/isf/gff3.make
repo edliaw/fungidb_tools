@@ -48,7 +48,7 @@ ifdef PREFIX
   FORMAT_GFF3 += --prefix '$(PREFIX)'
 endif
 SPLIT_ALGIDS      = split_algids --algfile $(ALGFILE)
-UNDO_ALGIDS       = undo_algids $(ALGFILE)
+UNDO_ALGIDS       = undo_algids $(ALGFILE) 2> /dev/null
 MAKE_ALGIDS       = cat $(LOG) | $(SPLIT_ALGIDS) --all > /dev/null
 # ISF:
 COMMIT            = --commit 2>&1 | $(SPLIT_ALGIDS) >> $(LOG) 2>&1
@@ -109,8 +109,12 @@ $(ALGFILE): $(LOG)
 	$(MAKE_ALGIDS)
 
 undo: $(ALGFILE)
+ifeq ($(UNDO_ALGID),)
+	@echo "Nothing to undo."
+else
 	ga $(UNDO) --mapfile $(XML_MAP) --algInvocationId $(UNDO_ALGID) --commit
 	$(UNDO_ALGIDS) --mark $(UNDO_ALGID)
+endif
 
 
 .PHONY: files all isf clean link undo

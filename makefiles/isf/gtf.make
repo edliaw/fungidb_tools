@@ -44,11 +44,13 @@ else
 endif
 
 FORMAT_GTF        = format_gff --filetype gtf --species $(ID) --provider $(SOURCE) --padding $(FORMAT_PAD) --soterm $(TYPE) --regex $(FORMAT_RE) --comments
+CONVERT_GTF       = gtf2gff3_3level.pl
 ifeq ($(SOURCE), JGI)
-  FORMAT_GTF += --nostart
+  FORMAT_GTF     += --nostart
+  CONVERT_GTF    += -fix -prefix $(PREFIX_TERM)
 endif
 SPLIT_ALGIDS      = split_algids --algfile $(ALGFILE)
-UNDO_ALGIDS       = undo_algids $(ALGFILE)
+UNDO_ALGIDS       = undo_algids $(ALGFILE) 2> /dev/null
 MAKE_ALGIDS       = cat $(LOG) | $(SPLIT_ALGIDS) --all > /dev/null
 # ISF:
 COMMIT            = --commit 2>&1 | $(SPLIT_ALGIDS) >> $(LOG) 2>&1
@@ -77,13 +79,9 @@ genome.gtf:
 	$(CAT) $(PROVIDER_FILE) | $(FORMAT_GTF) >| $@
 
 genome.gff3: genome.gtf
-ifeq ($(SOURCE), Broad)
-        # Convert Broad GTF to GFF3 format.
-	convertGTFToGFF3 $< >| $@
-else
+        # Convert GTF to GFF3 format.
 	# JGI GTF transcript ids need to be prefixed when converting.
-	gtf2gff3_3level.pl -prefix $(PREFIX_TERM) $< >| $@
-endif
+	$(CONVERT_GTF) $< >| $@
 
 genome.gff: genome.gff3
 	# Convert GFF3 to pseudo GFF3 format (compatible with ISF).
@@ -118,8 +116,12 @@ $(ALGFILE): $(LOG)
 	$(MAKE_ALGIDS)
 
 undo: $(ALGFILE)
+ifeq ($(UNDO_ALGID),)
+	@echo "Nothing to undo."
+else
 	ga $(UNDO) --mapfile $(XML_MAP) --algInvocationId $(UNDO_ALGID) --commit
 	$(UNDO_ALGIDS) --mark $(UNDO_ALGID)
+endif
 
 
 .PHONY: files all isf clean link undo

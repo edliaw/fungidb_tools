@@ -27,6 +27,7 @@ _rows = {
     "subclade": "subclade",
     "taxid": "strainncbitaxid",
     "speciestaxid": "speciesncbitaxid",
+    "familytaxid": "familyncbitaxid",
     "source": "source",
     "soterm": "soterm",
     "format": "genomeformat",
