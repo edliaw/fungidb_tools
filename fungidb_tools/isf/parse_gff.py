@@ -113,22 +113,19 @@ class GFFParser(object):
             attr_col = cols.pop()
             attr = OrderedDict()
 
-            comment = ""
-            c = attr_col.find('#')
-            if c >= 0:
-                if self.comments:
-                    comment = attr_col[c:]
-                else:
-                    warn("WARNING: inline comment present:\n%s" % line)
-                attr_col = attr_col[:c]
+            comment = []
 
             for pair in attr_col.rstrip(attr_d).split(attr_d):
                 pair = pair.strip()
+                if comment or pair.startswith('#'):
+                    comment.append(pair)
+                    continue
                 try:
                     key, val = pair.split(key_d, 2)
                 except:
                     raise Exception("FAILED to split: %s" % line)
                 attr[key] = val.strip(val_d)
+            comment = attr_d.join(comment)
             yield cols, attr, comment
 
     def parse_features(self, infile, commentfile=sys.stdout):
