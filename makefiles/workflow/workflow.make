@@ -1,4 +1,4 @@
-WORKFLOW = -h ${PWD}
+WORKFLOW = -h $(shell pwd -P)
 
 
 summary:
@@ -47,4 +47,4 @@ err_%:
 	tail -n 50 steps/$*/step.err
 
 
-.PHONY: summary start stop show_% undo_% reundo_% redo_% offline_% online_% tail lerr err_%
+.PHONY: summary start stop tail lerr
