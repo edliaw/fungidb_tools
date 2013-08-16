@@ -50,7 +50,7 @@ ifeq ($(SOURCE), JGI)
   CONVERT_GTF    += -fix -prefix $(PREFIX_TERM)
 endif
 SPLIT_ALGIDS      = split_algids --algfile $(ALGFILE)
-UNDO_ALGIDS       = undo_algids $(ALGFILE)
+UNDO_ALGIDS       = undo_algids $(ALGFILE) 2> /dev/null
 MAKE_ALGIDS       = cat $(LOG) | $(SPLIT_ALGIDS) --all > /dev/null
 # ISF:
 COMMIT            = --commit 2>&1 | $(SPLIT_ALGIDS) >> $(LOG) 2>&1

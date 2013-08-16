@@ -43,7 +43,7 @@ endif
 FORMAT_FASTA      = format_fasta --species $(ID) --padding $(FORMAT_PAD) --soterm $(TYPE) --regex $(FORMAT_RE)
 GENERATE_MAP      = generate_chr_map
 SPLIT_ALGIDS      = split_algids --algfile $(ALGFILE)
-UNDO_ALGIDS       = undo_algids $(ALGFILE)
+UNDO_ALGIDS       = undo_algids $(ALGFILE) 2> /dev/null
 MAKE_ALGIDS       = cat $(LOG) | $(SPLIT_ALGIDS) --all > /dev/null
 # ISF:
 COMMIT            = --commit 2>&1 | $(SPLIT_ALGIDS) >> $(LOG) 2>&1
