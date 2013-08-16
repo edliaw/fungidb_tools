@@ -15,12 +15,16 @@ from warnings import warn
 from collections import OrderedDict
 
 
+class ParseError(Exception):
+    pass
+
+
 class Feature(object):
     def __init__(self, seqid, source, soterm, pos, score, strand, phase, attr, comment, children):
         """Create a new Feature.
-        pos should be list of tuples (start, end)
-        attr should be an OrderedDict of attributes
-        children should be a list of child Features
+        pos: list of tuples (start, end)
+        attr: OrderedDict of attributes
+        children: list of child Features
         """
         self.seqid = seqid
         self.source = source
@@ -119,7 +123,7 @@ class Feature(object):
 class GFFParser(object):
     """GTF/GFF2/GFF3 parser.  Initialize with options then parse file."""
     def __init__(self, filetype, fasta=False, comments=True):
-        self.delim = self._set_filetype(filetype)
+        self._set_delimiters(filetype)
         self.fasta = fasta
         self.comments = comments
 
@@ -127,28 +131,17 @@ class GFFParser(object):
     def from_args(cls, args):
         return cls(args.filetype, args.fasta, args.comments)
 
-    @staticmethod
-    def _set_filetype(filetype):
-        delim = {}
-        delim['col'] = '\t'
-        delim['attr'] = ';'
-        if filetype in ('gtf', 'gff2'):
-            delim['key'] = ' '
-            delim['quot'] = '"'
-        elif filetype == 'gff3':
-            delim['key'] = '='
-            delim['quot'] = ''
-        else:
-            raise Exception('Invalid filetype: must be gtf, gff2, or gff3.')
-        return delim
+    def _set_delimiters(self, filetype):
+        self.d_column = '\t'
+        self.d_attribute = ';'
+        self.d_key = ' '
+        self.d_quotes = '"'
+        if filetype == 'gff3':
+            self.d_key = '='
+            self.d_quotes = ''
 
     def parse_flat(self, infile, commentfile=sys.stdout):
-        col_d = self.delim['col']
-        attr_d = self.delim['attr']
-        key_d = self.delim['key']
-        quot_d = self.delim['quot']
-
-        for line in infile:
+        for line_number, line in enumerate(infile):
             # Comments
             if line.startswith('#'):
                 if line.startswith('##FASTA'):
@@ -164,27 +157,27 @@ class GFFParser(object):
 
             line = line.rstrip()
             if not line:
-                warn("Empty line in file.")
+                warn("Line %d in file is empty." % line_number)
                 continue
             # Columns
-            cols = line.split(col_d, 9)
+            cols = line.split(self.d_column, 9)
             # Attributes column
             attr_col = cols.pop()
             attr = OrderedDict()
 
-            comment = []
+            comments = []
 
-            for pair in attr_col.rstrip(attr_d).split(attr_d):
-                pair = pair.strip()
-                if comment or pair.startswith('#'):
-                    comment.append(pair)
+            for pair in attr_col.rstrip(self.d_attribute).split(self.d_attribute):
+                s_pair = pair.strip()
+                if comments or s_pair.startswith('#'):
+                    comments.append(pair)
                     continue
                 try:
-                    key, val = pair.split(key_d, 2)
-                except:
-                    raise Exception("FAILED to split: %s" % line)
-                attr[key] = val.strip(quot_d)
-            comment = attr_d.join(comment)
+                    key, val = s_pair.split(self.d_key, 2)
+                    attr[key] = val.strip(self.d_quotes)
+                except ValueError:
+                    raise ParseError("FAILED to split: %s" % line)
+            comment = self.d_attribute.join(comments)
             yield cols, attr, comment
 
     def parse(self, infile, commentfile=sys.stdout):
@@ -206,11 +199,11 @@ class GFFParser(object):
 
     def join_flat(self, cols, attr, comment=""):
         """Convert flattened feature attributes into a GFF string."""
-        attrs = [self.delim['key'].join((key, surround(val, self.delim['quot']))) for key, val in attr.items()]
-        if comment:
+        attrs = [self.d_key.join((key, val.join((self.d_quotes, self.d_quotes)))) for key, val in attr.items()]
+        if self.comments and comment:
             attrs.append(comment)
-        cols = cols + [self.delim['attr'].join(attrs)]
-        return self.delim['col'].join(cols)
+        cols = cols + [self.d_attribute.join(attrs)]
+        return self.d_column.join(cols)
 
     def join(self, feature):
         for cols, attr, comment in feature.flatten():
@@ -219,10 +212,6 @@ class GFFParser(object):
     def join_all(self, rows):
         for cols, attr, comment in rows:
             yield self.join_flat(self, cols, attr, comment)
-
-
-def surround(value, delim):
-    return value.join((delim, delim))
 
 
 def add_gff_args(parser):
