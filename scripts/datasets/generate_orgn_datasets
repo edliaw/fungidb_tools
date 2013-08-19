@@ -49,7 +49,7 @@ def make_species_xmls(organisms, outdir):
         family_rep = family_reps[datasets.get_row(o, 'subclade')][0]
         strain_taxid = datasets.get_row(o, 'taxid')
         species_taxid = datasets.get_row(o, 'speciestaxid')
-        family_taxid = datasets.get_row(o, 'familytaxid')
+        family_taxid = datasets.get_row(o, 'familytaxid') or ""
         version = datasets.get_row(o, 'version')
         soterm = datasets.get_row(o, 'soterm')
         source = datasets.get_row(o, 'source')
@@ -179,6 +179,7 @@ def genome_dataset(ds, file_format, mito=False):
         # Genbank-formatted genome
         d = datasets.make_dataset(ds, "genbank_primary_genome")
         datasets.make_prop(d, "projectName", "$$projectName$$")
+        datasets.make_prop(d, "organismAbbrev", "$$organismAbbrev$$")
         datasets.make_prop(d, "ncbiTaxonId", "$$ncbiTaxonId$$")
         datasets.make_prop(d, "version", "$$genomeVersion$$")
         datasets.make_prop(d, "name", "$$source$$")
