@@ -90,9 +90,10 @@ def file_format(fmt):
 
 
 def extract_reps(organisms, debug=False):
-    """Make dictionaries of all the representative species and families. Also,
-    perform some checks to ensure that the representative species are unique
-    and present.
+    """\
+    Make dictionaries of all the representative species and families.
+    Also, perform some checks to ensure that the representative species
+    are unique and present.
     """
     species_reps = {}
     family_reps = {}
@@ -102,24 +103,31 @@ def extract_reps(organisms, debug=False):
         genus_species = naming.short_species(get_row(o, 'fullname'))
         if get_row(o, 'isrefstrain') == "Yes":
             if debug and genus_species in species_reps:
-                raise InvalidFormatException("{} species has too many reference strains: {}.".format(genus_species, (species_reps[genus_species], abbrev)))
+                raise InvalidFormatException(
+                    "{} species has too many reference strains: {}.".format(
+                        genus_species, (species_reps[genus_species], abbrev)))
             species_reps[genus_species] = abbrev
         elif debug and genus_species not in species_reps:
-            raise InvalidFormatException("{} species missing representative or out of order (representative must come first).".format(genus_species))
+            raise InvalidFormatException((
+                "{} species missing representative or out of order"
+                "(representative must come first).").format(genus_species))
 
         # We arbitrarily use the "subclade" as the "family" grouping.
         # Doesn't really map to the taxonomic family.
         family = get_row(o, 'subclade')
         if get_row(o, 'isfamrep') == "Yes":
             if debug and family in family_reps:
-                raise InvalidFormatException("{} family has too many representatives: {}.".format(family, (family_reps[family][0], abbrev,)))
+                raise InvalidFormatException(
+                    "{} family has too many representatives: {}.".format(
+                        family, (family_reps[family][0], abbrev,)))
             family_reps[family] = (abbrev, get_row(o, 'taxid'))
 
     return species_reps, family_reps
 
 
 def old_abbrevs(organisms):
-    """Create a dictionary the maps old abbreviations to their new one.
+    """\
+    Create a dictionary that maps old abbreviations to their new one.
     Useful for changing organisms' abbrevation with scripts.
     """
     sub_abbrev = {}

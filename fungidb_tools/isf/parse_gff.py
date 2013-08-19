@@ -15,37 +15,92 @@ from warnings import warn
 from collections import OrderedDict
 
 
+class ParseError(Exception):
+    pass
+
+
 class Feature(object):
-    def __init__(self, cols, attr, comment="", children=None):
-        self.seqid, self.source, self.soterm, start, end, self.score, self.strand, self.phase = cols
-        self.pos = [(start, end)]
+    def __init__(self, seqid, source, soterm, pos, score, strand, phase, attr, comment, children):
+        """Create a new Feature.
+        pos: list of tuples (start, end)
+        attr: OrderedDict of attributes
+        children: list of child Features
+        """
+        self.seqid = seqid
+        self.source = source
+        self.soterm = soterm
+        self.pos = pos
+        self.score = score
+        self.strand = strand
+        self.phase = phase
         self.attr = attr
         self.comment = comment
-        self.children = [] if children is None else children
+        self.children = children
 
-    def to_gff(self):
+    @classmethod
+    def unflatten(cls, cols, attr, comment="", children=None):
+        """Make new Feature out of list of GFF columns and OrderedDict of attributes."""
+        seqid, source, soterm, start, end, score, strand, phase = cols
+        pos = [(start, end)]
+        children = [] if children is None else children
+        return cls(seqid, source, soterm, pos, score, strand, phase, attr, comment, children)
+
+    def flatten(self):
+        """Reduce Feature into GFF columns, attributes, and comment."""
+        for vals in self._flatten():
+            yield vals
+        for vals in self._flatten_children():
+            yield vals
+
+    def _flatten(self):
         for start, end in self.pos:
             cols = [self.seqid, self.source, self.soterm, start, end, self.score, self.strand, self.phase]
             yield cols, self.attr, self.comment
+
+    def _flatten_children(self):
         for child in self.children:
-            for sub in child.to_gff():
-                yield sub
+            for multichild in child._flatten():
+                yield multichild
+        for child in self.children:
+            for subchild in child._flatten_children():
+                yield subchild
 
     def append(self, other):
-        added = False
-        if self.attr['ID'] == other.attr['ID'] and self.soterm == other.soterm:
-            self.pos += other.pos
-            warn("Multi-line feature: %s" % self)
-            added = True
-        else:
+        """Add multi-line position, child feature, or sub-child feature."""
+        try:
+            # Check for multiline feature.
+            if self.attr['ID'] == other.attr['ID']:
+                self.append_multiline(other)
+                return True
+
+            # Check for multiple inheritance (alt-splicing) and children-of-children.
+            added = False
             for parent in other.attr['Parent'].split(','):
+                if added:
+                    warn("Multiple parents:\t{}\t{}".format(other, other.attr['Parent']))
+                added = False
                 if self.attr['ID'] == parent:
                     self.children.append(other)
                     added = True
                 else:
+                    # See if any of the children are parents.
                     for child in self.children:
-                        added = child.append(other) or added
-        return added
+                        if child.append(other):
+                            added = True
+                            break
+            return added
+        except KeyError:
+            # Self or other lacks a Parent or ID attribute.
+            return False
+
+    def append_multiline(self, other):
+        """Add multiline feature's position."""
+        self.pos += other.pos
+        warn("Multi-line feature:\t{}\t{}".format(self, other))
+
+    def append_child(self, other):
+        assert self.attr['ID'] in other.attr['Parent'].split(',')
+        self.children.append(other)
 
     def rename(self, name):
         self.attr['ID'] = name
@@ -54,13 +109,21 @@ class Feature(object):
 
     def __str__(self):
         start, end = self.pos[0]
-        return "{}: {}{}-{}".format(self.seqid, self.strand, start, end)
+        return "{}:{}{}{}-{}".format(self.soterm, self.seqid, self.strand, start, end)
+
+    def __gt__(self, other):
+        if self.chrom != other.chrom:
+            return self.chrom > other.chrom
+        elif self.min != other.min:
+            return self.min > other.min
+        else:
+            return self.min > other.max
 
 
 class GFFParser(object):
     """GTF/GFF2/GFF3 parser.  Initialize with options then parse file."""
     def __init__(self, filetype, fasta=False, comments=True):
-        self.delim = self._set_filetype(filetype)
+        self._set_delimiters(filetype)
         self.fasta = fasta
         self.comments = comments
 
@@ -68,28 +131,17 @@ class GFFParser(object):
     def from_args(cls, args):
         return cls(args.filetype, args.fasta, args.comments)
 
-    @staticmethod
-    def _set_filetype(filetype):
-        delim = {}
-        delim['col'] = '\t'
-        delim['attr'] = ';'
-        if filetype in ('gtf', 'gff2'):
-            delim['key'] = ' '
-            delim['val'] = '"'
-        elif filetype == 'gff3':
-            delim['key'] = '='
-            delim['val'] = ''
-        else:
-            raise Exception('Invalid filetype: must be gtf, gff2, or gff3.')
-        return delim
+    def _set_delimiters(self, filetype):
+        self.d_column = '\t'
+        self.d_attribute = ';'
+        self.d_key = ' '
+        self.d_quotes = '"'
+        if filetype == 'gff3':
+            self.d_key = '='
+            self.d_quotes = ''
 
-    def parse(self, infile, commentfile=sys.stdout):
-        col_d = self.delim['col']
-        attr_d = self.delim['attr']
-        key_d = self.delim['key']
-        val_d = self.delim['val']
-
-        for line in infile:
+    def parse_flat(self, infile, commentfile=sys.stdout):
+        for line_number, line in enumerate(infile):
             # Comments
             if line.startswith('#'):
                 if line.startswith('##FASTA'):
@@ -105,64 +157,63 @@ class GFFParser(object):
 
             line = line.rstrip()
             if not line:
-                warn("Empty line in file.")
+                warn("Line %d in file is empty." % line_number)
                 continue
             # Columns
-            cols = line.split(col_d, 9)
+            cols = line.split(self.d_column, 9)
             # Attributes column
             attr_col = cols.pop()
             attr = OrderedDict()
 
-            comment = []
+            comments = []
 
-            for pair in attr_col.rstrip(attr_d).split(attr_d):
-                pair = pair.strip()
-                if comment or pair.startswith('#'):
-                    comment.append(pair)
+            for pair in attr_col.rstrip(self.d_attribute).split(self.d_attribute):
+                s_pair = pair.strip()
+                if comments or s_pair.startswith('#'):
+                    # If there are delimiters inside the inline comment, append
+                    # it now and join the list later.
+                    comments.append(pair)
                     continue
                 try:
-                    key, val = pair.split(key_d, 2)
-                except:
-                    raise Exception("FAILED to split: %s" % line)
-                attr[key] = val.strip(val_d)
-            comment = attr_d.join(comment)
+                    key, val = s_pair.split(self.d_key, 2)
+                    attr[key] = val.strip(self.d_quotes)
+                except ValueError:
+                    raise ParseError("FAILED to split: %s" % line)
+            comment = self.d_attribute.join(comments)
             yield cols, attr, comment
 
-    def parse_features(self, infile, commentfile=sys.stdout):
+    def parse(self, infile, commentfile=sys.stdout):
         """Parse lines as Features instead of (columns, attributes)."""
-        for cols, attr, comment in self.parse(infile, commentfile):
-            yield Feature(cols, attr, comment)
+        for cols, attr, comment in self.parse_flat(infile, commentfile):
+            yield Feature.unflatten(cols, attr, comment)
 
-    def parse_3level(self, infile, commentfile=sys.stdout):
-        features = {}
-        for feat in self.parse_features(infile, commentfile):
-            added = False
-            try:
-                added = features[feat.attr['Parent']].append(feat)
-            except KeyError:
-                pass
-            if not added:
-                features[feat.attr['ID']] = feat
-        return features
+    def parse_3level_sorted(self, infile, commentfile=sys.stdout):
+        """Fill features with children and yield top-level parents only.
+        Assumes children follow parent.
+        """
+        top = None
+        for feat in self.parse(infile, commentfile):
+            if top is None:
+                top = feat
+            elif not top.append(feat):
+                yield top
+                top = feat
 
-    def join(self, cols, attr, comment=""):
-        attrs = [self.delim['key'].join((key, surround(val, self.delim['val']))) for key, val in attr.items()]
-        if comment:
+    def join_flat(self, cols, attr, comment=""):
+        """Convert flattened feature attributes into a GFF string."""
+        attrs = [self.d_key.join((key, val.join((self.d_quotes, self.d_quotes)))) for key, val in attr.items()]
+        if self.comments and comment:
             attrs.append(comment)
-        cols = cols + [self.delim['attr'].join(attrs)]
-        return self.delim['col'].join(cols)
+        cols = cols + [self.d_attribute.join(attrs)]
+        return self.d_column.join(cols)
 
-    def join_feature(self, feature):
-        for cols, attr, comment in feature.to_gff():
-            yield self.join(cols, attr, comment)
+    def join(self, feature):
+        for cols, attr, comment in feature.flatten():
+            yield self.join_flat(cols, attr, comment)
 
     def join_all(self, rows):
         for cols, attr, comment in rows:
-            yield self.join(self, cols, attr, comment)
-
-
-def surround(value, delim):
-    return "{1}{0}{1}".format(value, delim)
+            yield self.join_flat(self, cols, attr, comment)
 
 
 def add_gff_args(parser):
