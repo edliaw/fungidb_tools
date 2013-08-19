@@ -170,6 +170,8 @@ class GFFParser(object):
             for pair in attr_col.rstrip(self.d_attribute).split(self.d_attribute):
                 s_pair = pair.strip()
                 if comments or s_pair.startswith('#'):
+                    # If there are delimiters inside the inline comment, append
+                    # it now and join the list later.
                     comments.append(pair)
                     continue
                 try:
