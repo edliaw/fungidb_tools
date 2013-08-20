@@ -120,7 +120,7 @@ def make_datasets_xml(organisms, ortho_gen, orthomcl_version, debug=False):
         datasets.make_prop(d, "hasDeprecatedGenes", datasets.xml_bool(False))
         datasets.make_prop(d, "hasTemporaryNcbiTaxonId", datasets.xml_bool(False))
         datasets.make_prop(d, "runExportPred", datasets.xml_bool(False))
-        datasets.make_prop(d, "skipOrfs", datasets.xml_bool(False))
+        datasets.make_prop(d, "isHugeGenome", datasets.xml_bool(False))
         datasets.make_prop(d, "maxIntronSize", "1000")
 
         if is_species_rep:
