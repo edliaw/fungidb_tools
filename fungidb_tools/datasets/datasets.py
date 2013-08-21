@@ -25,6 +25,7 @@ _rows = {
     "strain": "strain",
     "clade": "clade",
     "subclade": "subclade",
+    "family": "family",
     "taxid": "strainncbitaxid",
     "speciestaxid": "speciesncbitaxid",
     "familytaxid": "familyncbitaxid",
@@ -112,9 +113,7 @@ def extract_reps(organisms, debug=False):
                 "{} species missing representative or out of order"
                 "(representative must come first).").format(genus_species))
 
-        # We arbitrarily use the "subclade" as the "family" grouping.
-        # Doesn't really map to the taxonomic family.
-        family = get_row(o, 'subclade')
+        family = get_row(o, 'family')
         if get_row(o, 'isfamrep') == "Yes":
             if debug and family in family_reps:
                 raise InvalidFormatException(
@@ -135,7 +134,7 @@ def old_abbrevs(organisms):
     for o in organisms:
         abbrev = get_row(o, 'abbrev')
         #genus_species = naming.short_species(get_row(o, 'fullname'))
-        #subclade = get_row(o, 'subclade')
+        #family= get_row(o, 'family')
 
         old_abbrevs = get_row(o, 'oldabbrevs')
         if old_abbrevs is not None:
