@@ -46,7 +46,7 @@ def make_species_xmls(organisms, outdir):
         fullname = datasets.get_row(o, 'fullname')
         strain_abbrev = naming.abbrev_strain(datasets.get_row(o, 'strain'))
         ref_strain = species_reps[naming.short_species(fullname)]
-        family_rep = family_reps[datasets.get_row(o, 'subclade')][0]
+        family_rep = family_reps[datasets.get_row(o, 'family')][0]
         strain_taxid = datasets.get_row(o, 'taxid')
         species_taxid = datasets.get_row(o, 'speciestaxid')
         family_taxid = datasets.get_row(o, 'familytaxid') or ""

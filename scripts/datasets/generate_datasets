@@ -48,6 +48,8 @@ def make_datasets_xml(organisms, ortho_gen, orthomcl_version, debug=False):
 
     ds = etree.Element("datasets")
     datasets.make_constant(ds, "projectName", "FungiDB")
+    #datasets.make_constant(ds, "projectVersionForWebsiteFiles", "3.O")
+    datasets.make_constant(ds, "areHugeGenomes", datasets.xml_bool(False))
 
     for o in organisms:
         # Check spreadsheet values against our naming scheme.
@@ -78,7 +80,7 @@ def make_datasets_xml(organisms, ortho_gen, orthomcl_version, debug=False):
         is_species_rep = (datasets.get_row(o, 'isrefstrain') == "Yes")
         is_family_rep = (datasets.get_row(o, 'isfamrep') == "Yes")
         species_rep = species_reps[naming.short_species(taxname)]
-        family_name = datasets.get_row(o, 'subclade')
+        family_name = datasets.get_row(o, 'family')
         family_rep, family_rep_taxid = family_reps[family_name]
         if debug and is_species_rep != (species_rep == abbrev):
             raise datasets.InvalidFormatException("{} reference strain incorrect for {}".format(species_rep, abbrev))
