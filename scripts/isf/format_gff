@@ -1,5 +1,4 @@
 #!/usr/bin/env python2.7
-# -*- coding: utf-8 -*-
 """Reformat gff file for ISF.
 Modifies the first two columns.
 
@@ -36,7 +35,7 @@ def parse_arguments():
                         help='remove start and stop codons')
     parser.add_argument('-p', '--prefix',
                         type=json.loads, metavar="DICT", default={},
-                        help='prefix specific soterms')
+                        help='prefix specified soterms')
 
     rename = parser.add_argument_group('renaming', 'Chromosome renaming')
     isf.add_rename_args(rename)
