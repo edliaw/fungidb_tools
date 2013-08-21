@@ -48,8 +48,6 @@ def make_datasets_xml(organisms, ortho_gen, orthomcl_version, debug=False):
 
     ds = etree.Element("datasets")
     datasets.make_constant(ds, "projectName", "FungiDB")
-    #datasets.make_constant(ds, "projectVersionForWebsiteFiles", "3.O")
-    datasets.make_constant(ds, "areHugeGenomes", datasets.xml_bool(False))
 
     for o in organisms:
         # Check spreadsheet values against our naming scheme.
