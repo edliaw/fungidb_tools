@@ -146,19 +146,19 @@ def make_species_xmls(organisms, outdir):
 
         if is_ref_strain:
             # Reference strain data
-            d = xml.find('dataset[@class="referenceStrain-ESTsFromFasta"]')
-            if d is not None:
-                ds.append(d)
-            else:
-                d = datasets.make_dataset(ds, "referenceStrain-dbEST")
-                datasets.make_prop(d, "projectName", "$$projectName$$")
-                datasets.make_prop(d, "organismAbbrev", "$$organismAbbrev$$")
-                datasets.make_prop(d, "speciesNcbiTaxonId", "$$speciesNcbiTaxonId$$")
+            d = datasets.make_dataset(ds, "referenceStrain-dbEST")
+            datasets.make_prop(d, "projectName", "$$projectName$$")
+            datasets.make_prop(d, "organismAbbrev", "$$organismAbbrev$$")
+            datasets.make_prop(d, "speciesNcbiTaxonId", "$$speciesNcbiTaxonId$$")
 
             d = datasets.make_dataset(ds, "referenceStrain-epitope_sequences_IEDB")
             datasets.make_prop(d, "organismAbbrev", "$$organismAbbrev$$")
             datasets.make_prop(d, "speciesNcbiTaxonId", "$$speciesNcbiTaxonId$$")
             datasets.make_prop(d, "version", "2.4")
+
+            d = xml.find('dataset[@class="referenceStrain-ESTsFromFasta"]')
+            if d is not None:
+                ds.append(d)
 
         if is_fam_rep:
             d = datasets.make_dataset(ds, "familyRepresentative-isolatesGenbank")
