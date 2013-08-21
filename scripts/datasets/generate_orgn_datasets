@@ -234,7 +234,7 @@ def genome_dataset(ds, file_format, mito=False):
             datasets.make_prop(d, "ncbiTaxonId", "$$ncbiTaxonId$$")
             datasets.make_prop(d, "version", "$$genomeVersion$$")
             datasets.make_prop(d, "name", "$$source$$")
-            datasets.make_prop(d, "soTerm", "$$soTerm$$")
+            datasets.make_prop(d, "soTerm", "mitochondrial_chromosome")
             datasets.make_prop(d, "mapFile", "FungiDB/genericGFF2Gus.xml")
 
 
