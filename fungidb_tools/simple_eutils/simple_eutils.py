@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Simplify Bio.Entrez, with ElementTree parsing for efetch and esummary.
 
 Esearch, elink, efetch, and esummary accept either an id argument or a webenv/
@@ -79,7 +78,7 @@ def retry(f, attempts=3, delay=3, backoff=2):
     """Decorator: Allow retries in the event of a dropped query."""
     f.attempts = attempts
     f.delay = delay
-    f.backoff= backoff
+    f.backoff = backoff
     return decorator(_retry, f)
 
 
@@ -156,14 +155,13 @@ def webenv_link(db, dbfrom, id=None, webenv=None, query_key=None,
     Returns:
         Webenv and query key to access the session history.
     """
-    if (not webenv and id) and (isinstance(id, Iterable) and
-                                not isinstance(id, StringTypes)):
-        webenv, query_key = webenv_post(dbfrom, id)
-        id = None
-
-    link_handle = Entrez.elink(db=db, dbfrom=dbfrom, id=id, linkname=linkname,
-                               webenv=webenv, query_key=query_key,
-                               cmd='neighbor_history')
+    if id is None:
+        link_handle = Entrez.elink(db=db, dbfrom=dbfrom,
+                                   webenv=webenv, query_key=query_key,
+                                   linkname=linkname, cmd='neighbor_history')
+    else:
+        link_handle = Entrez.elink(db=db, dbfrom=dbfrom, id=id,
+                                   linkname=linkname, cmd='neighbor_history')
     et = etree.parse(link_handle)
     link_handle.close()
 
@@ -227,13 +225,13 @@ def idlist_link(db, dbfrom, id=None, webenv=None, query_key=None, linkname=None)
     Returns:
         List of ids.
     """
-    if (not webenv and id) and (isinstance(id, Iterable) and
-                                not isinstance(id, StringTypes)):
-        webenv, query_key = webenv_post(dbfrom, id)
-        id = None
+    if id is None:
+        link_handle = Entrez.elink(db=db, dbfrom=dbfrom, linkname=linkname,
+                                   webenv=webenv, query_key=query_key)
+    else:
+        link_handle = Entrez.elink(db=db, dbfrom=dbfrom, id=id,
+                                   linkname=linkname)
 
-    link_handle = Entrez.elink(db=db, dbfrom=dbfrom, id=id, linkname=linkname,
-                               webenv=webenv, query_key=query_key)
     et = etree.parse(link_handle)
     link_handle.close()
 
@@ -255,13 +253,12 @@ def etree_summary(db, id=None, webenv=None, query_key=None, out=None):
     Returns:
         ElementTree of results.
     """
-    if (not webenv and id) and (isinstance(id, Iterable) and
-                                not isinstance(id, StringTypes)):
-        webenv, query_key = webenv_post(db, id)
-        id = None
+    if id is None:
+        summary_handle = Entrez.esummary(db=db, webenv=webenv,
+                                         query_key=query_key)
+    else:
+        summary_handle = Entrez.esummary(db=db, id=id)
 
-    summary_handle = Entrez.esummary(db=db, id=id,
-                                     webenv=webenv, query_key=query_key)
     et = etree.parse(summary_handle)
     summary_handle.close()
 
@@ -285,13 +282,11 @@ def etree_fetch(db, id=None, webenv=None, query_key=None, out=None):
     Returns:
         ElementTree of results.
     """
-    if (not webenv and id) and (isinstance(id, Iterable) and
-                                not isinstance(id, StringTypes)):
-        webenv, query_key = webenv_post(db, id)
-        id = None
+    if id is None:
+        fetch_handle = Entrez.efetch(db=db, webenv=webenv, query_key=query_key)
+    else:
+        fetch_handle = Entrez.efetch(db=db, id=id)
 
-    fetch_handle = Entrez.efetch(db=db, id=id,
-                                 webenv=webenv, query_key=query_key)
     et = etree.parse(fetch_handle)
     fetch_handle.close()
 
