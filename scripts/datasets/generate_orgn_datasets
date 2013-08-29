@@ -51,7 +51,7 @@ def make_species_xmls(organisms, outdir):
         species_taxid = datasets.get_row(o, 'speciestaxid')
         family_taxid = datasets.get_row(o, 'familytaxid') or ""
         version = datasets.get_row(o, 'version')
-        soterm = datasets.get_row(o, 'soterm')
+        soterm = datasets.get_row(o, 'soterm').lower()
         source = datasets.get_row(o, 'source')
         idprefix = datasets.get_row(o, 'idprefix') or ""
         file_format = datasets.get_row(o, 'format')
