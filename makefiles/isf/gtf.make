@@ -44,10 +44,11 @@ else
 endif
 
 FORMAT_GTF        = format_gff --filetype gtf --species $(ID) --provider $(SOURCE) --padding $(FORMAT_PAD) --soterm $(TYPE) --regex $(FORMAT_RE) --comments
-CONVERT_GTF       = gtf2gff3_3level.pl
 ifeq ($(SOURCE), JGI)
   FORMAT_GTF     += --nostart
-  CONVERT_GTF    += -fix -prefix $(PREFIX_TERM)
+  CONVERT_GTF     = convertGTFToGFF3_JGI -prefix $(PREFIX_TERM)
+else
+  CONVERT_GTF     = convertGTFToGFF3_Broad
 endif
 SPLIT_ALGIDS      = split_algids --algfile $(ALGFILE)
 UNDO_ALGIDS       = undo_algids $(ALGFILE) 2> /dev/null
@@ -56,7 +57,7 @@ MAKE_ALGIDS       = cat $(LOG) | $(SPLIT_ALGIDS) --all > /dev/null
 COMMIT            = --commit 2>&1 | $(SPLIT_ALGIDS) >> $(LOG) 2>&1
 TEST              = >| error.log 2>&1
 INSERT_FEAT       = GUS::Supported::Plugin::InsertSequenceFeatures
-INSERT_FEAT_OPTS ?= --extDbName $(DB_NAME) --extDbRlsVer $(VERSION) --mapFile $(XML_MAP) --inputFileExtension gff --fileFormat gff3 --soCvsVersion 1.417 --organism $(TAXID) --seqSoTerm $(LONG_TYPE) --seqIdColumn source_id --naSequenceSubclass ExternalNASequence --sqlVerbose $(CHR_MAP_OPT) --inputFileOrDir $< --validationLog val.log --bioperlTreeOutput bioperlTree.out
+INSERT_FEAT_OPTS ?= --extDbName $(DB_NAME) --extDbRlsVer $(VERSION) --mapFile $(XML_MAP) --inputFileExtension gff --fileFormat gff3 --soCvsVersion 1.417 --organism $(TAXID) --seqSoTerm $(LONG_TYPE) --seqIdColumn source_id --naSequenceSubclass ExternalNASequence $(CHR_MAP_OPT) --inputFileOrDir $< --validationLog val.log --bioperlTreeOutput bioperlTree.out
 # Undo:
 UNDO              = GUS::Supported::Plugin::InsertSequenceFeaturesUndo
 UNDO_STR          = $(shell $(UNDO_ALGIDS))

@@ -35,7 +35,7 @@ MAKE_ALGIDS       = cat $(LOG) | $(SPLIT_ALGIDS) --all > /dev/null
 COMMIT            = --commit 2>&1 | $(SPLIT_ALGIDS) >> $(LOG) 2>&1
 TEST              = >| error.log 2>&1
 INSERT_P          = ApiCommonData::Load::Plugin::InsertGeneFeatProductFromTabFile
-INSERT_P_OPTS     = --productDbName $(DB_NAME) --productDbVer $(VERSION) --sqlVerbose --file $<
+INSERT_P_OPTS     = --productDbName $(DB_NAME) --productDbVer $(VERSION) --file $<
 # Undo:
 UNDO              = GUS::Community::Plugin::Undo
 UNDO_STR          = $(shell $(UNDO_ALGIDS))
