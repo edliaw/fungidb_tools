@@ -20,19 +20,19 @@ Modules
 -------
 
 * Datasets
-  * simple_gdata: for wrapping the gdata library into an easier-to-use format.  Primarily to download and edit spreadsheets on Google Drive.
+  * simple_gdata: wrapping around the gdata library for an easier-to-use format.  Primarily to download and edit spreadsheets on Google Drive.
   * datasets: for turning the Genomes spreadsheet into XML workflow config files.
   * xml: additional tools for working with XML files.
   * naming: for naming organisms according to stricter specifications than is enforced by EuPathDB.
 * NCBI
   * aspera: for downloading SRA datasets from NCBI.
-  * simple_eutils: for wrapping NCBI eutils to interface with NCBI.
+  * simple_eutils: wrapping around NCBI eutils to combine/simplify functions.
 
 Scripts
 -------
 
 * ISF (Insert Sequence Features)
-  * Reformatters, data extraction for various filetypes.
+  * Reformatters, data extraction for gtf, gff3, fasta, and genbank filetypes.
 * Datasets
   * Interact with data from the FungiDB Genomes spreadsheet.
 
