@@ -47,11 +47,11 @@ FORMAT_GFF3       = format_gff --filetype gff3 --species $(ID) --provider $(SOUR
 ifdef PREFIX
   FORMAT_GFF3 += --prefix '$(PREFIX)'
 endif
-SPLIT_ALGIDS      = split_algids --algfile $(ALGFILE)
+SPLIT_ALGIDS      = split_algids
 UNDO_ALGIDS       = undo_algids $(ALGFILE) 2> /dev/null
-MAKE_ALGIDS       = cat $(LOG) | $(SPLIT_ALGIDS) --all > /dev/null
+MAKE_ALGIDS       = $(SPLIT_ALGIDS) --all < $(LOG) >> $(ALGFILE)
 # ISF:
-COMMIT            = --commit 2>&1 | $(SPLIT_ALGIDS) >> $(LOG) 2>&1
+COMMIT            = --commit 2>&1 | tee -a $(LOG) | $(SPLIT_ALGIDS) >> $(ALGFILE)
 TEST              = >| error.log 2>&1
 INSERT_FEAT       = GUS::Supported::Plugin::InsertSequenceFeatures
 INSERT_FEAT_OPTS ?= --extDbName $(DB_NAME) --extDbRlsVer $(VERSION) --mapFile $(XML_MAP) --inputFileExtension gff --fileFormat gff3 --soCvsVersion 1.417 --organism $(TAXID) --seqSoTerm $(LONG_TYPE) --seqIdColumn source_id --naSequenceSubclass ExternalNASequence $(CHR_MAP_OPT) --inputFileOrDir $< --validationLog val.log --bioperlTreeOutput bioperlTree.out --commit

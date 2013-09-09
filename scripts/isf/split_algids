@@ -23,9 +23,6 @@ def parse_arguments():
     parser.add_argument('outfile',
                         type=argparse.FileType('w'), nargs='?',
                         default=sys.stdout, help='output file')
-    parser.add_argument('--algfile',
-                        type=argparse.FileType('a'),
-                        default=sys.stderr, help='algid output file')
     parser.add_argument('-a', '--all',
                         action='store_true',
                         help='retrieve all unique algids in input')
@@ -42,7 +39,7 @@ def main():
     # Handle I/O.
     ids = set()
     plugin = ''
-    with args.infile as infile, args.outfile as outfile, args.algfile as algfile:
+    with args.infile as infile, args.outfile as outfile:
         for line in infile:
             spline = line.split('\t', 2)
             if len(spline) == 3:
@@ -51,20 +48,10 @@ def main():
                 elif spline[1] == 'AlgInvocationId':
                     id = spline[2].rstrip()
                     if id not in ids:
-                        print(write_algfile(id, plugin, ""), file=algfile)
+                        outfile.write(write_algfile(id, plugin, "") + '\n')
                         ids.add(id)
                     if not args.all:
-                        outfile.write(line)
                         break
-            outfile.write(line)
-        else:
-            return
-
-        # Finish writing file.
-        # For performance reasons we stop checking lines once we find
-        # the first algid.
-        for line in infile:
-            outfile.write(line)
 
 
 if __name__ == "__main__":

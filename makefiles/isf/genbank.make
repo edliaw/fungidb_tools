@@ -39,11 +39,11 @@ else
 endif
 
 GENERATE_MAP      = generate_chr_map
-SPLIT_ALGIDS      = split_algids --algfile $(ALGFILE)
+SPLIT_ALGIDS      = split_algids
 UNDO_ALGIDS       = undo_algids $(ALGFILE) 2> /dev/null
-MAKE_ALGIDS       = cat $(LOG) | $(SPLIT_ALGIDS) --all > /dev/null
+MAKE_ALGIDS       = $(SPLIT_ALGIDS) --all < $(LOG) >> $(ALGFILE)
 # ISF:
-COMMIT            = --commit 2>&1 | $(SPLIT_ALGIDS) >> $(LOG) 2>&1
+COMMIT            = --commit 2>&1 | tee -a $(LOG) | $(SPLIT_ALGIDS) >> $(ALGFILE)
 TEST              = >| error.log 2>&1
 INSERT_DB         = GUS::Supported::Plugin::InsertExternalDatabase
 INSERT_DB_OPTS   ?= --name $(DB_NAME)
