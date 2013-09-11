@@ -32,12 +32,16 @@ undo_%:
 	# Undo a step.
 	workflow $(WORKFLOW) -r -u $* &
 
+tundo_%:
+	# Undo a step.
+	workflow $(WORKFLOW) -t -u $* &
+
 reundo_%:
 	# Set an undo step to ready.
 	workflowstep $(WORKFLOW) -p $* ready -u
 
 redo_all:
-	for f in $$($(FAILED)); do
+	for f in $$(${MAKE} show_FAILED 2>/dev/null); do
 	  ${MAKE} redo_$$f
 	done
 
@@ -69,4 +73,4 @@ log_%:
 	@workflow $(WORKFLOW) -s1 $* 2>/dev/null | awk '{ print "steps/" $$0 "/step.err\nsteps/" $$0 "/step.log" }'
 
 
-.PHONY: summary start stop tail
+.PHONY: summary start stop tail redo_all redo_last err_last

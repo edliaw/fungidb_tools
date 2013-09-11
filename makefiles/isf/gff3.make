@@ -82,7 +82,7 @@ genome.gff: genome.gff3
 
 chromosomeMap.txt:
 	# Copy the chromosome map file from the fasta directory.
-	cp $(MAP_FILE) .
+	ln -fs $(MAP_FILE) $@
 
 report.txt: genome.gff
 	# View feature qualifiers for genome.gff.

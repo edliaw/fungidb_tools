@@ -3,7 +3,7 @@ TAXID         ?=
 ## Target file:
 PROVIDER_FILE ?= ../fromProvider/*.gtf
 ZIP           ?= 
-MAP_FILE      ?= ../../../*_$(SOURCE)_fasta/$(VERSION)/final/chromosomeMap.txt
+MAP_FILE      ?= ../../../$(LONG_TYPE)_$(SOURCE)_fasta/$(VERSION)/final/chromosomeMap.txt
 ## Formatting:
 TYPE          ?= 
 FORMAT_RE     ?= "_$(VERSION)\.(?:(?P<number>\d+)|(?P<roman>[XIV]+)|(?P<letter>[A-Z]))"
@@ -90,7 +90,7 @@ genome.gff: genome.gff3
 
 chromosomeMap.txt:
 	# Copy the chromosome map file from the fasta directory.
-	cp $(MAP_FILE) $@
+	ln -fs $(MAP_FILE) $@
 
 report.txt: genome.gff
 	# View feature qualifiers for genome.gff.
