@@ -1,0 +1,106 @@
+#!/usr/bin/env python2.7
+
+from __future__ import print_function
+import argparse
+import sys
+from collections import OrderedDict
+from fungidb_tools.gff.GFF3Parser import GFF3Feature
+
+
+def parse_arguments():
+    parser = argparse.ArgumentParser(description=__doc__,
+                                     fromfile_prefix_chars='@')
+    parser.add_argument('infile',
+                        type=argparse.FileType('r'), nargs='?',
+                        default=sys.stdin, help='input file')
+    parser.add_argument('outfile',
+                        type=argparse.FileType('w'), nargs='?',
+                        default=sys.stdout, help='output file')
+    return parser.parse_args()
+
+
+class MIPSParser(object):
+    def parse_file(self, infile):
+        features = OrderedDict()
+        buffer = set()
+        for i, line in enumerate(infile):
+            line = line.rstrip()
+            try:
+                feat = self.parse_feature(line)
+            except Exception as e:
+                sys.stderr.write("Failed on line %d\n" % i)
+                raise e
+
+            if feat.id is not None:
+                assert feat.id not in features
+                features[feat.id] = feat
+
+            try:
+                for f in list(buffer):
+                    for p in f.parents:
+                        features[p].children.add(f)
+                    buffer.remove(f)
+            except KeyError:
+                pass
+
+            for p in feat.parents:
+                try:
+                    features[p].children.add(feat)
+                except KeyError:
+                    buffer.add(feat)
+
+        for key, f in features.iteritems():
+            if not f.parents:
+                yield f
+
+    def parse_feature(self, line):
+        columns = line.split('\t')
+        assert len(columns) == 9, "Line does not have 9 columns: %s" % line
+
+        seqid, source, soterm, start, end, score, strand, phase, _attr = columns
+
+        id, parents, attributes = self.parse_attributes(_attr)
+
+        f = GFF3Feature.from_file(seqid, source, soterm, start, end, score,
+                                  strand, phase, id, parents, attributes)
+        return f
+
+    def parse_attributes(self, attributes):
+        attr = [a.split('=', 1) for a in attributes.split(';')]
+        attr = OrderedDict((k, v.split(',')) for k, v in attr)
+
+        # Separate id and parents
+        id = attr.pop("ID", None)
+        parents = attr.pop("Parent", None)
+
+        if id is not None:
+            id = id[0]
+
+        return id, parents, attr
+
+
+def main():
+    args = parse_arguments()
+    parser = MIPSParser()
+
+    i = 1
+
+    with args.infile as infile, args.outfile as outfile:
+        for feat in parser.parse_file(infile):
+            for child in list(feat.children):
+                child.id = "cds{:06d}".format(i)
+                exon = GFF3Feature(child.seqid, child.source, "exon",
+                                   "exon{:06d}".format(i), child.parents,
+                                   child.regions, child.children)
+                i += 1
+                feat.children.add(exon)
+            geneid = feat.id.split(':', 1)[1]
+            gene = GFF3Feature(feat.seqid, feat.source, "gene", geneid, None,
+                               feat.regions, None)
+            gene.children.add(feat)
+            feat.parents.add(geneid)
+            outfile.write(gene.format() + '\n')
+
+
+if __name__ == "__main__":
+    main()
