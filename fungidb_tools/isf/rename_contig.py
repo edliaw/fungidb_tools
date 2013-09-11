@@ -9,7 +9,7 @@ Output:
 Edward Liaw
 """
 import re
-from .roman import roman_to_int
+import roman
 
 RE_DEFAULT = (r'Chr_(?:(?P<number>\d+)|(?:P<roman>[XIV]+)|(?P<letter>[A-Z]))',)
 
@@ -40,14 +40,17 @@ class ContigRenamer(object):
             if match is not None:
                 match = match.groupdict()
                 number = match.get('number', None)
-                roman = match.get('roman', None)
+                roman_num = match.get('roman', None)
                 letter = match.get('letter', None)
                 if number is not None:
-                    contig = self._format_number(match['number'])
-                elif roman is not None:
-                    contig = match['roman']
+                    contig = self._format_number(number)
+                elif roman_num is not None:
+                    if roman_num.isdigit():
+                        contig = roman.int_to_roman(int(roman_num))
+                    else:
+                        contig = roman_num
                 elif letter is not None:
-                    contig = match['letter'].upper()
+                    contig = letter.upper()
                 else:
                     raise Exception("Regex {} doesn't contain a number, letter, or roman numeral field.".format(rx.pattern))
                 return "{}_{}{}".format(self.abbrev, so, contig)
@@ -62,7 +65,7 @@ def add_rename_args(parser):
                         type=int, default=2,
                         help='number padding adds 0s to fix the width')
     parser.add_argument('--soterm',
-                        nargs='*', choices=('Chr', 'SC'), default=('Chr',),
+                        nargs='*', choices=('Chr', 'SC', 'LG'), default=('Chr',),
                         help='SO terms (per regular expression)')
     parser.add_argument('--regex',
                         nargs='*', default=RE_DEFAULT,
