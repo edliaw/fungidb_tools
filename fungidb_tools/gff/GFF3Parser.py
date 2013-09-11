@@ -162,7 +162,7 @@ class GFF3Parser(object):
 
     def parse_feature(self, line):
         columns = line.split('\t')
-        assert len(columns) == 9, "Line does not have 9 columns."
+        assert len(columns) == 9, "Line does not have 9 columns: %s" % line
 
         seqid, source, soterm, start, end, score, strand, phase, _attr = columns
 
