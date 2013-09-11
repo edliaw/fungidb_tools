@@ -8,17 +8,24 @@ from __future__ import print_function
 import sys
 import argparse
 
-SAVE_COLS = ('LOCUS', 'NAME')
 
-
-def mark_columns(header):
-    marked = []
+def mark_tsv_columns(header, save):
     spline = header.rstrip('\n').split('\t')
-    for i, col in enumerate(spline):
-        for save in SAVE_COLS:
-            if col == save:
-                marked.append(i)
-    return marked
+    headers = {col: i for (i, col) in enumerate(spline)}
+    return [headers[s] for s in save]
+
+
+def extract_tsv_columns(infile, save):
+    for line in infile:
+        spline = line.rstrip('\n').split('\t')
+        yield '\t'.join(spline[s] for s in save)
+
+
+def parse_broad(infile):
+    columns = ['LOCUS', 'NAME']
+    save = mark_tsv_columns(next(infile), columns)
+    for line in extract_tsv_columns(infile, save):
+        yield line
 
 
 def parse_arguments():
@@ -42,13 +49,8 @@ def main():
 
     # Handle I/O.
     with args.infile as infile, args.outfile as outfile:
-        marked = mark_columns(next(infile))
-        for line in infile:
-            outstr = []
-            spline = line.rstrip('\n').split('\t')
-            for mark in marked:
-                outstr.append(spline[mark])
-            print('\t'.join(outstr), file=outfile)
+        for line in parse_broad(infile):
+            outfile.write(line + '\n')
 
 
 if __name__ == "__main__":

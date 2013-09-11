@@ -6,6 +6,7 @@ Edward Liaw
 """
 import sys
 import argparse
+from warnings import warn
 from Bio import SeqIO
 
 
@@ -19,17 +20,13 @@ def extract_products(infile):
         for feature in record.features:
             # Extract information from mRNA features.
             if feature.type == 'mRNA':
-                try:
-                    locus = feature.qualifiers['locus_tag']
-                    product = feature.qualifiers['product']
-                    if len(locus) > 1:
-                        print >> sys.stderr, "Locus has more than one element {}".format(locus)
-                    elif len(product) > 1:
-                        print >> sys.stderr, "Product has more than one element {}".format(product)
-                    yield '; '.join(locus), '; '.join(product)
-                except Exception as e:
-                    print >> sys.stderr, e
-                    sys.exit(0)
+                locus = feature.qualifiers['locus_tag']
+                product = feature.qualifiers['product']
+                if len(locus) > 1:
+                    warn("Locus has more than one element {}".format(locus))
+                elif len(product) > 1:
+                    warn("Product has more than one element {}".format(product))
+                yield '; '.join(locus), '; '.join(product)
 
 
 def parse_arguments():
@@ -54,7 +51,7 @@ def main():
     # Handle I/O.
     with args.infile as infile, args.outfile as outfile:
         for locus, product in extract_products(infile):
-            print >> outfile, '\t'.join((locus, product))
+            outfile.write('\t'.join((locus, product)) + '\n')
 
 
 if __name__ == "__main__":
