@@ -122,7 +122,30 @@ class GFF3Parser(object):
         self.fasta = fasta
         self.comments = comments
 
-    def parse_file(self, infile):
+    def parse_flat(self, infile):
+        for i, line in enumerate(infile):
+            line = line.rstrip()
+
+            if line.startswith('###'):
+                continue
+            elif line.startswith('##FASTA'):
+                if self.fasta:
+                    for f in self.parse_fasta(infile):
+                        yield f
+                break
+            elif line.startswith('##'):
+                yield self.parse_directive(line)
+            elif line.startswith('#'):
+                if self.comments:
+                    yield self.parse_comment(line)
+            else:
+                try:
+                    yield self.parse_feature(line)
+                except Exception as e:
+                    sys.stderr.write("Failed on line %d:\n%s\n" % (i, line))
+                    raise e
+
+    def parse(self, infile):
         features = OrderedDict()
         buffer = set()
 

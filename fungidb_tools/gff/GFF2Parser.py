@@ -93,7 +93,7 @@ class GFF2Parser(object):
         self.fasta = fasta
         self.comments = comments
 
-    def parse_file(self, infile):
+    def parse(self, infile):
         for i, line in enumerate(infile):
             line = line.rstrip()
             if line.startswith('##'):
