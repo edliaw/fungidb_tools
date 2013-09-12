@@ -27,7 +27,7 @@ class Directive(object):
         self.text = text
 
     def __str__(self):
-        return '##' + '\t'.join(self.name, self.text)
+        return '##' + '\t'.join((self.name, self.text))
 
 
 @total_ordering
@@ -110,6 +110,9 @@ class GFF3Feature(object):
 
         return '\n'.join(outstr)
 
+    def __str__(self):
+        return self.format()
+
     def __lt__(self, other):
         return min(self.regions) < min(other.regions)
 
@@ -121,14 +124,59 @@ class GFF3Parser(object):
 
     def parse_file(self, infile):
         features = OrderedDict()
+        buffer = set()
+
+        def return_parents():
+            if buffer:
+                sys.stdout.write("Wasn't able to find parents for:\n")
+                sys.stdout.write('\n'.join([f.format() for f in buffer]))
+                raise
+            for f in features.itervalues():
+                if not f.parents:
+                    yield f
+            features.clear()
+
+        def tier_feature(feat):
+            # Add to list of features or concatenate multi-line features as one
+            # feature.
+            try:
+                f = features[feat.id]
+            except KeyError:
+                if feat.id is not None:
+                    features[feat.id] = feat
+            else:
+                f.regions += feat.regions
+                feat = f
+
+            # Look for children in the buffer.
+            for f in list(buffer):
+                try:
+                    for p in f.parents:
+                        features[p].children.add(f)
+                except KeyError:
+                    pass
+                else:
+                    buffer.remove(f)
+
+            # Look for parents or send to the buffer.
+            for p in feat.parents:
+                try:
+                    features[p].children.add(feat)
+                except KeyError:
+                    buffer.add(feat)
+
         for i, line in enumerate(infile):
             line = line.rstrip()
+
             if line.startswith('###'):
-                yield self.tier_features(features)
+                for f in return_parents():
+                    yield f
             elif line.startswith('##FASTA'):
-                yield self.tier_features(features)
+                for f in return_parents():
+                    yield f
                 if self.fasta:
-                    yield self.parse_fasta(infile)
+                    for f in self.parse_fasta(infile):
+                        yield f
                 break
             elif line.startswith('##'):
                 yield self.parse_directive(line)
@@ -139,17 +187,13 @@ class GFF3Parser(object):
                 try:
                     feat = self.parse_feature(line)
                 except Exception as e:
-                    sys.stderr.write("Failed on line %d\n" % i)
+                    sys.stderr.write("Failed on line %d:\n%s\n" % (i, line))
                     raise e
-
-                try:
-                    f = features[feat.id]
-                except KeyError:
-                    features[feat.id] = feat
                 else:
-                    f.regions += feat.regions
+                    tier_feature(feat)
         else:
-            yield self.tier_features(features)
+            for f in return_parents():
+                yield f
 
     def parse_directive(self, line):
         line = line.lstrip('#')
@@ -162,7 +206,7 @@ class GFF3Parser(object):
 
     def parse_feature(self, line):
         columns = line.split('\t')
-        assert len(columns) == 9, "Line does not have 9 columns: %s" % line
+        assert len(columns) == 9, "Line does not have 9 columns:\n%s" % line
 
         seqid, source, soterm, start, end, score, strand, phase, _attr = columns
 
@@ -180,27 +224,15 @@ class GFF3Parser(object):
         _id = attr.pop("ID", None)
         parents = attr.pop("Parent", None)
 
-        assert _id is not None, "Feature missing ID"
-        assert len(_id) == 1, "Illegal character ',' in ID"
-        id = _id[0]
+        if _id is not None:
+            assert len(_id) == 1, "Illegal character ',' in ID"
+            id = _id[0]
+        else:
+            assert parents is not None, "No ID or Parents attribute"
+            id = None
 
         return id, parents, attr
 
     def parse_fasta(self, infile):
         from Bio import SeqIO
         return SeqIO.parse(infile)
-
-    def tier_features(self, features):
-        """Follows parent attribute to link parents to children.
-        Returns a dict of only parents.
-        Has side-effect of clearing the dict of features.
-        """
-        tiered_features = OrderedDict()
-        for id, f in features.iteritems():
-            if f.parents:
-                for p in f.parents:
-                    features[p].children.add(f)
-            else:
-                tiered_features[id] = f
-        features.clear()
-        return tiered_features
