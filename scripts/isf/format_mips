@@ -22,19 +22,20 @@ def main():
     args = parse_arguments()
     parser = gp.GFF3Parser()
 
-    i = 1
+    cds_id = 1
 
     with args.infile as infile, args.outfile as outfile:
-        for feat in parser.parse_file(infile):
+        for feat in parser.parse(infile):
             if not isinstance(feat, gp.GFF3Feature):
                 outfile.write(str(feat) + '\n')
                 continue
             for child in list(feat.children):
-                child.id = "cds{:06d}".format(i)
+                child.id = "cds{:06d}".format(cds_id)
                 exon = gp.GFF3Feature(child.seqid, child.source, "exon",
-                                      "exon{:06d}".format(i), child.parents,
-                                      child.regions, child.children)
-                i += 1
+                                      "exon{:06d}".format(cds_id),
+                                      child.parents, child.regions,
+                                      child.children)
+                cds_id += 1
                 feat.children.add(exon)
             geneid = feat.id.split(':', 1)[1]
             gene = gp.GFF3Feature(feat.seqid, feat.source, "gene", geneid, None,
