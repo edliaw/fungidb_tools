@@ -1,0 +1,46 @@
+#!/usr/bin/env python2.7
+"""Extract aliases from the "aliases" field in a gff3 file."""
+
+from __future__ import print_function
+from fungidb_tools.gff import GFF3Parser as gp
+import argparse
+import sys
+import urllib2
+
+
+def parse_arguments():
+    parser = argparse.ArgumentParser(description=__doc__,
+                                     fromfile_prefix_chars='@')
+    parser.add_argument('infile',
+                        type=argparse.FileType('r'), nargs='?',
+                        default=sys.stdin, help='input file')
+    parser.add_argument('outfile',
+                        type=argparse.FileType('w'), nargs='?',
+                        default=sys.stdout, help='output file')
+    parser.add_argument('-a', '--attributes',
+                        nargs='*', default=['Alias'])
+    return parser.parse_args()
+
+
+def main():
+    args = parse_arguments()
+    with args.infile as infile, args.outfile as outfile:
+        for feat in gp.GFF3Parser().parse_flat(infile):
+            if not isinstance(feat, gp.GFF3Feature):
+                continue
+            elif feat.id is None or feat.parents:
+                continue
+            a = feat.regions[0].attributes
+            aliases = []
+            for tag in args.attributes:
+                try:
+                    aliases += a[tag]
+                except KeyError:
+                    pass
+            if aliases:
+                id = urllib2.unquote(feat.id)
+                aliases = ','.join([urllib2.unquote(a) for a in aliases])
+                print("\t".join((id, aliases)), file=outfile)
+
+if __name__ == "__main__":
+    main()

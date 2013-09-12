@@ -25,6 +25,7 @@ setup(name='fungidb_tools',
           'scripts/isf/generate_chr_map',
           'scripts/isf/split_algids',
           'scripts/isf/undo_algids',
+          'scripts/isf/extract_aliases',
       ],
       install_requires=[
           'biopython',
