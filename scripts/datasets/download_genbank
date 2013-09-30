@@ -1,0 +1,61 @@
+#!/usr/bin/env python2.7
+
+from __future__ import print_function
+import argparse
+import sys
+import os
+import gzip
+from fungidb_tools import simple_eutils as eutils
+from Bio import Entrez, SeqIO
+
+
+def parse_arguments():
+    """Handle command-line arguments."""
+    parser = argparse.ArgumentParser(description=__doc__,
+                                     fromfile_prefix_chars='@')
+    parser.add_argument('idlist',
+                        nargs='+', help='search term')
+    parser.add_argument('--db',
+                        default='bioproject',
+                        help='target database')
+    parser.add_argument('-o', '--outdir',
+                        default='.', help='output directory')
+    parser.add_argument('--batch',
+                        type=int, default=3, help='download batch size')
+    return parser.parse_args()
+
+
+def main():
+    args = parse_arguments()
+    if args.db not in ('nucleotide', 'nuccore'):
+        webenv, query_key = eutils.webenv_link('nucleotide', args.db,
+                                               args.idlist)
+        webenv, query_key, count = eutils.webenv_search('nucleotide',
+                                                        webenv=webenv,
+                                                        query_key=query_key)
+    else:
+        id_list = args.idlist
+        webenv, query_key, count = eutils.webenv_search('nucleotide',
+                                                        term=id_list)
+
+    downloaded = 0
+    for start in xrange(0, count, args.batch):
+        handle = Entrez.efetch(db='nucleotide', rettype='gbwithparts',
+                               retmode='text', retstart=start,
+                               retmax=args.batch, webenv=webenv,
+                               query_key=query_key)
+        for record in SeqIO.parse(handle, 'gb'):
+            acc = record.name
+            fn = os.path.join(args.outdir, acc + ".gbk.gz")
+            print("Downloading {}...".format(fn))
+            with gzip.open(fn, 'wb') as outfile:
+                SeqIO.write(record, outfile, 'gb')
+                downloaded += 1
+
+        handle.close()
+
+
+if __name__ == "__main__":
+    exit = main()
+    if exit:
+        sys.exit(exit)
