@@ -18,10 +18,17 @@ def extract_products(infile):
     """
     for record in SeqIO.parse(infile, 'genbank'):
         for feature in record.features:
-            # Extract information from mRNA features.
-            if feature.type == 'mRNA':
-                locus = feature.qualifiers['locus_tag']
-                product = feature.qualifiers['product']
+            # Extract information from features.
+            if feature.type.endswith('RNA'):
+                try:
+                    locus = feature.qualifiers['locus_tag']
+                except:
+                    continue
+                try:
+                    product = feature.qualifiers['product']
+                except:
+                    warn("%s missing product" % locus)
+                    continue
                 if len(locus) > 1:
                     warn("Locus has more than one element {}".format(locus))
                 elif len(product) > 1:
