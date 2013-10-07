@@ -41,8 +41,8 @@ reundo_%:
 	workflowstep $(WORKFLOW) -p $* ready -u
 
 redo_all:
-	for f in $$(${MAKE} show_FAILED 2>/dev/null); do
-	  ${MAKE} redo_$$f
+	@for f in $$(${FAILED}); do \
+	  ${MAKE} redo_$$f; \
 	done
 
 redo_last:
