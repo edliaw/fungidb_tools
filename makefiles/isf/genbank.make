@@ -26,8 +26,6 @@ LOG           ?= isf.log
 # Derived:
 ifeq ($(LONG_TYPE),chromosome)
   TYPE        ?= Chr
-  CHR_MAP      = chromosomeMap.txt
-  CHR_MAP_OPT  = --chromosomeMapFile $(CHR_MAP)
 else ifeq ($(LONG_TYPE),supercontig)
   TYPE        ?= SC
 endif
@@ -50,7 +48,7 @@ INSERT_DB_OPTS   ?= --name $(DB_NAME)
 INSERT_RL         = GUS::Supported::Plugin::InsertExternalDatabaseRls
 INSERT_RL_OPTS   ?= --databaseName $(DB_NAME) --databaseVersion $(VERSION)
 INSERT_FEAT       = GUS::Supported::Plugin::InsertSequenceFeatures
-INSERT_FEAT_OPTS ?= --extDbName $(DB_NAME) --extDbRlsVer $(VERSION) --mapFile $(XML_MAP) --fileFormat genbank --soCvsVersion 1.417 --organism $(TAXID) --seqSoTerm $(LONG_TYPE) --seqIdColumn source_id $(CHR_MAP_OPT) --inputFileOrDir $< --validationLog val.log --bioperlTreeOutput bioperlTree.out
+INSERT_FEAT_OPTS ?= --extDbName $(DB_NAME) --extDbRlsVer $(VERSION) --mapFile $(XML_MAP) --fileFormat genbank --soCvsVersion 1.417 --organism $(TAXID) --seqSoTerm $(LONG_TYPE) --seqIdColumn source_id --chromosomeMapFile chromosomeMap.txt --inputFileOrDir $< --validationLog val.log --bioperlTreeOutput bioperlTree.out
 # Undo:
 UNDO              = GUS::Community::Plugin::Undo
 UNDO_FEAT         = GUS::Supported::Plugin::InsertSequenceFeaturesUndo
@@ -59,7 +57,7 @@ UNDO_ALGID        = $(firstword $(UNDO_STR))
 UNDO_PLUGIN       = $(lastword $(UNDO_STR))
 
 
-files: report.txt $(CHR_MAP)
+files: report.txt chromosomeMap.txt
 
 all: isf
 	${MAKE} link
@@ -84,7 +82,7 @@ report.txt: genome.gbf
 	# View feature qualifiers for genome.gbk.
 	reportFeatureQualifiers --format genbank --file_or_dir $< >| $@
 
-link: genome.gbf $(CHR_MAP)
+link: genome.gbf chromosomeMap.txt
 	# Link files to the final directory.
 	mkdir -p ../final
 	-cd ../final && \
@@ -108,10 +106,10 @@ insv:
 	# Add version to table.
 	ga $(INSERT_RL) $(INSERT_RL_OPTS)
 
-insf-c: genome.gbf $(CHR_MAP)
+insf-c: genome.gbf chromosomeMap.txt
 	ga $(INSERT_FEAT) $(INSERT_FEAT_OPTS) $(COMMIT)
 
-insf: genome.gbf $(CHR_MAP)
+insf: genome.gbf chromosomeMap.txt
 	# Insert features and sequences.
 	ga $(INSERT_FEAT) $(INSERT_FEAT_OPTS) $(TEST)
 
