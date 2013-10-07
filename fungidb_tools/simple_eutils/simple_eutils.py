@@ -31,8 +31,6 @@ import sys
 import time
 from decorator import decorator
 from Bio import Entrez
-from collections import Iterable
-from types import StringTypes
 
 try:
     from lxml import etree
@@ -115,7 +113,8 @@ def webenv_search(db, term=None, field=None, webenv=None, query_key=None):
     Args:
         db: database to query
         -- and --
-        id: string or list of ids
+        term: query
+        field: type of query
         -- or --
         webenv: session history keys
         query_key
@@ -179,7 +178,8 @@ def idlist_search(db, term=None, field=None, webenv=None, query_key=None,
     Args:
         db: database to query
         -- and --
-        id: string or list of ids
+        term: query
+        field: type of query
         -- or --
         webenv: session history keys
         query_key
