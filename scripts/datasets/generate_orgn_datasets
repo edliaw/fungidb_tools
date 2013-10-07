@@ -207,6 +207,7 @@ def genome_dataset(ds, file_format, mito=False):
         datasets.make_prop(d, "soTerm", "$$soTerm$$")
         datasets.make_prop(d, "table", "DoTS::ExternalNASequence")
         datasets.make_prop(d, "sourceIdRegex", "^>(\S+)")
+        datasets.make_prop(d, "releaseDate", "")
         # Genome features
         d = datasets.make_dataset(ds, "NoPreprocess_primary_genome_features")
         datasets.make_prop(d, "projectName", "$$projectName$$")

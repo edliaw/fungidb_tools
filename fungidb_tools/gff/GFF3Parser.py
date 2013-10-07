@@ -251,7 +251,7 @@ class GFF3Parser(object):
             assert len(_id) == 1, "Illegal character ',' in ID"
             id = _id[0]
         else:
-            assert parents is not None, "No ID or Parents attribute"
+            #assert parents is not None, "No ID or Parents attribute"
             id = None
 
         return id, parents, attr

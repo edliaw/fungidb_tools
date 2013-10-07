@@ -31,8 +31,6 @@ LOG           ?= isf.log
 # Derived:
 ifeq ($(LONG_TYPE),chromosome)
   TYPE        ?= Chr
-  CHR_MAP      = chromosomeMap.txt
-  CHR_MAP_OPT  = --chromosomeMapFile $(CHR_MAP)
 else ifeq ($(LONG_TYPE),supercontig)
   TYPE        ?= SC
 endif
@@ -57,7 +55,7 @@ MAKE_ALGIDS       = $(SPLIT_ALGIDS) --all < $(LOG) >> $(ALGFILE)
 COMMIT            = --commit 2>&1 | tee -a $(LOG) | $(SPLIT_ALGIDS) >> $(ALGFILE)
 TEST              = >| error.log 2>&1
 INSERT_FEAT       = GUS::Supported::Plugin::InsertSequenceFeatures
-INSERT_FEAT_OPTS ?= --extDbName $(DB_NAME) --extDbRlsVer $(VERSION) --mapFile $(XML_MAP) --inputFileExtension gff --fileFormat gff3 --soCvsVersion 1.417 --organism $(TAXID) --seqSoTerm $(LONG_TYPE) --seqIdColumn source_id --naSequenceSubclass ExternalNASequence $(CHR_MAP_OPT) --inputFileOrDir $< --validationLog val.log --bioperlTreeOutput bioperlTree.out
+INSERT_FEAT_OPTS ?= --extDbName $(DB_NAME) --extDbRlsVer $(VERSION) --mapFile $(XML_MAP) --inputFileExtension gff --fileFormat gff3 --soCvsVersion 1.417 --organism $(TAXID) --seqSoTerm $(LONG_TYPE) --seqIdColumn source_id --naSequenceSubclass ExternalNASequence --chromosomeMapFile chromosomeMap.txt --inputFileOrDir $< --validationLog val.log --bioperlTreeOutput bioperlTree.out
 # Undo:
 UNDO              = GUS::Supported::Plugin::InsertSequenceFeaturesUndo
 UNDO_STR          = $(shell $(UNDO_ALGIDS))
@@ -65,7 +63,7 @@ UNDO_ALGID        = $(firstword $(UNDO_STR))
 UNDO_PLUGIN       = $(lastword $(UNDO_STR))
 
 
-files: report.txt $(CHR_MAP)
+files: report.txt chromosomeMap.txt
 
 all: isf
 	${MAKE} link
@@ -73,7 +71,7 @@ all: isf
 isf: insf-c
 
 clean:
-	-rm genome.* report.txt $(CHR_MAP)
+	-rm genome.* report.txt chromosomeMap.txt
 
 genome.gtf:
 	# Copy provider file and reformat names
@@ -96,7 +94,7 @@ report.txt: genome.gff
 	# View feature qualifiers for genome.gff.
 	reportFeatureQualifiers --format gff3 --file_or_dir $< >| $@
 
-link: genome.gff $(CHR_MAP)
+link: genome.gff chromosomeMap.txt
 	# Link files to the final directory.
 	mkdir -p ../final
 	-cd ../final && \
@@ -104,10 +102,10 @@ link: genome.gff $(CHR_MAP)
 	  ln -fs ../workspace/$${file}; \
 	done
 
-insf-c: genome.gff $(CHR_MAP)
+insf-c: genome.gff chromosomeMap.txt
 	ga $(INSERT_FEAT) $(INSERT_FEAT_OPTS) $(COMMIT)
 
-insf: genome.gff $(CHR_MAP)algid 
+insf: genome.gff chromosomeMap.txt
 	# Run ISF to insert features.
 	ga $(INSERT_FEAT) $(INSERT_FEAT_OPTS) $(TEST)
 

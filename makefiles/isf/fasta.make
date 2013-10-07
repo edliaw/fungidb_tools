@@ -28,8 +28,6 @@ LOG           ?= isf.log
 # Derived:
 ifeq ($(LONG_TYPE),chromosome)
   TYPE        ?= Chr
-  CHR_MAP      = chromosomeMap.txt
-  CHR_MAP_OPT  = --chromosomeMapFile $(CHR_MAP)
 else ifeq ($(LONG_TYPE),supercontig)
   TYPE        ?= SC
 endif
@@ -53,7 +51,7 @@ INSERT_DB_OPTS   ?= --name $(DB_NAME)
 INSERT_RL         = GUS::Supported::Plugin::InsertExternalDatabaseRls
 INSERT_RL_OPTS   ?= --databaseName $(DB_NAME) --databaseVersion $(VERSION)
 LOAD_SEQS         = GUS::Supported::Plugin::LoadFastaSequences
-LOAD_SEQS_OPTS   ?= --externalDatabaseName $(DB_NAME) --ncbiTaxId $(TAXID) --externalDatabaseVersion $(VERSION) --SOTermName $(LONG_TYPE) --regexSourceId '>(\S+)' --tableName DoTS::ExternalNASequence --debug $(CHR_MAP_OPT) --sequenceFile $<
+LOAD_SEQS_OPTS   ?= --externalDatabaseName $(DB_NAME) --ncbiTaxId $(TAXID) --externalDatabaseVersion $(VERSION) --SOTermName $(LONG_TYPE) --regexSourceId '>(\S+)' --tableName DoTS::ExternalNASequence --debug --chromosomeMapFile chromosomeMap.txt --sequenceFile $<
 # Undo:
 UNDO              = GUS::Community::Plugin::Undo
 UNDO_STR          = $(shell $(UNDO_ALGIDS))
@@ -61,7 +59,7 @@ UNDO_ALGID        = $(firstword $(UNDO_STR))
 UNDO_PLUGIN       = $(lastword $(UNDO_STR))
 
 
-files: genome.fasta $(CHR_MAP)
+files: genome.fasta chromosomeMap.txt
 
 all: isf
 	${MAKE} link
@@ -72,7 +70,7 @@ isf:
 	${MAKE} load-c
 
 clean:
-	-rm genome.* $(CHR_MAP)
+	-rm genome.* chromosomeMap.txt
 
 genome.fasta:
 	# Copy provider file and reformat headers
@@ -80,9 +78,13 @@ genome.fasta:
 
 chromosomeMap.txt: genome.fasta
 	# Generate chromosome map file.
+ifeq ($(LONG_TYPE),chromosome)
 	$(GENERATE_MAP) $< >| $@
+else
+	touch $@
+endif
 
-link: genome.fasta $(CHR_MAP)
+link: genome.fasta chromosomeMap.txt
 	# Link files to the final directory.
 	mkdir -p ../final
 	-cd ../final && \
@@ -106,10 +108,10 @@ insv:
 	# Add version to table.
 	ga $(INSERT_RL) $(INSERT_RL_OPTS)
 
-load-c: genome.fasta $(CHR_MAP)
+load-c: genome.fasta chromosomeMap.txt
 	ga $(LOAD_SEQS) $(LOAD_SEQS_OPTS) $(COMMIT)
 
-load: genome.fasta $(CHR_MAP)
+load: genome.fasta chromosomeMap.txt
 	# Load data into table.
 	ga $(LOAD_SEQS) $(LOAD_SEQS_OPTS) $(TEST)
 

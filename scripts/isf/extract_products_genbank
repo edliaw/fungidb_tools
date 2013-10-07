@@ -10,7 +10,7 @@ from warnings import warn
 from Bio import SeqIO
 
 
-def extract_products(infile):
+def extract_products(infile, qualifiers):
     """Extract product names.
 
     Args:
@@ -24,16 +24,22 @@ def extract_products(infile):
                     locus = feature.qualifiers['locus_tag']
                 except:
                     continue
-                try:
-                    product = feature.qualifiers['product']
-                except:
+                products = set()
+                for q in qualifiers:
+                    try:
+                        f = feature.qualifiers[q]
+                    except KeyError:
+                        continue
+                    products |= set(qual for qual in f
+                                    if qual not in locus)
+                if not products:
                     warn("%s missing product" % locus)
                     continue
                 if len(locus) > 1:
                     warn("Locus has more than one element {}".format(locus))
-                elif len(product) > 1:
-                    warn("Product has more than one element {}".format(product))
-                yield '; '.join(locus), '; '.join(product)
+                elif len(products) > 1:
+                    warn("Product has more than one element {}".format(products))
+                yield ','.join(locus), ','.join(products)
 
 
 def parse_arguments():
@@ -49,6 +55,9 @@ def parse_arguments():
     parser.add_argument('outfile',
                         type=argparse.FileType('w'), nargs='?',
                         default=sys.stdout, help='output file')
+    parser.add_argument('-q', '--qualifiers',
+                        nargs='*', default=['product'],
+                        help='feature qualifiers to extract')
     return parser.parse_args()
 
 
@@ -57,7 +66,7 @@ def main():
 
     # Handle I/O.
     with args.infile as infile, args.outfile as outfile:
-        for locus, product in extract_products(infile):
+        for locus, product in extract_products(infile, args.qualifiers):
             outfile.write('\t'.join((locus, product)) + '\n')
 
 

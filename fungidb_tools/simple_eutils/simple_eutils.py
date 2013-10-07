@@ -92,7 +92,7 @@ def webenv_post(db, id):
     Returns:
         Webenv and query key to access the session history.
     """
-    if type(id) == list:
+    if isinstance(id, list):
         # Accepts a list or comma-separated string.
         id = ','.join(id)
 
@@ -159,6 +159,8 @@ def webenv_link(db, dbfrom, id=None, webenv=None, query_key=None,
                                    webenv=webenv, query_key=query_key,
                                    linkname=linkname, cmd='neighbor_history')
     else:
+        if isinstance(id, list):
+            id = ','.join(id)
         link_handle = Entrez.elink(db=db, dbfrom=dbfrom, id=id,
                                    linkname=linkname, cmd='neighbor_history')
     et = etree.parse(link_handle)
@@ -229,6 +231,8 @@ def idlist_link(db, dbfrom, id=None, webenv=None, query_key=None, linkname=None)
         link_handle = Entrez.elink(db=db, dbfrom=dbfrom, linkname=linkname,
                                    webenv=webenv, query_key=query_key)
     else:
+        if isinstance(id, list):
+            id = ','.join(id)
         link_handle = Entrez.elink(db=db, dbfrom=dbfrom, id=id,
                                    linkname=linkname)
 
@@ -257,6 +261,8 @@ def etree_summary(db, id=None, webenv=None, query_key=None, out=None):
         summary_handle = Entrez.esummary(db=db, webenv=webenv,
                                          query_key=query_key)
     else:
+        if isinstance(id, list):
+            id = ','.join(id)
         summary_handle = Entrez.esummary(db=db, id=id)
 
     et = etree.parse(summary_handle)
@@ -285,6 +291,8 @@ def etree_fetch(db, id=None, webenv=None, query_key=None, out=None):
     if id is None:
         fetch_handle = Entrez.efetch(db=db, webenv=webenv, query_key=query_key)
     else:
+        if isinstance(id, list):
+            id = ','.join(id)
         fetch_handle = Entrez.efetch(db=db, id=id)
 
     et = etree.parse(fetch_handle)
