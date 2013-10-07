@@ -7,8 +7,11 @@ import subprocess
 import os
 
 
+aspera_dir = os.getenv('ASPERA_HOME', '~/.aspera/connect')
+
+
 class Aspera(object):
-    def __init__(self, base_dir="~/.aspera/connect",
+    def __init__(self, base_dir=aspera_dir,
                  opts=('-k', '1', '-l', '300M', '-QTr')):
         base_dir = os.path.expanduser(base_dir)
         dsa = os.path.join(base_dir, "etc/asperaweb_id_dsa.putty")

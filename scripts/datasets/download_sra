@@ -12,7 +12,7 @@ from warnings import warn
 from fungidb_tools.aspera import Aspera
 from fungidb_tools import simple_eutils as eutils
 
-NCBI_FTP = "anonftp@ftp-private.ncbi.nlm.nih.gov:"
+NCBI_FTP = "anonftp@ftp-trace.ncbi.nlm.nih.gov:"
 SRA_FTP_DIR = "sra/sra-instant/reads"
 SRA_FOLDER = {
     "SRP": "ByStudy",
@@ -79,7 +79,7 @@ def sra_ftp_address(term):
     prefix1 = term[:3]
     prefix2 = term[:6]
     try:
-        link = os.path.join(SRA_FTP_DIR, SRA_FOLDER[prefix1], 'litesra', prefix1, prefix2, term)
+        link = os.path.join(SRA_FTP_DIR, SRA_FOLDER[prefix1], 'sra', prefix1, prefix2, term)
     except KeyError:
         raise KeyError("Invalid SRA prefix: {}! Valid choices are {}.".format(prefix1, SRA_FOLDER.keys()))
 
@@ -96,7 +96,7 @@ def main():
             print(id, results, sep='\t')
             srp_set.add(results['srp'])
         for srp in srp_set:
-            ascp.fetch(srp, args.outdir)
+            ascp.fetch(sra_ftp_address(srp), args.outdir)
 
 
 if __name__ == "__main__":
