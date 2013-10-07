@@ -7,7 +7,7 @@ Edward Liaw
 from __future__ import print_function
 import sys
 import argparse
-import warnings
+from warnings import warn
 
 ID_COL = 'transcriptId'
 SAVE_COLS = ('kogdefline',)
@@ -27,6 +27,7 @@ def parse_arguments():
                         type=argparse.FileType('w'), nargs='?',
                         default=sys.stdout, help='output file')
     parser.add_argument('-i', '--id',
+                        default=ID_COL,
                         help='header of the id column')
     parser.add_argument('-p', '--prefix',
                         help='id prefix')
@@ -63,7 +64,7 @@ def main():
             if args.prefix:
                 id = '_'.join((args.prefix, id))
             if prev_id == id:
-                warnings.warn('Non-unique key: {}'.format(id))
+                warn('Non-unique key: {}'.format(id))
             prev_id = id
 
             print('\t'.join((id, outstr)), file=outfile)
