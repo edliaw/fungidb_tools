@@ -3,6 +3,7 @@
 from __future__ import print_function
 import argparse
 from lxml import etree
+from warnings import warn
 from fungidb_tools.simple_gdata import SimpleGData
 from fungidb_tools import simple_eutils as eutils
 from fungidb_tools import datasets
@@ -30,6 +31,90 @@ def parse_arguments():
     return parser.parse_args()
 
 
+def get_targets(feed):
+    targets = {}
+    for row in feed.entry:
+        taxid = row.custom['strainncbitaxid'].text
+        if taxid:
+            targets[taxid] = row
+    return targets
+
+
+def check_before_update(row, column, value):
+    curr_value = row.custom[column].text
+    update = (curr_value != value)
+    if update:
+        warn("Changing %s: from %s to %s" % (column, curr_value, value))
+        row.custom[column].text = value
+    return update
+
+
+def update_taxonomy(sheet, targets, args):
+    ranks = {'family': ('family', 'suborder', 'order', 'genus'),
+             'species': ('species',)}
+
+    def get_rank(rank, taxon):
+        taxid = taxon.find('TaxId').text
+
+        for r in ranks[rank]:
+            parent_taxon = taxon.find('LineageEx/Taxon[Rank="%s"]' % r)
+            if parent_taxon is not None:
+                break
+        else:
+            warn("%s missing for: %s" % (rank, taxid))
+            raise
+        parent_taxid = parent_taxon.find('TaxId').text
+        parent_name = parent_taxon.find('ScientificName').text
+        return parent_taxid, parent_name
+
+    if args.input:
+        taxa = etree.parse(args.input)
+    else:
+        taxa = eutils.etree_fetch('taxonomy', id=targets.keys(), out=args.dump)
+
+    for taxid, row in targets.iteritems():
+        t = taxa.find('Taxon[TaxId="%s"]' % taxid)
+        if t is None:
+            raise Exception(taxid)
+
+        try:
+            fam_taxid, fam_name = get_rank('family', t)
+        except Exception:
+            continue
+        update = check_before_update(row, 'familyncbitaxid', fam_taxid)
+        update = check_before_update(row, 'family', fam_name) or update
+
+        try:
+            species_taxid, species_name = get_rank('species', t)
+        except Exception:
+            species_taxid = t.find('TaxId').text
+            species_name = t.find('ScientificName').text
+
+        parent_taxid = t.find('ParentTaxId').text
+        if species_taxid not in (parent_taxid, taxid):
+            warn("Parent taxid doesn't match: %s / %s" % (parent_taxid, species_taxid))
+            if args.commit and update:
+                sheet.update_row(row)
+            continue
+
+        update = check_before_update(row, 'speciesncbitaxid', species_taxid) or update
+        update = check_before_update(row, 'species', species_name) or update
+
+        if args.commit and update:
+            sheet.update_row(row)
+
+
+def update_ortho(sheet, targets, args):
+    with etree.parse(open(args.input)) as ds:
+        for d in ds.findall('dataset[@class="organism"]'):
+            taxid = d.find('prop[@name="ncbiTaxonId"]').text
+            ortho = d.find('prop[@name="orthomclAbbrev"]').text
+            row = targets[taxid]
+            row.custom["orthomclname"].text = ortho
+            if args.commit:
+                sheet.update_row(row)
+
+
 def main():
     args = parse_arguments()
 
@@ -37,37 +122,10 @@ def main():
     sheet.select_document(datasets.defaults['gdoc'])
     sheet.select_worksheet(datasets.defaults['gsheet'])
     feed = sheet.get_list_feed()
-    targets = []
-    taxids = []
-    for row in feed.entry:
-        taxid = row.custom['speciesncbitaxid'].text
-        if taxid is not None:
-            targets.append(row)
-            taxids.append(taxid)
 
-    if args.input:
-        taxa = etree.parse(args.input)
-    else:
-        taxa = eutils.etree_fetch('taxonomy', id=taxids, out=args.dump)
+    targets = get_targets(feed)
 
-    for row, taxid in zip(targets, taxids):
-        t = taxa.find('Taxon[TaxId="%s"]' % taxid)
-        if t is None:
-            raise Exception(taxid)
-        fam_taxon = None
-        for rank in ('family', 'suborder', 'order', 'genus'):
-            fam_taxon = t.find('LineageEx/Taxon[Rank="%s"]' % rank)
-            if fam_taxon is not None:
-                break
-        else:
-            raise Exception(taxid)
-        fam_taxid = fam_taxon.find('TaxId').text
-        fam_name = fam_taxon.find('ScientificName').text
-        print(fam_taxid, fam_name)
-        row.custom['familyncbitaxid'].text = fam_taxid
-        row.custom['family'].text = fam_name
-        if args.commit:
-            sheet.update_row(row)
+    update_taxonomy(sheet, targets, args)
 
 
 if __name__ == "__main__":
