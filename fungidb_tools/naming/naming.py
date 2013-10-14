@@ -31,7 +31,7 @@ class OrthoAbbrev(object):
         else:
             abbrevs = self.abbrevs.values()
 
-            long_name = genus[0] + species + strain
+            long_name = genus[0] + species + abbrev_strain(strain)
             long_name = RE_NON_ALPHA.sub("", long_name).lower()
 
             length = 4
@@ -154,6 +154,19 @@ def split_taxname(taxname):
         warn("Organism %s does not have a strain." % taxname)
 
     return genus, species, strain
+
+
+def split_species(species):
+    """Split long species name into 2-tuple of species name and varietas/forma
+    (infraspecific).
+
+    >>> split_species('circinelloides f. lusitanicus')
+    ('circinelloides', 'f. lusitanicus')
+    """
+    split = species.split(" ")
+    species = " ".join(split[:1])
+    infra = " ".join(split[1:])
+    return species, infra
 
 
 if __name__ == "__main__":
