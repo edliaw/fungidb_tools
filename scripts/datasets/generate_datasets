@@ -3,12 +3,10 @@
 from __future__ import print_function
 import argparse
 import json
-from warnings import warn
+import warnings
 from lxml import etree
-from fungidb_tools import naming
 from fungidb_tools import datasets
 from fungidb_tools.simple_gdata import SimpleGData
-from fungidb_tools.xml import indent
 
 
 def parse_arguments():
@@ -19,12 +17,15 @@ def parse_arguments():
     """
     parser = argparse.ArgumentParser(description=__doc__,
                                      fromfile_prefix_chars='@')
+    parser.add_argument('--orgdir',
+                        default=datasets.DEFAULT.DATASETS,
+                        help='organism datasets directory')
+    parser.add_argument('--fungifile',
+                        default=datasets.DEFAULT.XML,
+                        help='fungidb datasets file')
     parser.add_argument('--jsonfile',
-                        default=datasets.defaults['json'],
+                        default=datasets.DEFAULT.JSON,
                         help='jsonized spreadsheet')
-    parser.add_argument('--xmlfile',
-                        default=datasets.defaults['xml'],
-                        help='xml datasets file')
     parser.add_argument('-d', '--debug',
                         action='store_true',
                         help='check spreadsheet for errors')
@@ -37,143 +38,34 @@ def parse_arguments():
     return parser.parse_args()
 
 
-def make_datasets_xml(organisms, ortho_gen, orthomcl_version, debug=False):
-    """Make a datasets xml file for a set of organisms.
+def custom_formatwarning(msg, cat, fn, line, *a):
+    return "{:s}:{:d}:  {:s}\n".format(fn, line, msg)
 
-    Args:
-        organisms: pulled in as a JSON object from the FungiDB spreadsheet.
-    """
-    organisms = [o for o in organisms if datasets.ds_to_bool(datasets.get_row(o, 'isloaded'))]
-    species_reps, family_reps = datasets.extract_reps(organisms, debug)
-
-    ds = etree.Element("datasets")
-    datasets.make_constant(ds, "projectName", "FungiDB")
-
-    for o in organisms:
-        # Check spreadsheet values against our naming scheme.
-        taxname = datasets.get_row(o, 'fullname')
-        genus, species, strain = naming.split_taxname(taxname)
-        genus_species = datasets.get_row(o, 'species')
-        o_strain = datasets.get_row(o, 'strain')
-        if strain:
-            # Check that strain in full NCBI name matches spreadsheet.
-            if debug and strain != o_strain:
-                raise datasets.InvalidFormatException("{} strain does not match {} in spreadsheet.".format(strain, o_strain))
-        else:
-            # NCBI name doesn"t have a strain name: set it to the spreadsheet
-            # value.
-            strain = o_strain
-        abbrev = naming.abbrev_dbname(genus, species, strain)
-        filename = naming.filename(genus, species, strain)
-        strain_abbrev = abbrev[4:]
-
-        # Check that our spreadsheet values are consistent.
-        o_abbrev = datasets.get_row(o, 'abbrev')
-        if debug and abbrev != o_abbrev:
-            raise datasets.InvalidFormatException("{} abbreviation does not match {} in spreadsheet.".format(abbrev, o_abbrev))
-        if debug and " ".join((genus, species)) != genus_species:
-            raise datasets.InvalidFormatException("{} species name does not match {} in spreadsheet.".format(" ".join((genus, species)), genus_species))
-
-        # Representative species and family.
-        is_species_rep = (datasets.get_row(o, 'isrefstrain') == "Yes")
-        is_family_rep = (datasets.get_row(o, 'isfamrep') == "Yes")
-        species_rep = species_reps[naming.short_species(taxname)]
-        family_name = datasets.get_row(o, 'family')
-        family_rep, family_rep_taxid = family_reps[family_name]
-        if debug and is_species_rep != (species_rep == abbrev):
-            raise datasets.InvalidFormatException("{} reference strain incorrect for {}".format(species_rep, abbrev))
-        if debug and is_family_rep != (family_rep == abbrev):
-            raise datasets.InvalidFormatException("{} family representative incorrect for {}".format(family_rep, abbrev))
-        if not is_family_rep:
-            # The family name and taxid are blank for non-representative
-            # species.
-            family_name = ""
-            family_rep_taxid = ""
-
-        # Write fields into the xml file.
-        d = datasets.make_dataset(ds, "organism")
-        datasets.make_prop(d, "projectName", "$$projectName$$")
-        datasets.make_prop(d, "organismFullName", taxname)
-        datasets.make_prop(d, "ncbiTaxonId", datasets.get_row(o, 'taxid'))
-        datasets.make_prop(d, "speciesNcbiTaxonId", datasets.get_row(o, 'speciestaxid'))
-        datasets.make_prop(d, "organismAbbrev", abbrev)
-        datasets.make_prop(d, "publicOrganismAbbrev", abbrev)
-        datasets.make_prop(d, "organismNameForFiles", filename)
-        datasets.make_prop(d, "strainAbbrev", strain_abbrev)
-        datasets.make_prop(d, "orthomclAbbrev", ortho_gen.abbrev(genus, species, strain_abbrev))
-        datasets.make_prop(d, "taxonHierarchyForBlastxFilter", " ".join(("Eukaryota", "Fungi", genus)))
-        datasets.make_prop(d, "genomeSource", datasets.get_row(o, 'source'))
-        datasets.make_prop(d, "genomeVersion", datasets.get_row(o, 'version'))
-        # Species representative / reference strain.
-        datasets.make_prop(d, "isReferenceStrain", datasets.xml_bool(is_species_rep))
-        datasets.make_prop(d, "referenceStrainOrganismAbbrev", species_rep)
-        # Family representative.
-        datasets.make_prop(d, "isFamilyRepresentative", datasets.xml_bool(is_family_rep))
-        datasets.make_prop(d, "familyRepOrganismAbbrev", family_rep)
-        datasets.make_prop(d, "familyNcbiTaxonIds", family_rep_taxid)
-        datasets.make_prop(d, "familyNameForFiles", family_name)
-        # May need to add some of these parameters to the spreadsheet if they
-        # vary.
-        datasets.make_prop(d, "isHaploid", datasets.xml_bool(True))
-        datasets.make_prop(d, "isAnnotatedGenome", datasets.xml_bool(True))
-        datasets.make_prop(d, "annotationIncludesTRNAs", datasets.xml_bool(False))
-        datasets.make_prop(d, "hasDeprecatedGenes", datasets.xml_bool(False))
-        datasets.make_prop(d, "hasTemporaryNcbiTaxonId", datasets.xml_bool(False))
-        datasets.make_prop(d, "runExportPred", datasets.xml_bool(False))
-        datasets.make_prop(d, "isHugeGenome", datasets.xml_bool(False))
-        datasets.make_prop(d, "maxIntronSize", "1000")
-
-        if is_species_rep:
-            d = datasets.make_dataset(ds, "referenceStrain")
-            datasets.make_prop(d, "organismAbbrev", species_rep)
-            datasets.make_prop(d, "isAnnotatedGenome", datasets.xml_bool(True))
-
-    for ortho in ("orthomcl", "orthomclPhyletic", "orthomclTree"):
-        d = datasets.make_dataset(ds, ortho)
-        datasets.make_prop(d, "projectName", "$$projectName$$")
-        datasets.make_prop(d, "version", orthomcl_version)
-
-    indent(ds)
-
-    return ds
-
-
-def parse_ortho(xmlfile):
-    ortho = {}
-    try:
-        xml = etree.parse(xmlfile)
-        orgns = xml.findall('//dataset[@class="organism"]')
-        for o in orgns:
-            fullname = o.find('prop[@name="organismFullName"]').text
-            genus, species, _ = naming.split_taxname(fullname)
-            strain = o.find('prop[@name="strainAbbrev"]').text
-            ortho_abbrev = o.find('prop[@name="orthomclAbbrev"]').text
-            ortho[(genus, species, strain)] = ortho_abbrev
-    except IOError:
-        warn("Failed to load previous XML file: %s" % xmlfile)
-    return naming.OrthoAbbrev(ortho)
+warnings.formatwarning = custom_formatwarning
 
 
 def main():
     args = parse_arguments()
 
     sheet = SimpleGData.prompt_creds(args.email, args.pword)
-    sheet.select_document(datasets.defaults['gdoc'])
-    sheet.select_worksheet(datasets.defaults['gsheet'])
+    sheet.select_document(datasets.DEFAULT.GDOC)
+    sheet.select_worksheet(datasets.DEFAULT.GSHEET)
 
     json_feed = sheet.json_feed()
 
     with open(args.jsonfile, 'w') as jsonfile:
-        print(json.dumps(json_feed, sort_keys=True, indent=2), file=jsonfile)
+        json.dump(json_feed, jsonfile, sort_keys=True, indent=2)
 
-    try:
-        ortho_gen = parse_ortho(args.xmlfile)
-    except IOError:
-        ortho_gen = naming.OrthoAbbrev()
-    datasets_xml = make_datasets_xml(json_feed, ortho_gen, args.orthomcl, args.debug)
+    organisms = [o for o in json_feed if datasets.bool_from_sheet(o[datasets.COL.ISLOADED])]
 
-    with open(args.xmlfile, 'w') as xmlfile:
-        print(etree.tostring(datasets_xml), file=xmlfile)
+    ds = datasets.FungiDBXMLGenerator.from_json(organisms, args.orthomcl, args.debug)
+
+    with open(args.fungifile, 'w') as fungifile:
+        print(etree.tostring(ds.make_fungidb_xml()), file=fungifile)
+
+    for orgfn, xml in ds.make_species_xmls(args.orgdir):
+        with open(orgfn, 'w') as orgfile:
+            print(etree.tostring(xml), file=orgfile)
 
 
 if __name__ == "__main__":
