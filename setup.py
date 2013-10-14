@@ -17,7 +17,6 @@ setup(name='fungidb_tools',
       packages=['fungidb_tools'],
       scripts=[
           'scripts/datasets/generate_datasets',
-          'scripts/datasets/generate_orgn_datasets',
           'scripts/datasets/download_sra',
           'scripts/datasets/download_genbank',
           'scripts/isf/format_fasta',
