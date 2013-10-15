@@ -62,20 +62,11 @@ def filename(genus, species, strain):
     """Returns a filename-appropriate name.
 
     >>> filename('Mucor', 'circinelloides f. lusitanicus', 'CBS 277.49')
-    'McircinelloidesCBS277-49'
+    'Mcircinelloides_CBS277-49'
     """
     strain = abbrev_strain(strain)
     species = species.split(" ", 1)[0]
     return "_".join((genus[0].upper() + species.lower(), strain))
-
-
-def short_species(taxname):
-    """Genus and shortened species name if the species name is long.
-
-    >>> short_species('Mucor circinelloides f. lusitanicus CBS 277.49')
-    'Mucor circinelloides'
-    """
-    return " ".join(taxname.strip().split(" ", 2)[:2])
 
 
 def abbrev_strain(strain):
@@ -83,6 +74,10 @@ def abbrev_strain(strain):
 
     >>> abbrev_strain('CBS 277.49')
     'CBS277-49'
+    >>> abbrev_strain('NRRL 1555(-)')
+    'NRRL1555-'
+    >>> abbrev_strain('C735 delta SOWgp')
+    'C735deltSOWgp'
     """
     # Reduce long, lowercase words to 4 letters.
     shortened_words = []
@@ -102,6 +97,8 @@ def abbrev_strain(strain):
 def abbrev_dbname(genus, species, strain):
     """Create an abbreviated organism name for internal use.
 
+    >>> abbrev_dbname('Tremella', 'mesenterica', 'DSM 1558')
+    'TmesDSM1558'
     >>> abbrev_dbname('Mucor', 'circinelloides f. lusitanicus', 'CBS 277.49')
     'McirCBS277-49'
     """
@@ -123,8 +120,12 @@ def split_taxname(taxname):
             In this case, you'll need to provide the strain name some other
             way.
 
+    >>> split_taxname('Tremella mesenterica DSM 1558')
+    ('Tremella', 'mesenterica', 'DSM 1558')
     >>> split_taxname('Mucor circinelloides f. lusitanicus CBS 277.49')
-    ('Mucor', 'circinelloides f. lusitanicus',  'CBS 277.49')
+    ('Mucor', 'circinelloides f. lusitanicus', 'CBS 277.49')
+    >>> split_taxname('Puccinia graminis f. sp. tritici CRL 75-36-700-3')
+    ('Puccinia', 'graminis f. sp. tritici', 'CRL 75-36-700-3')
     """
     split_name = taxname.strip().split(" ")
     genus = split_name.pop(0)
@@ -160,6 +161,8 @@ def split_species(species):
     """Split long species name into 2-tuple of species name and varietas/forma
     (infraspecific).
 
+    >>> split_species('mesenterica')
+    ('mesenterica', '')
     >>> split_species('circinelloides f. lusitanicus')
     ('circinelloides', 'f. lusitanicus')
     """
@@ -170,19 +173,5 @@ def split_species(species):
 
 
 if __name__ == "__main__":
-    import json
-
-    with open("fungidb.json") as infile:
-        organisms = json.load(infile)
-
-    for o in organisms:
-        taxname = o["fullnamencbi"]
-        if taxname is not None:
-            print(taxname)
-            genus, species, strain = split_taxname(taxname)
-            o_strain = o["strain"]
-            if strain is not None:
-                assert strain == o_strain
-            else:
-                strain = o_strain
-            print(abbrev_dbname(genus, species, strain))
+    import doctest
+    doctest.testmod()
