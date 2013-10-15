@@ -248,14 +248,14 @@ class SpeciesXMLGenerator(object):
             if strain != d_strain:
                 warn("Non-matching strain: {} / {}".format(strain, d_strain))
 
-            is_refstrain = bool_from_sheet(json[COL.ISREFSTRAIN])
-            d_is_refstrain = (abbrev == species_rep)
-            if is_refstrain != d_is_refstrain:
+            is_species_rep = bool_from_sheet(json[COL.ISREFSTRAIN])
+            d_is_species_rep = (abbrev == species_rep)
+            if is_species_rep != d_is_species_rep:
                 warn("Non-matching reference strain: {} / {}".format(abbrev, species_rep))
 
-            is_famrep = bool_from_sheet(json[COL.ISFAMREP])
-            d_is_famrep = (abbrev == family_rep)
-            if is_famrep != d_is_famrep:
+            is_family_rep = bool_from_sheet(json[COL.ISFAMREP])
+            d_is_family_rep = (abbrev == family_rep)
+            if is_family_rep != d_is_family_rep:
                 warn("Non-matching family representative: {} / {}".format(abbrev, family_rep))
 
         return cls(old_xml, abbrev, taxname, strain,
