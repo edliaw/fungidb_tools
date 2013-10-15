@@ -7,10 +7,10 @@ EMAIL  = $(USER)@$(SITE).org
 WWW    = /var/www/$(URL)
 TRUNK   = ~/GUS/trunk
 
-GUS_BLD     ?= 
-GUS_NOBLD   ?= CBIL WDK WSF FgpUtil install
-APIDB_BLD   ?= ApiCommonShared ApiCommonData
-APIDB_NOBLD ?= GBrowse ApiCommonWebService EuPathSiteCommon EuPathWebSvcCommon ApiCommonWebsite
+GUS_BLD     ?= ReFlow
+GUS_NOBLD   ?= CBIL WDK WSF FgpUtil install GusSchema
+APIDB_BLD   ?= ApiCommonShared EuPathDatasets FungiDBDatasets
+APIDB_NOBLD ?= ApiCommonData GBrowse ApiCommonWebService EuPathSiteCommon EuPathWebSvcCommon ApiCommonWebsite EuPathPresenters FungiDBPresenters
 WEB_BLDW    ?= ApiCommonWebsite
 
 GUS        = $(GUS_BLD) $(GUS_NOBLD)
