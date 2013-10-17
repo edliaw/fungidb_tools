@@ -475,7 +475,8 @@ class FungiDBXMLGenerator(object):
             is_family_rep = o[COL.ISFAMREP]
 
             genus, species, strain = naming.split_taxname(taxname)
-            genus_species = (genus, species)
+            short_species = naming.split_species(species)[0]
+            genus_species = (genus, short_species)
 
             if orthomcl:
                 orthomcl_abbrevs[(genus, species, strain)] = orthomcl
@@ -536,8 +537,9 @@ class FungiDBXMLGenerator(object):
             abbrev = o[COL.ABBREV]
             family = o[COL.FAMILY]
             genus, species, strain = naming.split_taxname(o[COL.TAXNAME])
+            short_species = naming.split_species(species)[0]
             try:
-                species_rep = self.species_reps[(genus, species)]
+                species_rep = self.species_reps[(genus, short_species)]
             except KeyError:
                 raise Exception("No reference strain for species: %s" % " ".join((genus, species)))
             try:
@@ -552,7 +554,8 @@ class FungiDBXMLGenerator(object):
                 warn("Creating new xml file: %s" % filename)
                 old_xml = etree.Element("datasets")
 
-            g = SpeciesXMLGenerator.from_json(o, old_xml, species_rep, family_rep)
+            g = SpeciesXMLGenerator.from_json(o, old_xml, species_rep,
+                                              family_rep, debug=False)
             datasets = etree.Element("datasets")
             g.append_to_datasets(datasets)
             elementlib.indent(datasets)
