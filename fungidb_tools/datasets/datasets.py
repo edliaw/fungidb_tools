@@ -507,11 +507,12 @@ class FungiDBXMLGenerator(object):
 
         for o in self.json:
             genus, species, strain = naming.split_taxname(o[COL.TAXNAME])
+            short_species = naming.split_species(species)[0]
             family = o[COL.FAMILY]
             try:
-                species_rep = self.species_reps[(genus, species)]
+                species_rep = self.species_reps[(genus, short_species)]
             except KeyError:
-                raise Exception("No reference strain for species: %s" % " ".join((genus, species)))
+                raise Exception("No reference strain for species: %s" % " ".join((genus, short_species)))
             try:
                 family_rep, family_rep_taxid = self.family_reps[family]
             except KeyError:
