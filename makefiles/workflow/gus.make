@@ -74,5 +74,15 @@ $(ALL_DIRS)::
 $(BLD_DIRS)::
 	@${MAKE} $@-b
 
+_dropdead_:
+	installApidbSchema --db $(DB) --dropApiDB --allowFailures
+	installApidbSchema --db $(DB) --dropGUS
 
-.PHONY: common all link tuning sql _clean_ checkout $(ALL_DIRS)
+_reinstall_:
+	build GUS install -append -installDBSchemaSkipRoles
+	installApidbSchema --db $(DB) --create
+	rm GUS/Model/lib/perl/generated
+	${MAKE} GUS ApiCommonData
+
+
+.PHONY: common all link tuning sql _clean_ checkout $(ALL_DIRS) _dropdead_ _reinstall_
