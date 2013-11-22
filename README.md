@@ -14,19 +14,21 @@ Installation
 
 ```
 python2.7 setup.py install
+or
+python2.7 setup.py develop
 ```
 
 Modules
 -------
 
 * Datasets
-  * simple_gdata: wrapping around the gdata library for an easier-to-use format.  Primarily to download and edit spreadsheets on Google Drive.
-  * datasets: for turning the Genomes spreadsheet into XML workflow config files.
-  * xml: additional tools for working with XML files.
-  * naming: for naming organisms according to stricter specifications than is enforced by EuPathDB.
+  * simple_gdata: Wrapper around the gdata library to make it easier to use.  Used to interface with spreadsheets on Google Drive.
+  * datasets: Turns the Genomes spreadsheet into XML workflow config files.
+  * xml: Additional tools for working with XML files.
+  * naming: Naming organisms with more consistent specifications than is enforced by EuPathDB.
 * NCBI
-  * aspera: for downloading SRA datasets from NCBI.
-  * simple_eutils: wrapping around NCBI eutils to combine/simplify functions.
+  * aspera: For downloading SRA datasets from NCBI.
+  * simple_eutils: Wrapper around NCBI eutils to combine/simplify functions.
 
 Scripts
 -------
@@ -34,7 +36,7 @@ Scripts
 * ISF (Insert Sequence Features)
   * Reformatters, data extraction for gtf, gff3, fasta, and genbank filetypes.
 * Datasets
-  * Interact with data from the FungiDB Genomes spreadsheet.
+  * Interact with data pulled from the FungiDB Genomes spreadsheet.
 
 Makefiles
 ---------
