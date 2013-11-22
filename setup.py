@@ -31,6 +31,7 @@ setup(name='fungidb_tools',
           'scripts/isf/extract_products_jgi',
       ],
       install_requires=[
+          'future',
           'biopython',
           'lxml',
           'gdata',
