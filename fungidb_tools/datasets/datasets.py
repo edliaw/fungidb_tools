@@ -2,6 +2,7 @@
 
 2013-10-11
 Edward Liaw
+
 """
 import os
 from lxml import etree
@@ -11,58 +12,64 @@ from .. import elementlib
 
 
 class DEFAULT(object):
+
     """Constants: Default paths."""
+
     JSON = os.path.expanduser("~/workspace/FungiDB.json")
-    XML = os.path.expanduser("~/GUS/current/project_home/FungiDBDatasets/Datasets/lib/xml/datasets/FungiDB.xml")
-    DATASETS = os.path.expanduser("~/GUS/current/project_home/FungiDBDatasets/Datasets/lib/xml/datasets/FungiDB")
+    XML = os.path.expanduser("~/GUS/current/project_home/FungiDBDatasets"
+                             "/Datasets/lib/xml/datasets/FungiDB.xml")
+    DATASETS = os.path.expanduser("~/GUS/current/project_home/FungiDBDatasets"
+                                  "/Datasets/lib/xml/datasets/FungiDB")
     GDOC = "FungiDB Genomes"
     GSHEET = "Edit"
 
 
 class COL(object):
+
     """Constants: Column names in the spreadsheet."""
-    ABBREV = "abbreviation"
-    TAXNAME = "ncbiname"
-    SPECIES = "species"
-    STRAIN = "strain"
-    CLADE = "clade"
-    SUBCLADE = "subclade"
-    FAMILY = "family"
-    TAXID = "strainncbitaxid"
-    SPECIESTAXID = "speciesncbitaxid"
-    FAMILYTAXID = "familyncbitaxid"
-    SOURCE = "source"
-    SOTERM = "soterm"
-    FORMAT = "genomeformat"
-    VERSION = "assemblyversion"
-    IDPREFIX = "idprefix"
-    OLDABBREVS = "oldabbreviations"
-    ISLOADED = "loaded"
-    ISREFSTRAIN = "referencestrain"
-    ISFAMREP = "familyrepresentative"
-    MITO = "mitochondrialchromosomesloaded"
-    PRODUCTS = "productsloaded"
-    ORTHOMCL = "orthomclname"
+
+    ABBREV = "Abbreviation"
+    TAXNAME = "NCBI Name"
+    SPECIES = "Species"
+    STRAIN = "Strain"
+    CLADE = "Clade"
+    SUBCLADE = "Subclade"
+    FAMILY = "Family"
+    TAXID = "Strain NCBI Taxid"
+    SPECIESTAXID = "Species NCBI Taxid"
+    FAMILYTAXID = "Family NCBI Taxid"
+    SOURCE = "Source"
+    SOTERM = "SO Term"
+    FORMAT = "Genome Format"
+    VERSION = "Assembly Version"
+    IDPREFIX = "ID Prefix"
+    OLDABBREVS = "Old Abbreviations"
+    ISLOADED = "Loaded"
+    ISREFSTRAIN = "Reference Strain"
+    ISFAMREP = "Family Representative"
+    MITO = "Mitochondrial Chromosomes Loaded"
+    PRODUCTS = "Products Loaded"
+    ORTHOMCL = "OrthoMCL Name"
 
 
 def bool_from_sheet(b):
-    """Check if a spreadsheet entry is equivalent to True (Yes, Reload)."""
+    """Return bool for equivalent spreadsheet entry (Yes, Ready, Reload)."""
     return (b in ("Yes", "Ready", "Reload"))
 
 
 def str_from_bool(b):
-    """String equivalent of python boolean value, for use in XML."""
+    """Return string equivalent of python boolean value, for use in XML."""
     return "true" if b else "false"
 
 
 def xml_dataset(parent, cls):
-    """Mutator: create an xml dataset subelement."""
+    """Mutator: Return a new xml dataset subelement."""
     dataset = etree.SubElement(parent, "dataset", **{"class": cls})
     return dataset
 
 
 def xml_prop(parent, name, text):
-    """Mutator: create an xml property subelement."""
+    """Mutator: Return a new xml property subelement."""
     if isinstance(text, bool):
         text = str_from_bool(text)
     prop = etree.SubElement(parent, "prop", name=name).text = text
@@ -70,7 +77,7 @@ def xml_prop(parent, name, text):
 
 
 def xml_constant(parent, name, value):
-    """Mutator: create an xml constant."""
+    """Mutator: Return a new xml constant."""
     if isinstance(value, bool):
         value = str_from_bool(value)
     constant = etree.SubElement(parent, "constant", name=name, value=value)
@@ -78,6 +85,9 @@ def xml_constant(parent, name, value):
 
 
 class OrganismXMLGenerator(object):
+
+    """Generate each organism's dataset(s) for FungiDB.xml."""
+
     def __init__(self, abbrev, taxname, strain, family, source, version,
                  taxid, species_taxid,
                  species_rep, family_rep, family_rep_taxid, orthomcl_abbrev):
@@ -108,6 +118,7 @@ class OrganismXMLGenerator(object):
     @classmethod
     def from_json(cls, json, species_rep, family_rep, family_rep_taxid,
                   orthomcl_abbrev, debug=False):
+        """Return new instance from a json object."""
         abbrev = json[COL.ABBREV]
         taxname = json[COL.TAXNAME]
         strain = json[COL.STRAIN]
@@ -124,38 +135,42 @@ class OrganismXMLGenerator(object):
 
         if debug:
             if abbrev != d_abbrev:
-                warn("Non-matching abbreviation: {} / {}".format(abbrev, d_abbrev))
+                warn("Non-matching abbreviation: "
+                     "{} / {}".format(abbrev, d_abbrev))
 
             if strain != d_strain:
-                warn("Non-matching strain: {} / {}".format(strain, d_strain))
+                warn("Non-matching strain: "
+                     "{} / {}".format(strain, d_strain))
 
             genus_species = json[COL.SPECIES]
             d_genus_species = " ".join((genus, species))
             if genus_species != d_genus_species:
-                warn("Non-matching species: {} / {}".format(genus_species, d_genus_species))
+                warn("Non-matching species: "
+                     "{} / {}".format(genus_species, d_genus_species))
 
             d_orthomcl_abbrev = json[COL.ORTHOMCL]
             if orthomcl_abbrev != d_orthomcl_abbrev:
-                warn("Non-matching orthomcl abbrev: {} / {}".format(orthomcl_abbrev, d_orthomcl_abbrev))
+                warn("Non-matching orthomcl abbrev: "
+                     "{} / {}".format(orthomcl_abbrev, d_orthomcl_abbrev))
 
             is_species_rep = bool_from_sheet(json[COL.ISREFSTRAIN])
             d_is_species_rep = (abbrev == species_rep)
             if is_species_rep != d_is_species_rep:
-                warn("Non-matching reference strain: {} / {}".format(abbrev, species_rep))
+                warn("Non-matching reference strain: "
+                     "{} / {}".format(abbrev, species_rep))
 
             is_family_rep = bool_from_sheet(json[COL.ISFAMREP])
             d_is_family_rep = (abbrev == family_rep)
             if is_family_rep != d_is_family_rep:
-                warn("Non-matching family representative: {} / {}".format(abbrev, family_rep))
+                warn("Non-matching family representative: "
+                     "{} / {}".format(abbrev, family_rep))
 
         return cls(abbrev, taxname, strain, family, source, version,
                    taxid, species_taxid,
                    species_rep, family_rep, family_rep_taxid, orthomcl_abbrev)
 
     def append_to_datasets(self, parent):
-        """Mutator: creates subelements for each organism under the parent
-        "datasets" element.
-        """
+        """Mutator: Create dataset elements for each organism."""
         d = xml_dataset(parent, "organism")
         xml_prop(d, "projectName", "$$projectName$$")
         xml_prop(d, "organismFullName", self.taxname)
@@ -166,7 +181,8 @@ class OrganismXMLGenerator(object):
         xml_prop(d, "organismNameForFiles", self.filename)
         xml_prop(d, "strainAbbrev", self.strain_abbrev)
         xml_prop(d, "orthomclAbbrev", self.orthomcl_abbrev)
-        xml_prop(d, "taxonHierarchyForBlastxFilter", " ".join(("Eukaryota", "Fungi", self.genus)))
+        xml_prop(d, "taxonHierarchyForBlastxFilter",
+                 " ".join(("Eukaryota", "Fungi", self.genus)))
         xml_prop(d, "genomeSource", self.source)
         xml_prop(d, "genomeVersion", self.version)
         # Species representative / reference strain.
@@ -195,6 +211,9 @@ class OrganismXMLGenerator(object):
 
 
 class SpeciesXMLGenerator(object):
+
+    """Generate datasets for each organism's XML file."""
+
     def __init__(self, old_xml, abbrev, taxname, strain,
                  species_rep, family_rep, taxid, species_taxid, family_taxid,
                  source, version, file_format, soterm, idprefix,
@@ -222,6 +241,7 @@ class SpeciesXMLGenerator(object):
 
     @classmethod
     def from_json(cls, json, old_xml, species_rep, family_rep, debug=False):
+        """Return new instance from a json object."""
         abbrev = json[COL.ABBREV]
         taxname = json[COL.TAXNAME]
         strain = json[COL.STRAIN]
@@ -243,20 +263,24 @@ class SpeciesXMLGenerator(object):
 
         if debug:
             if abbrev != d_abbrev:
-                warn("Non-matching abbreviation: {} / {}".format(abbrev, d_abbrev))
+                warn("Non-matching abbreviation: "
+                     "{} / {}".format(abbrev, d_abbrev))
 
             if strain != d_strain:
-                warn("Non-matching strain: {} / {}".format(strain, d_strain))
+                warn("Non-matching strain: "
+                     "{} / {}".format(strain, d_strain))
 
             is_species_rep = bool_from_sheet(json[COL.ISREFSTRAIN])
             d_is_species_rep = (abbrev == species_rep)
             if is_species_rep != d_is_species_rep:
-                warn("Non-matching reference strain: {} / {}".format(abbrev, species_rep))
+                warn("Non-matching reference strain: "
+                     "{} / {}".format(abbrev, species_rep))
 
             is_family_rep = bool_from_sheet(json[COL.ISFAMREP])
             d_is_family_rep = (abbrev == family_rep)
             if is_family_rep != d_is_family_rep:
-                warn("Non-matching family representative: {} / {}".format(abbrev, family_rep))
+                warn("Non-matching family representative: "
+                     "{} / {}".format(abbrev, family_rep))
 
         return cls(old_xml, abbrev, taxname, strain,
                    species_rep, family_rep, taxid, species_taxid, family_taxid,
@@ -264,10 +288,12 @@ class SpeciesXMLGenerator(object):
                    has_mito, has_products)
 
     def find_and_append(self, parent, lookup):
+        """Mutator: Add datasets from the old xml file."""
         for cls in self.old_xml.iterfind('dataset[@class="{}"]'.format(lookup)):
             parent.append(cls)
 
     def genbank_dataset(self, parent):
+        """Mutator: Add a new genbank dataset."""
         d = xml_dataset(parent, "genbank_primary_genome")
         xml_prop(d, "projectName", "$$projectName$$")
         xml_prop(d, "organismAbbrev", "$$organismAbbrev$$")
@@ -288,6 +314,7 @@ class SpeciesXMLGenerator(object):
             xml_prop(d, "organelle", "mitochondrion")
 
     def fasta_dataset(self, parent):
+        """Mutator: Add a new fasta dataset."""
         d = xml_dataset(parent, "fasta_primary_genome_sequence")
         xml_prop(d, "projectName", "$$projectName$$")
         xml_prop(d, "organismAbbrev", "$$organismAbbrev$$")
@@ -296,7 +323,7 @@ class SpeciesXMLGenerator(object):
         xml_prop(d, "name", "$$source$$")
         xml_prop(d, "soTerm", "$$soTerm$$")
         xml_prop(d, "table", "DoTS::ExternalNASequence")
-        xml_prop(d, "sourceIdRegex", "^>(\S+)")
+        xml_prop(d, "sourceIdRegex", r"^>(\S+)")
         xml_prop(d, "releaseDate", "")
         # Genome features
         d = xml_dataset(parent, "NoPreprocess_primary_genome_features")
@@ -316,7 +343,7 @@ class SpeciesXMLGenerator(object):
             xml_prop(d, "name", "$$source$$")
             xml_prop(d, "soTerm", "mitochondrial_chromosome")
             xml_prop(d, "table", "DoTS::ExternalNASequence")
-            xml_prop(d, "sourceIdRegex", "^>(\S+)")
+            xml_prop(d, "sourceIdRegex", r"^>(\S+)")
             xml_prop(d, "organelle", "mitochondrion")
 
             d = xml_dataset(parent, "NoPreprocess_organelle_genome_features")
@@ -329,11 +356,14 @@ class SpeciesXMLGenerator(object):
             xml_prop(d, "mapFile", "FungiDB/genericGFF2Gus.xml")
 
     def reference_strain(self, parent):
+        """Mutator: Add datasets that pull from the reference strain."""
         d = xml_dataset(parent, "transcriptsFromReferenceStrain")
-        xml_prop(d, "referenceStrainOrganismAbbrev", "$$referenceStrainOrganismAbbrev$$")
+        xml_prop(d, "referenceStrainOrganismAbbrev",
+                 "$$referenceStrainOrganismAbbrev$$")
 
         d = xml_dataset(parent, "epitopesFromReferenceStrain")
-        xml_prop(d, "referenceStrainOrganismAbbrev", "$$referenceStrainOrganismAbbrev$$")
+        xml_prop(d, "referenceStrainOrganismAbbrev",
+                 "$$referenceStrainOrganismAbbrev$$")
 
         if self.is_species_rep:
             d = xml_dataset(parent, "referenceStrain-dbEST")
@@ -349,6 +379,7 @@ class SpeciesXMLGenerator(object):
             self.find_and_append(parent, "referenceStrain-ESTsFromFasta")
 
     def family_representative(self, parent):
+        """Mutator: Add datasets that pull from the family rep."""
         d = xml_dataset(parent, "isolatesFromFamilyRepresentative")
         xml_prop(d, "name", "genbank")
         xml_prop(d, "familyRepOrganismAbbrev", "$$familyRepOrganismAbbrev$$")
@@ -359,15 +390,15 @@ class SpeciesXMLGenerator(object):
             xml_prop(d, "ncbiTaxonId", "$$familyNcbiTaxonIds$$")
 
     def compare_old(self, parent):
+        """Warn if there are differences between the old xml and the new."""
         attribs = [d.attrib['class'] for d in parent.findall('dataset')]
         for c in self.old_xml.iterfind('dataset'):
             if c.attrib['class'] not in attribs:
-                warn("Removed from {}: {}".format(self.abbrev, c.attrib['class']))
+                warn("Removed from "
+                     "{}: {}".format(self.abbrev, c.attrib['class']))
 
     def append_to_datasets(self, parent):
-        """Mutator: creates subelements for each dataset under the parent
-        "datasets" element.
-        """
+        """Mutator: Create dataset elements for each dataset."""
         # Constants
         xml_constant(parent, "organismAbbrev", self.abbrev)
         xml_constant(parent, "strainAbbrev", self.strain_abbrev)
@@ -449,8 +480,14 @@ class SpeciesXMLGenerator(object):
 
 
 class FungiDBXMLGenerator(object):
-    """Handles initialization loop to determine representatives and orthomcl
-    abbreviations."""
+
+    """Generates FungiDB.xml.
+
+    Necessary to handle the initialization loop to determine representatives
+    and orthomcl abbreviations.
+
+    """
+
     def __init__(self, json, species_reps, family_reps, orthomcl_abbrevs,
                  orthomcl_version, debug=False):
         self.json = json
@@ -462,6 +499,7 @@ class FungiDBXMLGenerator(object):
 
     @classmethod
     def from_json(cls, json, orthomcl_version, debug=False):
+        """Return new instance from a json object."""
         species_reps = {}
         family_reps = {}
         orthomcl_abbrevs = {}
@@ -484,12 +522,15 @@ class FungiDBXMLGenerator(object):
             if debug:
                 species_name = " ".join(genus_species)
                 if is_species_rep and genus_species in species_reps:
-                    warn("More than one reference strains: {} in {}".format(abbrev, species_name))
+                    warn("More than one reference strains: "
+                         "{} in {}".format(abbrev, species_name))
                 elif not is_species_rep and genus_species not in species_reps:
-                    warn("Missing reference strain or out of order: {} in {}".format(abbrev, species_name))
+                    warn("Missing reference strain or out of order: "
+                         "{} in {}".format(abbrev, species_name))
 
                 if is_family_rep and family in family_reps:
-                    warn("More than one family representative: {} in {}".format(abbrev, family))
+                    warn("More than one family representative: "
+                         "{} in {}".format(abbrev, family))
 
             if is_species_rep:
                 species_reps[genus_species] = abbrev
@@ -500,7 +541,8 @@ class FungiDBXMLGenerator(object):
                    orthomcl_version, debug)
 
     def make_fungidb_xml(self):
-        generate_orthomcl_abbrev = naming.OrthoAbbrev(seed=self.orthomcl_abbrevs).abbrev
+        """Create and return FungiDB.xml as an XML object."""
+        make_orthomcl_abbrev = naming.OrthoAbbrev(self.orthomcl_abbrevs).abbrev
 
         datasets = etree.Element("datasets")
         xml_constant(datasets, "projectName", "FungiDB")
@@ -512,13 +554,15 @@ class FungiDBXMLGenerator(object):
             try:
                 species_rep = self.species_reps[(genus, short_species)]
             except KeyError:
-                raise Exception("No reference strain for species: %s" % " ".join((genus, short_species)))
+                raise Exception("No reference strain for species: "
+                                " ".join((genus, short_species)))
             try:
                 family_rep, family_rep_taxid = self.family_reps[family]
             except KeyError:
-                raise Exception("No family representative for family: %s" % family)
+                raise Exception("No family representative for family: "
+                                "%s" % family)
 
-            orthomcl_abbrev = generate_orthomcl_abbrev(genus, species, strain)
+            orthomcl_abbrev = make_orthomcl_abbrev(genus, species, strain)
 
             g = OrganismXMLGenerator.from_json(o, species_rep, family_rep,
                                                family_rep_taxid,
@@ -534,19 +578,22 @@ class FungiDBXMLGenerator(object):
         return datasets
 
     def make_species_xmls(self, outdir):
+        """Create and return XML files for each organism."""
         for o in self.json:
             abbrev = o[COL.ABBREV]
             family = o[COL.FAMILY]
-            genus, species, strain = naming.split_taxname(o[COL.TAXNAME])
+            genus, species, _ = naming.split_taxname(o[COL.TAXNAME])
             short_species = naming.split_species(species)[0]
             try:
                 species_rep = self.species_reps[(genus, short_species)]
             except KeyError:
-                raise Exception("No reference strain for species: %s" % " ".join((genus, species)))
+                raise Exception("No reference strain for species: "
+                                " ".join((genus, species)))
             try:
-                family_rep, family_rep_taxid = self.family_reps[family]
+                family_rep, _ = self.family_reps[family]
             except KeyError:
-                raise Exception("No family representative for family: %s" % family)
+                raise Exception("No family representative for family: "
+                                "{}".format(family))
 
             filename = os.path.join(outdir, abbrev + '.xml')
             try:
