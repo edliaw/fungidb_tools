@@ -4,9 +4,10 @@ from __future__ import print_function
 import argparse
 import json
 import warnings
+import gspread
 from lxml import etree
 from fungidb_tools import datasets
-from fungidb_tools.simple_gdata import SimpleGData
+from fungidb_tools.json_gspread import json_gspread
 
 
 def parse_arguments():
@@ -47,11 +48,11 @@ warnings.formatwarning = custom_formatwarning
 def main():
     args = parse_arguments()
 
-    sheet = SimpleGData.prompt_creds(args.email, args.pword)
-    sheet.select_document(datasets.DEFAULT.GDOC)
-    sheet.select_worksheet(datasets.DEFAULT.GSHEET)
+    gc = gspread.login(args.email, args.pword)
+    sh = gc.open(datasets.DEFAULT.GDOC)
+    wk = sh.worksheet(datasets.DEFAULT.GSHEET)
 
-    json_feed = sheet.json_feed()
+    json_feed = json_gspread(wk)
 
     with open(args.jsonfile, 'w') as jsonfile:
         json.dump(json_feed, jsonfile, sort_keys=True, indent=2)
