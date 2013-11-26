@@ -1,10 +1,11 @@
 #!/usr/bin/env python
-
-from __future__ import print_function
+"""FIXME: Not updated to use gspread."""
+from __future__ import print_function, unicode_literals
+from future.builtins import open
 import argparse
+import gspread
 from lxml import etree
 from warnings import warn
-from fungidb_tools.simple_gdata import SimpleGData
 from fungidb_tools import simple_eutils as eutils
 from fungidb_tools import datasets
 
@@ -33,7 +34,7 @@ def parse_arguments():
 
 def get_targets(feed):
     targets = {}
-    for row in feed.entry:
+    for row in feed:
         taxid = row.custom['strainncbitaxid'].text
         if taxid:
             targets[taxid] = row
@@ -72,7 +73,7 @@ def update_taxonomy(sheet, targets, args):
     else:
         taxa = eutils.etree_fetch('taxonomy', id=targets.keys(), out=args.dump)
 
-    for taxid, row in targets.iteritems():
+    for taxid, row in targets.items():
         t = taxa.find('Taxon[TaxId="%s"]' % taxid)
         if t is None:
             raise Exception(taxid)
@@ -118,10 +119,10 @@ def update_ortho(sheet, targets, args):
 def main():
     args = parse_arguments()
 
-    sheet = SimpleGData.prompt_creds(args.email, args.pword)
-    sheet.select_document(datasets.defaults['gdoc'])
-    sheet.select_worksheet(datasets.defaults['gsheet'])
-    feed = sheet.get_list_feed()
+    gc = gspread.login(args.email, args.pword)
+    sh = gc.open(datasets.DEFAULT.GDOC)
+    wk = sh.worksheet(datasets.DEFAULT.GSHEET)
+    feed = wk.get_all_values()
 
     targets = get_targets(feed)
 

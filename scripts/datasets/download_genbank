@@ -1,6 +1,7 @@
 #!/usr/bin/env python2.7
 
-from __future__ import print_function
+from __future__ import print_function, unicode_literals
+from future.builtins import range
 import argparse
 import sys
 import os
@@ -39,7 +40,7 @@ def main():
                                                         term=id_list)
 
     downloaded = 0
-    for start in xrange(0, count, args.batch):
+    for start in range(0, count, args.batch):
         handle = Entrez.efetch(db='nucleotide', rettype='gbwithparts',
                                retmode='text', retstart=start,
                                retmax=args.batch, webenv=webenv,

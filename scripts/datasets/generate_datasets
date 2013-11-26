@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-from __future__ import print_function
+from __future__ import print_function, unicode_literals
+from future.builtins import open
 import argparse
 import json
 import warnings
@@ -57,9 +58,11 @@ def main():
     with open(args.jsonfile, 'w') as jsonfile:
         json.dump(json_feed, jsonfile, sort_keys=True, indent=2)
 
-    organisms = [o for o in json_feed if datasets.bool_from_sheet(o[datasets.COL.ISLOADED])]
+    organisms = [o for o in json_feed
+                 if datasets.bool_from_sheet(o[datasets.COL.ISLOADED])]
 
-    ds = datasets.FungiDBXMLGenerator.from_json(organisms, args.orthomcl, args.debug)
+    ds = datasets.FungiDBXMLGenerator.from_json(organisms, args.orthomcl,
+                                                args.debug)
 
     with open(args.fungifile, 'w') as fungifile:
         print(etree.tostring(ds.make_fungidb_xml()), file=fungifile)
