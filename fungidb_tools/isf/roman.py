@@ -1,6 +1,7 @@
 """Convert between integer and roman numerals.
 
 http://code.activestate.com/recipes/81611-roman-numerals/
+
 """
 
 NUMERAL_MAP = zip(
@@ -9,7 +10,8 @@ NUMERAL_MAP = zip(
 )
 
 
-def int_to_roman(i):
+def roman_from_int(i):
+    """Return the roman numeral string corresponding to the integer given."""
     result = []
     for integer, numeral in NUMERAL_MAP:
         count = int(i / integer)
@@ -18,7 +20,8 @@ def int_to_roman(i):
     return ''.join(result)
 
 
-def roman_to_int(n):
+def int_from_roman(n):
+    """Return the integer corresponding to the roman numeral given."""
     n = unicode(n).upper()
 
     i = result = 0
