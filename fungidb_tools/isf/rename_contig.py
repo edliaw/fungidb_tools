@@ -8,8 +8,7 @@ Example:
 Edward Liaw
 
 """
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 from future.builtins import zip, int
 import re
 from . import roman
@@ -68,18 +67,21 @@ class ContigRenamer(object):
                 raise Exception("Regex {} doesn't contain a number, letter, "
                                 "or roman numeral field.".format(rx.pattern))
             return "{}_{}{}".format(self.abbrev, so, contig)
-        raise NoMatchException("{} doesn't match any regular expression.".format(target))
+        raise NoMatchException("Doesn't match any regular expression: "
+                               "{}".format(target))
 
 
 def add_rename_args(parser):
+    """Add arguments to argument parser."""
     parser.add_argument('--species',
                         help='species abbreviation')
     parser.add_argument('--padding',
                         type=int, default=2,
                         help='number padding adds 0s to fix the width')
     parser.add_argument('--soterm',
-                        nargs='*', choices=('Chr', 'SC', 'LG'), default=('Chr',),
+                        nargs='*',
+                        choices=('Chr', 'SC', 'LG'), default=('Chr',),
                         help='SO terms (per regular expression)')
     parser.add_argument('--regex',
                         nargs='*', default=RE_DEFAULT,
-                        help='regular expressions to search the contig identifier')
+                        help='regular expressions matching contig identifiers')
