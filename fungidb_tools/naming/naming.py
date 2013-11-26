@@ -48,11 +48,9 @@ class OrthoAbbrev(object):
                 name = prefix + chr(mod + i)
                 if name not in abbrevs:
                     self.abbrevs[(genus, species, strain)] = name
-                    break
-            else:
-                raise Exception("Couldn't find a unique abbreviation for "
-                                "{} {} {}".format(genus, species, strain))
-            return name
+                    return name
+            raise Exception("Couldn't find a unique abbreviation for "
+                            "{} {} {}".format(genus, species, strain))
 
 
 def slugify(string, whitespace="_", unfriendly="-"):
