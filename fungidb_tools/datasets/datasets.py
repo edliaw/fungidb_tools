@@ -4,6 +4,7 @@
 Edward Liaw
 
 """
+from __future__ import unicode_literals
 import os
 from lxml import etree
 from warnings import warn
