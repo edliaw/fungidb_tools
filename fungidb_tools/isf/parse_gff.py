@@ -10,6 +10,7 @@ Edward Liaw
 """
 
 from __future__ import print_function
+from __future__ import unicode_literals
 import sys
 from warnings import warn
 from collections import OrderedDict
