@@ -3,7 +3,7 @@
 Edward Liaw
 """
 
-from __future__ import print_function
+from __future__ import print_function, unicode_literals
 import re
 import sys
 from functools import total_ordering
@@ -98,7 +98,7 @@ class GFF3Feature(object):
             a.append(("Parent", self.parents))
 
         for r in sorted(self.regions):
-            attributes = a + r.attributes.items()
+            attributes = a + list(r.attributes.items())
             attributes = ['='.join((k, ','.join(v))) for k, v in attributes]
             attributes = ';'.join(attributes)
             row = '\t'.join((r.seqid, self.source, self.soterm, r.start, r.end,
@@ -154,7 +154,7 @@ class GFF3Parser(object):
                 sys.stdout.write("Wasn't able to find parents for:\n")
                 sys.stdout.write('\n'.join([f.format() for f in buffer]))
                 raise
-            for f in features.itervalues():
+            for f in features.values():
                 if not f.parents:
                     yield f
             features.clear()

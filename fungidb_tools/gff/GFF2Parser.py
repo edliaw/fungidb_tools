@@ -3,7 +3,8 @@
 Edward Liaw
 """
 
-from __future__ import print_function
+from __future__ import print_function, unicode_literals
+from future.builtins import str
 import re
 import sys
 from functools import total_ordering
