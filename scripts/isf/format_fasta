@@ -5,7 +5,7 @@
 2013/07/16
 Edward Liaw
 """
-from __future__ import print_function
+from __future__ import print_function, unicode_literals
 from warnings import warn
 import argparse
 import sys

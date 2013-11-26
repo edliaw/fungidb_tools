@@ -4,7 +4,8 @@
 2012/09/14
 Edward Liaw
 """
-from __future__ import print_function
+from __future__ import print_function, unicode_literals
+from future.builtins import str, int
 import sys
 import argparse
 from fungidb_tools.isf.roman import int_from_roman

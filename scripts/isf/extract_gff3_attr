@@ -1,11 +1,11 @@
 #!/usr/bin/env python2.7
 """Extract attributes by field name from a gff3 file."""
 
-from __future__ import print_function
+from __future__ import print_function, unicode_literals
 from fungidb_tools.gff import GFF3Parser as gp
 import argparse
 import sys
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 
 
 def parse_arguments():
@@ -39,8 +39,8 @@ def main():
                 except KeyError:
                     pass
             if aliases:
-                id = urllib2.unquote(feat.id)
-                aliases = ','.join([urllib2.unquote(a) for a in aliases])
+                id = urllib.parse.unquote(feat.id)
+                aliases = ','.join([urllib.parse.unquote(a) for a in aliases])
                 print("\t".join((id, aliases)), file=outfile)
 
 if __name__ == "__main__":

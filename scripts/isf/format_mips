@@ -1,6 +1,7 @@
 #!/usr/bin/env python2.7
 
-from __future__ import print_function
+from __future__ import print_function, unicode_literals
+from future.builtins import str
 import argparse
 import sys
 from fungidb_tools.gff import GFF3Parser as gp
