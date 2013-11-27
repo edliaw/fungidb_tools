@@ -555,7 +555,7 @@ class FungiDBXMLGenerator(object):
             try:
                 species_rep = self.species_reps[(genus, short_species)]
             except KeyError:
-                raise Exception("No reference strain for species: "
+                raise Exception("No reference strain for species: " +
                                 " ".join((genus, short_species)))
             try:
                 family_rep, family_rep_taxid = self.family_reps[family]
@@ -588,7 +588,7 @@ class FungiDBXMLGenerator(object):
             try:
                 species_rep = self.species_reps[(genus, short_species)]
             except KeyError:
-                raise Exception("No reference strain for species: "
+                raise Exception("No reference strain for species: " +
                                 " ".join((genus, species)))
             try:
                 family_rep, _ = self.family_reps[family]
