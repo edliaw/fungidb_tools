@@ -3,8 +3,7 @@
 http://code.activestate.com/recipes/81611-roman-numerals/
 
 """
-from __future__ import division
-from __future__ import unicode_literals
+from __future__ import division, unicode_literals
 from future.builtins import str, zip, int
 
 NUMERAL_MAP = list(zip(
