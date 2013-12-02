@@ -4,6 +4,7 @@
 2012/09/10
 Edward Liaw
 """
+from __future__ import unicode_literals
 import sys
 import argparse
 from warnings import warn

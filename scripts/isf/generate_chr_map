@@ -4,10 +4,11 @@
 2012/09/14
 Edward Liaw
 """
-from __future__ import print_function
+from __future__ import print_function, unicode_literals
+from future.builtins import str, int
 import sys
 import argparse
-from fungidb_tools.isf.roman import roman_to_int
+from fungidb_tools.isf.roman import int_from_roman
 import re
 
 RE_DEFAULT = (r'_(?:Chr|SC|LG)(?:(?P<number>\d+)|(?P<roman>[XIV]+)|(?P<letter>\S+))$',)
@@ -61,7 +62,7 @@ def main():
                     if number is not None:
                         contig = int(match['number'])
                     elif roman is not None:
-                        contig = roman_to_int(match['roman'])
+                        contig = int_from_roman(match['roman'])
                     elif letter is not None:
                         contig = match['letter']
                     else:

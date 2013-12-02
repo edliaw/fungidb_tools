@@ -3,6 +3,7 @@
 2012/11/14
 Edward Liaw
 """
+from __future__ import unicode_literals
 
 def _is_empty(text):
     return not text or text.isspace()

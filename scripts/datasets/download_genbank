@@ -1,6 +1,7 @@
 #!/usr/bin/env python2.7
 
-from __future__ import print_function
+from __future__ import print_function, unicode_literals
+from future.builtins import range
 import argparse
 import sys
 import os
@@ -39,7 +40,7 @@ def main():
                                                         term=id_list)
 
     downloaded = 0
-    for start in xrange(0, count, args.batch):
+    for start in range(0, count, args.batch):
         handle = Entrez.efetch(db='nucleotide', rettype='gbwithparts',
                                retmode='text', retstart=start,
                                retmax=args.batch, webenv=webenv,
@@ -48,11 +49,12 @@ def main():
             acc = record.name
             fn = os.path.join(args.outdir, acc + ".gbk.gz")
             print("Downloading {}...".format(fn))
-            with gzip.open(fn, 'wb') as outfile:
+            with gzip.open(fn, 'wt') as outfile:
                 SeqIO.write(record, outfile, 'gb')
                 downloaded += 1
 
         handle.close()
+        print("Downloaded {}/{} files".format(downloaded, count))
 
 
 if __name__ == "__main__":

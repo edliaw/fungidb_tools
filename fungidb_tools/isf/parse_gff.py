@@ -10,8 +10,9 @@ Edward Liaw
 """
 
 from __future__ import print_function
+from __future__ import unicode_literals
 import sys
-import urllib
+import urllib.parse
 from warnings import warn
 from collections import OrderedDict
 
@@ -177,7 +178,7 @@ class GFFParser(object):
                     continue
                 try:
                     key, val = s_pair.split(self.d_key, 2)
-                    val = urllib.quote(urllib.unquote(val.strip(self.d_quotes)))
+                    val = urllib.parse.quote(urllib.parse.unquote(val.strip(self.d_quotes)))
                     attr[key] = val
                 except ValueError:
                     raise ParseError("FAILED to split: %s" % line)

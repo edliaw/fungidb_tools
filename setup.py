@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-
-from setuptools import setup
+"""fungidb-tools setup file."""
+from setuptools import setup, find_packages
 
 
 def readme():
@@ -10,11 +10,13 @@ def readme():
 setup(name='fungidb_tools',
       version='0.1',
       description='Tools for maintaining and developing FungiDB',
-      long_description=readme(),
-      url='http://github.com/edliaw/fungidb_tools',
       author='Edward Liaw',
       author_email='ed.liaw@fungidb.org',
-      packages=['fungidb_tools'],
+      long_description=readme(),
+      url='http://github.com/edliaw/fungidb_tools',
+
+      packages=find_packages(),
+
       scripts=[
           'scripts/datasets/generate_datasets',
           'scripts/datasets/download_sra',
@@ -30,10 +32,13 @@ setup(name='fungidb_tools',
           'scripts/isf/extract_products_genbank',
           'scripts/isf/extract_products_jgi',
       ],
+
+      test_suite="fungidb_tools.tests",
+
       install_requires=[
+          'future',
           'biopython',
           'lxml',
-          'gdata',
+          'gspread',
           'decorator',
-      ],
-      zip_safe=False,)
+      ],)

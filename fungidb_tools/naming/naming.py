@@ -2,7 +2,10 @@
 
 2013-06-10
 Edward Liaw
+
 """
+from __future__ import unicode_literals
+from future.builtins import range, str, chr
 import re
 from warnings import warn
 import unicodedata
@@ -14,22 +17,26 @@ RE_NON_ALPHA = re.compile(r'[^a-zA-Z]+')
 
 
 class OrthoAbbrev(object):
-    """Generate a unique 4-letter orthomcl abbreviation for the organism.
+
+    """A memoized unique 4-letter OrthoMCL abbreviation generator.
 
     >>> ortho = OrthoAbbrev()
     >>> ortho.abbrev('Mucor', 'circinelloides f. lusitanicus', 'CBS 277.49')
     'mcir'
     >>> ortho.abbrev('Mucor', 'circinelloides f. lusitanicus', 'CBS 277.50')
     'mcis'
+
     """
+
     def __init__(self, seed=None):
         self.abbrevs = {} if seed is None else seed
 
     def abbrev(self, genus, species, strain):
+        """Return a new OrthoMCL abbreviation for the given organism."""
         if (genus, species, strain) in self.abbrevs:
             return self.abbrevs[(genus, species, strain)]
         else:
-            abbrevs = self.abbrevs.values()
+            abbrevs = set(self.abbrevs.values())
 
             long_name = genus[0] + species + abbrev_strain(strain)
             long_name = RE_NON_ALPHA.sub("", long_name).lower()
@@ -42,27 +49,30 @@ class OrthoAbbrev(object):
                 if name not in abbrevs:
                     self.abbrevs[(genus, species, strain)] = name
                     return name
-            else:
-                raise Exception("Couldn't find a unique abbreviation for {} {} {}".format(genus, species, strain))
+            raise Exception("Couldn't find a unique abbreviation for "
+                            "{} {} {}".format(genus, species, strain))
 
 
 def slugify(string, whitespace="_", unfriendly="-"):
-    """Reduces a string into ASCII and substitutes for whitespace and
-    non-alphabetic characters.
+    """Return a reduced string.
+
+    Convert string into ASCII and substitute for non-alphabetic characters.
+
     """
     string = RE_UNFRIENDLY.sub(
         unfriendly,
-        unicodedata.normalize('NFKD', unicode(string)).encode('ascii', 'ignore')
+        unicodedata.normalize('NFKD', string)
     )
     string = RE_WHITESPACE.sub(whitespace, string)
     return string
 
 
 def filename(genus, species, strain):
-    """Returns a filename-appropriate name.
+    """Return a filename-appropriate name.
 
     >>> filename('Mucor', 'circinelloides f. lusitanicus', 'CBS 277.49')
     'Mcircinelloides_CBS277-49'
+
     """
     strain = abbrev_strain(strain)
     species = species.split(" ", 1)[0]
@@ -70,7 +80,7 @@ def filename(genus, species, strain):
 
 
 def abbrev_strain(strain):
-    """Create an abbreviated strain name.
+    """Return an abbreviated strain name.
 
     >>> abbrev_strain('CBS 277.49')
     'CBS277-49'
@@ -78,6 +88,7 @@ def abbrev_strain(strain):
     'NRRL1555-'
     >>> abbrev_strain('C735 delta SOWgp')
     'C735deltSOWgp'
+
     """
     # Reduce long, lowercase words to 4 letters.
     shortened_words = []
@@ -95,20 +106,20 @@ def abbrev_strain(strain):
 
 
 def abbrev_dbname(genus, species, strain):
-    """Create an abbreviated organism name for internal use.
+    """Return an abbreviated organism name for internal use.
 
     >>> abbrev_dbname('Tremella', 'mesenterica', 'DSM 1558')
     'TmesDSM1558'
     >>> abbrev_dbname('Mucor', 'circinelloides f. lusitanicus', 'CBS 277.49')
     'McirCBS277-49'
+
     """
     strain = abbrev_strain(strain)
     return genus[0].upper() + species[:3].lower() + strain
 
 
 def split_taxname(taxname):
-    """Split a name taken from NCBI taxonomy.
-    Returns: 3-tuple of (genus, species, strain).
+    """Split NCBI taxonomy name and return 3-tuple (genus, species, strain).
 
     Assumptions:
         Words are separated by spaces.
@@ -126,6 +137,7 @@ def split_taxname(taxname):
     ('Mucor', 'circinelloides f. lusitanicus', 'CBS 277.49')
     >>> split_taxname('Puccinia graminis f. sp. tritici CRL 75-36-700-3')
     ('Puccinia', 'graminis f. sp. tritici', 'CRL 75-36-700-3')
+
     """
     split_name = taxname.strip().split(" ")
     genus = split_name.pop(0)
@@ -158,13 +170,13 @@ def split_taxname(taxname):
 
 
 def split_species(species):
-    """Split long species name into 2-tuple of species name and varietas/forma
-    (infraspecific).
+    """Split species name and return 2-tuple (species, varietas/forma).
 
     >>> split_species('mesenterica')
     ('mesenterica', '')
     >>> split_species('circinelloides f. lusitanicus')
     ('circinelloides', 'f. lusitanicus')
+
     """
     split = species.split(" ")
     species = " ".join(split[:1])
