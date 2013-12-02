@@ -49,11 +49,12 @@ def main():
             acc = record.name
             fn = os.path.join(args.outdir, acc + ".gbk.gz")
             print("Downloading {}...".format(fn))
-            with gzip.open(fn, 'wb') as outfile:
+            with gzip.open(fn, 'wt') as outfile:
                 SeqIO.write(record, outfile, 'gb')
                 downloaded += 1
 
         handle.close()
+        print("Downloaded {}/{} files".format(downloaded, count))
 
 
 if __name__ == "__main__":
