@@ -5,7 +5,7 @@ SITE   = fungidb
 URL    = $(USER).$(SITE).org
 EMAIL  = $(USER)@$(SITE).org
 WWW    = /var/www/$(URL)
-TRUNK   = ~/GUS/trunk
+TRUNK   = ~/GUS/current
 
 GUS_BLD     ?= ReFlow
 GUS_NOBLD   ?= CBIL WDK WSF FgpUtil install GusSchema
