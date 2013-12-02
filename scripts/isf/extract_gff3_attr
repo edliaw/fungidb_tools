@@ -19,6 +19,8 @@ def parse_arguments():
                         default=sys.stdout, help='output file')
     parser.add_argument('-a', '--attributes',
                         nargs='*', default=['Alias'])
+    parser.add_argument('-s', '--split',
+                        action='store_true')
     return parser.parse_args()
 
 
@@ -32,16 +34,15 @@ def main():
                 continue
 
             a = feat.regions[0].attributes
+            uq_id = urllib2.unquote(feat.id)
             aliases = []
             for tag in args.attributes:
                 try:
-                    aliases += a[tag]
+                    aliases += urllib2.unquote(a[tag])
                 except KeyError:
                     pass
-            if aliases:
-                id = urllib2.unquote(feat.id)
-                aliases = ','.join([urllib2.unquote(a) for a in aliases])
-                print("\t".join((id, aliases)), file=outfile)
+            for a in aliases:
+                print("\t".join((uq_id, a)), file=outfile)
 
 if __name__ == "__main__":
     main()
