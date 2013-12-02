@@ -10,7 +10,7 @@ import argparse
 from fungidb_tools.isf.roman import roman_to_int
 import re
 
-RE_DEFAULT = (r'(?:Chr|SC|LG)(?:(?P<number>\d+)|(?P<roman>[XIV]+)|(?P<letter>\S+))$',)
+RE_DEFAULT = (r'_(?:Chr|SC|LG)(?:(?P<number>\d+)|(?P<roman>[XIV]+)|(?P<letter>\S+))$',)
 
 
 def parse_arguments():
