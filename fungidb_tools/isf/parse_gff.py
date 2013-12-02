@@ -11,6 +11,7 @@ Edward Liaw
 
 from __future__ import print_function
 import sys
+import urllib
 from warnings import warn
 from collections import OrderedDict
 
@@ -176,7 +177,8 @@ class GFFParser(object):
                     continue
                 try:
                     key, val = s_pair.split(self.d_key, 2)
-                    attr[key] = val.strip(self.d_quotes)
+                    val = urllib.quote(urllib.unquote(val.strip(self.d_quotes)))
+                    attr[key] = val
                 except ValueError:
                     raise ParseError("FAILED to split: %s" % line)
             comment = self.d_attribute.join(comments)
