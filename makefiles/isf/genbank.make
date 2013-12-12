@@ -49,6 +49,7 @@ INSERT_RL         = GUS::Supported::Plugin::InsertExternalDatabaseRls
 INSERT_RL_OPTS   ?= --databaseName $(DB_NAME) --databaseVersion $(VERSION)
 INSERT_FEAT       = GUS::Supported::Plugin::InsertSequenceFeatures
 INSERT_FEAT_OPTS ?= --extDbName $(DB_NAME) --extDbRlsVer $(VERSION) --mapFile $(XML_MAP) --fileFormat genbank --soCvsVersion 1.417 --organism $(TAXID) --seqSoTerm $(LONG_TYPE) --seqIdColumn source_id --chromosomeMapFile chromosomeMap.txt --inputFileOrDir $< --validationLog val.log --bioperlTreeOutput bioperlTree.out
+QA_OPTS          ?= --organismAbbrev $(ID) --extDbName $(DB_NAME) --extDbRlsVer $(VERSION)
 # Undo:
 UNDO              = GUS::Community::Plugin::Undo
 UNDO_FEAT         = GUS::Supported::Plugin::InsertSequenceFeaturesUndo
@@ -113,6 +114,11 @@ insf: genome.gbf chromosomeMap.txt
 	# Insert features and sequences.
 	ga $(INSERT_FEAT) $(INSERT_FEAT_OPTS) $(TEST)
 
+qa: qa_report.txt
+
+qa_report.txt:
+	postLoadIsfQA $(QA_OPTS) 2> $@
+
 
 # Undoing:
 $(ALGFILE): $(LOG)
@@ -130,4 +136,4 @@ else
 endif
 
 
-.PHONY: files all isf clean link undo
+.PHONY: files all isf clean link undo qa

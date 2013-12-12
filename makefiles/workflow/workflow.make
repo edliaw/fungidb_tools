@@ -39,10 +39,10 @@ stop:
 show-%:
 	@workflow $(WORKFLOW) -s1 $*
 
-err-%:
+err-all-%:
 	@${MAKE} -s show-$* | awk '{ print "steps/" $$0 "/step.err" }'
 
-log-%:
+log-all-%:
 	@${MAKE} -s show-$* | awk '{ print "steps/" $$0 "/step.log" }'
 
 
@@ -92,11 +92,11 @@ online-%:
 	# On-line a step.
 	workflowstep $(WORKFLOW) -p $* online
 
-errl-%:
-	less steps/$*/step.err
+err-%:
+	vim "steps/$*/step.err"
 
-logl-%:
-	less steps/$*/step.log
+log-%:
+	vim "steps/$*/step.log"
 
 tail:
 	tail -f logs/controller.log

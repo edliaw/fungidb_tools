@@ -35,6 +35,9 @@ link:
 tuning:
 	tuningManager --instance $(DB) --propfile ${GUS_HOME}/config/tuningManagerProp.xml --doUpdate &
 
+tuning-%:
+	tuningManager --instance $(DB) --propfile ${GUS_HOME}/config/tuningManagerProp.xml --doUpdate --tables $* &
+
 add_tuning:
 	# Run once for new database instance.
 	tuningMgrMgr addinstance -connectName=$(DB) -instanceNickname=$(DB) -propfile ${GUS_HOME}/config/tuningManagerProp.xml -family=$(BUILD) -svn=$(BRANCH_DIR)

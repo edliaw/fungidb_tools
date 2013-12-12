@@ -52,7 +52,8 @@ MAKE_ALGIDS       = $(SPLIT_ALGIDS) --all < $(LOG) >> $(ALGFILE)
 COMMIT            = --commit 2>&1 | tee -a $(LOG) | $(SPLIT_ALGIDS) >> $(ALGFILE)
 TEST              = >| error.log 2>&1
 INSERT_FEAT       = GUS::Supported::Plugin::InsertSequenceFeatures
-INSERT_FEAT_OPTS ?= --extDbName $(DB_NAME) --extDbRlsVer $(VERSION) --mapFile $(XML_MAP) --inputFileExtension gff --fileFormat gff3 --soCvsVersion 1.417 --organism $(TAXID) --seqSoTerm $(LONG_TYPE) --seqIdColumn source_id --naSequenceSubclass ExternalNASequence --chromosomeMapFile chromosomeMap.txt --inputFileOrDir $< --validationLog val.log --bioperlTreeOutput bioperlTree.out --commit
+INSERT_FEAT_OPTS ?= --extDbName $(DB_NAME) --extDbRlsVer $(VERSION) --mapFile $(XML_MAP) --inputFileExtension gff --fileFormat gff3 --soCvsVersion 1.417 --organism $(TAXID) --seqSoTerm $(LONG_TYPE) --seqIdColumn source_id --naSequenceSubclass ExternalNASequence --chromosomeMapFile chromosomeMap.txt --inputFileOrDir $< --validationLog val.log --bioperlTreeOutput bioperlTree.out
+QA_OPTS          ?= --organismAbbrev $(ID) --extDbName $(DB_NAME) --extDbRlsVer $(VERSION)
 # Undo:
 UNDO              = GUS::Supported::Plugin::InsertSequenceFeaturesUndo
 UNDO_STR          = $(shell $(UNDO_ALGIDS))
@@ -101,6 +102,10 @@ insf: genome.gff chromosomeMap.txt
 	# Run ISF to insert features.
 	ga $(INSERT_FEAT) $(INSERT_FEAT_OPTS) $(TEST)
 
+qa: qa_report.txt
+
+qa_report.txt:
+	postLoadIsfQA $(QA_OPTS) 2> $@
 
 # Undoing:
 $(ALGFILE): $(LOG)
@@ -115,4 +120,4 @@ else
 endif
 
 
-.PHONY: files all isf clean link undo
+.PHONY: files all isf clean link undo qa
