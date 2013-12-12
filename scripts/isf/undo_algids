@@ -11,7 +11,6 @@ import argparse
 import shutil
 import os
 from warnings import warn
-from mmap import mmap
 
 
 def parse_arguments():
@@ -30,16 +29,6 @@ def parse_arguments():
                         action='store_true',
                         help="retrieve all committed algids, beginning with the most recent")
     return parser.parse_args()
-
-
-def reverse_file(infile):
-    m = mmap(infile.fileno(), 0)
-    nl = m.size() - 1
-    prev_nl = m.size()
-    while nl > -1:
-        nl = m.rfind('\n', 0, nl)
-        yield m[nl + 1:prev_nl]
-        prev_nl = nl + 1
 
 
 def read_algfile(algfile):
@@ -68,7 +57,7 @@ def mark(args):
 def print_algs(args):
     try:
         with open(args.algfile, 'r+') as algfile:
-            for algid, plugin, undo in read_algfile(reverse_file(algfile)):
+            for algid, plugin, undo in read_algfile(reversed(algfile.readlines())):
                 if not undo:
                     print(algid, plugin)
                     if not args.all:
