@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 """Generates a chromosome map for a fasta file.
 
 2012/09/14

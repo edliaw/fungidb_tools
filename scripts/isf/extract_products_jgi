@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 """Extract columns from a tab-separated summary file.
 
 2012/10/01

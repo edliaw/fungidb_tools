@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 """Extract attributes by field name from a gff3 file."""
 
 from __future__ import print_function, unicode_literals
