@@ -65,11 +65,11 @@ def main():
                                                 args.debug)
 
     with open(args.fungifile, 'w') as fungifile:
-        print(etree.tostring(ds.make_fungidb_xml()), file=fungifile)
+        print(etree.tostring(ds.make_fungidb_xml(), encoding='unicode'), file=fungifile)
 
     for orgfn, xml in ds.make_species_xmls(args.orgdir):
         with open(orgfn, 'w') as orgfile:
-            print(etree.tostring(xml), file=orgfile)
+            print(etree.tostring(xml, encoding='unicode'), file=orgfile)
 
 
 if __name__ == "__main__":
