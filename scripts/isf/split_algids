@@ -25,6 +25,10 @@ def parse_arguments():
     parser.add_argument('-a', '--all',
                         action='store_true',
                         help='retrieve all unique algids in input')
+    parser.add_argument('-e', '--exhaust',
+                        action='store_true',
+                        help='exhaust stdin to prevent cases like tee exiting'
+                        'preemptively')
     return parser.parse_args()
 
 
@@ -51,6 +55,10 @@ def main():
                         ids.add(id)
                     if not args.all:
                         break
+        # Exhaust stdin.  The prevents situations like tee exiting.
+        if args.exhaust:
+            for line in infile:
+                pass
 
 
 if __name__ == "__main__":
