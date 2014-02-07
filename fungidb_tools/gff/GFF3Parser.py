@@ -14,6 +14,13 @@ R_WHITESPACE = re.compile(r'\s+')
 
 
 class Comment(object):
+
+    """A GFF comment.
+
+    Attributes:
+        text String: comment text.
+    """
+
     def __init__(self, text):
         self.text = text
 
@@ -22,6 +29,14 @@ class Comment(object):
 
 
 class Directive(object):
+
+    """A GFF directive.
+
+    Attributes:
+        name String: directive type.
+        text String: body of directive.
+    """
+
     def __init__(self, name, text):
         self.name = name
         self.text = text
@@ -32,6 +47,22 @@ class Directive(object):
 
 @total_ordering
 class Region(object):
+
+    """A region of nucleotides on a contig.
+
+    Attributes:
+        seqid String: contig id.
+        start Int: 1-based start position.
+        end Int: 1-based end position.
+        score String: . or floating point number E-value or P-value.
+        strand String: + for positive strand, - minus strand, . not stranded,
+            ? unknown strand.
+        phase String: .,0,1,2 required for all CDS features indicating # of
+            bases to remove from the beginning of this region to reach the first
+            base of the next codon.
+        attributes String List OrderedDict: attributes in tag/value format.
+    """
+
     def __init__(self, seqid, start, end, score='.', strand='.', phase='.',
                  attributes=None):
         self.seqid = seqid
@@ -72,6 +103,19 @@ class Region(object):
 
 
 class GFF3Feature(object):
+
+    """A GFF3 feature.
+
+    Attributes:
+        seqid String: contig id.
+        source String: source identifier.
+        soterm String: type of feature.
+        id String: attribute identifying this feature.
+        parents GFF3Feature Set: parent feature(s).
+        regions Region List: region(s) this feature occupies.
+        children GFF3Feature Set: children feature(s).
+    """
+
     def __init__(self, seqid, source, soterm, id,
                  parents=None, regions=None, children=None):
         self.seqid = seqid
@@ -80,11 +124,23 @@ class GFF3Feature(object):
         self.id = id
         self.parents = set(parents) if parents else set()
         self.regions = regions or []
-        self.children = children or set()
+        self.children = set(children) if children else set()
 
     @classmethod
-    def from_file(cls, seqid, source, soterm, start, end, score, strand,
-                  phase, id, parents, attributes):
+    def from_row(cls, seqid, source, soterm, start, end, score, strand,
+                  phase, attributes):
+        """Take input from a GFF entry."""
+        # Separate id and parents
+        _id = attributes.pop("ID", None)
+        parents = attributes.pop("Parent", None)
+
+        if _id is not None:
+            assert len(_id) == 1, "Illegal character ',' in ID"
+            id = _id.pop()
+        else:
+            #assert parents is not None, "No ID or Parents attribute"
+            id = None
+
         regions = [Region(seqid, start, end, score, strand, phase, attributes)]
         return cls(seqid, source, soterm, id, parents, regions)
 
@@ -233,28 +289,16 @@ class GFF3Parser(object):
 
         seqid, source, soterm, start, end, score, strand, phase, _attr = columns
 
-        id, parents, attributes = self.parse_attributes(_attr)
+        attributes = self.parse_attributes(_attr)
 
-        f = GFF3Feature.from_file(seqid, source, soterm, start, end, score,
-                                  strand, phase, id, parents, attributes)
+        f = GFF3Feature.from_row(seqid, source, soterm, start, end, score,
+                                  strand, phase, attributes)
         return f
 
     def parse_attributes(self, attributes):
         attr = [a.split('=', 1) for a in attributes.split(';')]
         attr = OrderedDict((k, v.split(',')) for k, v in attr)
-
-        # Separate id and parents
-        _id = attr.pop("ID", None)
-        parents = attr.pop("Parent", None)
-
-        if _id is not None:
-            assert len(_id) == 1, "Illegal character ',' in ID"
-            id = _id[0]
-        else:
-            #assert parents is not None, "No ID or Parents attribute"
-            id = None
-
-        return id, parents, attr
+        return attr
 
     def parse_fasta(self, infile):
         from Bio import SeqIO

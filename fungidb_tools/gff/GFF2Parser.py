@@ -16,18 +16,29 @@ R_ATTR_TOKENS = re.compile(r';|#.*|"[^"]*"|[^";\s]+')
 
 
 class Comment(object):
+
+    """A GFF comment.
+
+    Attributes:
+        text String: comment text.
+    """
+
     def __init__(self, text):
         self.text = text
-
-    @classmethod
-    def from_gff(cls, text):
-        return cls(text.lstrip('#').lstrip())
 
     def __str__(self):
         return '# ' + self.text
 
 
 class Directive(object):
+
+    """A GFF directive.
+
+    Attributes:
+        name String: directive type.
+        text String: body of directive.
+    """
+
     def __init__(self, name, text):
         self.name = name
         self.text = text
@@ -38,6 +49,24 @@ class Directive(object):
 
 @total_ordering
 class GFF2Feature(object):
+
+    """A GFF2 feature.
+
+    Attributes:
+        seqid String: contig id.
+        source String: source identifier.
+        feature String: type of feature.
+        start Int: 1-based start position.
+        end Int: 1-based end position.
+        score String: . or floating point number E-value or P-value.
+        strand String: + for positive strand, - minus strand, . not stranded,
+            ? unknown strand.
+        phase String: .,0,1,2 required for all CDS features indicating # of
+            bases to remove from the beginning of this region to reach the first
+            base of the next codon.
+        attributes String List OrderedDict: attributes in tag/value format.
+    """
+
     def __init__(self, seqid, source, feature, start, end, score, strand,
                  phase, attributes=None, comment=None):
         self.seqid = seqid
