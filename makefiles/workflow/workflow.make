@@ -67,12 +67,17 @@ tundo-%:
 	# Test undo a step.
 	workflow $(WORKFLOW) -t -u $* &
 
+reundo-all:
+	@${FAILED} | while read f; do \
+	  ${MAKE} reundo-$$f; \
+	done
+
 reundo-%:
 	# Set an undo step to ready.
 	workflowstep $(WORKFLOW) -p $* ready -u
 
 redo-all:
-	@for f in $$(${FAILED}); do \
+	@${FAILED} | while read f; do \
 	  ${MAKE} redo-$$f; \
 	done
 

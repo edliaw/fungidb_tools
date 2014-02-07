@@ -52,7 +52,7 @@ SPLIT_ALGIDS      = split_algids
 UNDO_ALGIDS       = undo_algids $(ALGFILE) 2> /dev/null
 MAKE_ALGIDS       = $(SPLIT_ALGIDS) --all < $(LOG) >> $(ALGFILE)
 # ISF:
-COMMIT            = --commit 2>&1 | tee -a $(LOG) | $(SPLIT_ALGIDS) >> $(ALGFILE)
+COMMIT            = --commit 2>&1 | tee -a $(LOG) | $(SPLIT_ALGIDS) --exhaust >> $(ALGFILE)
 TEST              = >| error.log 2>&1
 INSERT_FEAT       = GUS::Supported::Plugin::InsertSequenceFeatures
 INSERT_FEAT_OPTS ?= --extDbName $(DB_NAME) --extDbRlsVer $(VERSION) --mapFile $(XML_MAP) --inputFileExtension gff --fileFormat gff3 --soCvsVersion 1.417 --organism $(TAXID) --seqSoTerm $(LONG_TYPE) --seqIdColumn source_id --naSequenceSubclass ExternalNASequence --chromosomeMapFile chromosomeMap.txt --inputFileOrDir $< --validationLog val.log --bioperlTreeOutput bioperlTree.out
