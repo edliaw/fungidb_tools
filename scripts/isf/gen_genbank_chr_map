@@ -10,7 +10,6 @@ import sys
 import argparse
 from Bio import SeqIO
 
-RE_DEFAULT = r'LOCUS'
 
 def parse_arguments():
     """Handle command-line arguments.
@@ -32,5 +31,9 @@ def main():
     args = parse_arguments()
 
     with args.infile as infile, args.outfile as outfile:
-        for i, record in enumerate(SeqIO.parse(infile)):
-            print("{0}\t{1}\t{1}".format(record.name, i), file=outfile)
+        for i, record in enumerate(SeqIO.parse(infile, 'genbank')):
+            print("{0}\t{1}\t{1}".format(record.name, i+1), file=outfile)
+
+
+if __name__ == "__main__":
+    main()
