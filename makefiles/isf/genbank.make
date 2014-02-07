@@ -75,9 +75,9 @@ genome.gbf:
 	# Concatenate provider files.
 	$(CAT) $(PROVIDER_FILE) >| $@
 
-#chromosomeMap.txt: genome.gbf
+chromosomeMap.txt: genome.gbf
 	# Generate chromosome map file.
-	#$(GENERATE_MAP) $< >| $@
+	$(GENERATE_MAP) $< >| $@
 
 report.txt: genome.gbf
 	# View feature qualifiers for genome.gbk.
