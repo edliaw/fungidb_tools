@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 
 from __future__ import print_function, unicode_literals
 from future.builtins import range
@@ -6,6 +6,7 @@ import argparse
 import sys
 import os
 import gzip
+import itertools
 from fungidb_tools import simple_eutils as eutils
 from Bio import Entrez, SeqIO
 
@@ -28,21 +29,29 @@ def parse_arguments():
 
 def main():
     args = parse_arguments()
+
+    completed = set()
+    try:
+        with open('completed', 'r') as infile:
+            completed = set(line.rstrip() for line in infile)
+    except FileNotFoundError:
+        pass
+
     if args.db not in ('nucleotide', 'nuccore'):
         webenv, query_key = eutils.webenv_link('nucleotide', args.db,
                                                args.idlist)
-        webenv, query_key, count = eutils.webenv_search('nucleotide',
-                                                        webenv=webenv,
-                                                        query_key=query_key)
+        idlist = eutils.idlist_search('nucleotide', webenv=webenv,
+                                      query_key=query_key)
     else:
-        id_list = args.idlist
-        webenv, query_key, count = eutils.webenv_search('nucleotide',
-                                                        term=id_list)
+        idlist = eutils.idlist_search('nucleotide', term=args.idlist)
+
+    idlist = list(set(idlist) - completed)
 
     downloaded = 0
-    for start in range(0, count, args.batch):
+    for ids in (idlist[i:i + args.batch] for i in range(0, len(idlist), args.batch)):
+        webenv, query_key = eutils.webenv_post('nucleotide', ids)
         handle = Entrez.efetch(db='nucleotide', rettype='gbwithparts',
-                               retmode='text', retstart=start,
+                               retmode='text', retstart=0,
                                retmax=args.batch, webenv=webenv,
                                query_key=query_key)
         for record in SeqIO.parse(handle, 'gb'):
@@ -52,9 +61,11 @@ def main():
             with gzip.open(fn, 'wt') as outfile:
                 SeqIO.write(record, outfile, 'gb')
                 downloaded += 1
-
         handle.close()
-        print("Downloaded {}/{} files".format(downloaded, count))
+
+        with open('completed', 'a') as outfile:
+            print('\n'.join(ids), file=outfile)
+        print("Downloaded {}/{} files".format(downloaded, len(idlist)))
 
 
 if __name__ == "__main__":
