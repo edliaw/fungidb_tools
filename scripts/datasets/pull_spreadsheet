@@ -1,0 +1,48 @@
+#!/usr/bin/env python3
+
+import sys
+import argparse
+import json
+import gspread
+from fungidb_tools import datasets
+from fungidb_tools.json_gspread import json_gspread
+
+
+def parse_arguments():
+    """Handle command-line arguments.
+
+    Returns:
+        args: Arguments passed in from the command-line.
+    """
+    parser = argparse.ArgumentParser(description=__doc__,
+                                     fromfile_prefix_chars='@')
+    parser.add_argument('--output',
+                        default=datasets.DEFAULT.JSON,
+                        help='json to dump')
+    parser.add_argument('-d', '--debug',
+                        action='store_true',
+                        help='check spreadsheet for errors')
+    parser.add_argument('--orthomcl',
+                        default="5.12", help='orthomcl version')
+    parser.add_argument('-e', '--email',
+                        help='gmail login')
+    parser.add_argument('-p', '--pword',
+                        help='gmail password')
+    return parser.parse_args()
+
+
+def main():
+    args = parse_arguments()
+
+    gc = gspread.login(args.email, args.pword)
+    sh = gc.open(datasets.DEFAULT.GDOC)
+    wk = sh.worksheet(datasets.DEFAULT.GSHEET)
+
+    json_feed = json_gspread(wk)
+
+    with open(args.output, 'w') as jsonfile:
+        json.dump(json_feed, jsonfile, sort_keys=True, indent=2)
+
+
+if __name__ == "__main__":
+    main()
