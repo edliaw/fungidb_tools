@@ -6,29 +6,31 @@ Scripts for maintenance, data loading, and validation for FungiDB.
 Prerequisites
 -------------
 
-* python2.7 compiled with _curses, _ssh
+* python3 compiled with _curses, _ssh
 * biopython, lxml, gdata, decorator
 
 Installation
 ------------
 
 ```
-python2.7 setup.py install
+python3 setup.py install
 or
-python2.7 setup.py develop
+python3 setup.py develop
 ```
 
 Modules
 -------
 
 * Datasets
-  * simple_gdata: Wrapper around the gdata library to make it easier to use.  Used to interface with spreadsheets on Google Drive.
-  * datasets: Turns the Genomes spreadsheet into XML workflow config files.
-  * xml: Additional tools for working with XML files.
+  * datasets: Turn the Genomes spreadsheet into XML workflow config files.
+  * isf: Reformat and extract data from genome files.
   * naming: Naming organisms with more consistent specifications than is enforced by EuPathDB.
 * NCBI
   * aspera: For downloading SRA datasets from NCBI.
   * simple_eutils: Wrapper around NCBI eutils to combine/simplify functions.
+* Other
+  * elementlib: Tools for working with XML files.
+  * json_gspread: Convert old-style Google Spreadsheet into JSON structure.
 
 Scripts
 -------
