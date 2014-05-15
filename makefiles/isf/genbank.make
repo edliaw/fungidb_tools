@@ -77,7 +77,11 @@ genome.gbf:
 
 chromosomeMap.txt: genome.gbf
 	# Generate chromosome map file.
+ifeq ($(LONG_TYPE),chromosome)
 	$(GENERATE_MAP) $< >| $@
+else
+	touch $@
+endif
 
 report.txt: genome.gbf
 	# View feature qualifiers for genome.gbk.

@@ -1,18 +1,22 @@
-BRANCH ?= trunk
-DB     ?= fungbl1n
-USER   ?= edliaw
-BUILD   = fung-build-6
+BRANCH  ?= trunk
+FBRANCH ?= $(TRUNK)
+DB      ?= fungbl1n
+USER    ?= edliaw
+BUILD    = fung-build-6
 
-GUS_BLD     ?= CBIL DJob GusSchema ReFlow WDK WSF FgpUtil
+GUS_BLD     ?= TuningManager CBIL DJob GusSchema ReFlow WDK WSF FgpUtil
 GUS_NOBLD   ?= WSFTemplate install
-APIDB_BLD   ?= DoTS ApiCommonShared ApiCommonData ApiCommonWorkflow GGTools EuPathDatasets FungiDBDatasets
-APIDB_NOBLD ?= EuPathPresenters FungiDBPresenters
+APIDB_BLD   ?= DoTS ApiCommonShared ApiCommonData ApiCommonWorkflow ApiCommonWebsite EuPathSiteCommon GGTools EuPathDatasets
+APIDB_NOBLD ?= EuPathPresenters
+FUNGI_BLD   ?= FungiDBDatasets FungiDBPresenters
+FUNGI_NOBLD ?= 
 
 GUS        = $(GUS_BLD) $(GUS_NOBLD)
 APIDB      = $(APIDB_BLD) $(APIDB_NOBLD)
-BLD_DIRS   = $(GUS_BLD) $(APIDB_BLD) GUS
-NOBLD_DIRS = $(GUS_NOBLD) $(APIDB_NOBLD)
-ALL_DIRS   = $(GUS) $(APIDB) GUS
+FUNGI      = $(FUNGI_BLD) $(FUNGI_NOBLD)
+BLD_DIRS   = $(GUS_BLD) $(APIDB_BLD) $(FUNGI_BLD) GUS
+NOBLD_DIRS = $(GUS_NOBLD) $(APIDB_NOBLD) $(FUNGI_NOBLD)
+ALL_DIRS   = $(GUS) $(APIDB) $(FUNGI) GUS
 
 SVN_CO  = svn co
 SVN_URL = https://www.cbil.upenn.edu/svn
@@ -23,24 +27,33 @@ else
   BRANCH_DIR = branches/$(BRANCH)
 endif
 
+ifeq ($(FBRANCH),trunk)
+  FBRANCH_DIR = $(FBRANCH)
+else
+  FBRANCH_DIR = branches/$(FBRANCH)
+endif
 
-common: ApiCommonData ApiCommonWorkflow
+TUNING_PROP = ${GUS_HOME}/config/tuningManagerProp.xml
+TUNING_CONFIG = ${PROJECT_HOME}/ApiCommonShared/Model/lib/xml/tuningManager/tuningManager.xml
 
-all: $(GUS) $(APIDB)
+
+common: ApiCommonData ApiCommonShared ApiCommonWorkflow
+
+all: $(GUS) $(APIDB) $(FUNGI)
 
 link:
 	# Activate this branch as the project home.
 	ln -fs $(shell basename $(shell readlink -f ${CURDIR}/..)) -T ~/GUS/current
 
 tuning:
-	tuningManager --instance $(DB) --propfile ${GUS_HOME}/config/tuningManagerProp.xml --doUpdate &
+	tuningManager --instance $(DB) --propfile $(TUNING_PROP) --configFile $(TUNING_CONFIG) --doUpdate &
 
 tuning-%:
-	tuningManager --instance $(DB) --propfile ${GUS_HOME}/config/tuningManagerProp.xml --doUpdate --tables $* &
+	tuningManager --instance $(DB) --propfile $(TUNING_PROP) --configFile $(TUNING_CONFIG) --doUpdate --tables $* &
 
 add-tuning:
 	# Run once for new database instance.
-	tuningMgrMgr addinstance -connectName=$(DB) -instanceNickname=$(DB) -propfile ${GUS_HOME}/config/tuningManagerProp.xml -family=$(BUILD) -svn=$(BRANCH_DIR)
+	tuningMgrMgr addinstance -connectName=$(DB) -instanceNickname=$(DB) -propfile $(TUNING_PROP) -family=$(BUILD) -svn=$(BRANCH_DIR)
 
 sql:
 	sqlplus $(USER)@$(DB)
@@ -60,12 +73,18 @@ checkout:
 	for TARGET in $(APIDB); do \
 	  ${MAKE} $${TARGET}-apidb-checkout; \
 	done
+	for TARGET in $(FUNGI); do \
+	  ${MAKE} $${TARGET}-fungi-checkout; \
+	done
 
 %-gus-checkout:
 	$(SVN_CO) $(SVN_URL)/gus/$*/$(BRANCH_DIR) $*
 
 %-apidb-checkout:
 	$(SVN_CO) $(SVN_URL)/apidb/$*/$(BRANCH_DIR) $*
+
+%-fungi-checkout:
+	$(SVN_CO) $(SVN_URL)/apidb/$*/$(FBRANCH_DIR) $*
 
 %-u:
 	svn up $*

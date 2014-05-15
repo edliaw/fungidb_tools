@@ -59,6 +59,10 @@ log-all-%:
 %-Z:
 	@${MAKE} $*-$(LAST_RUNNING)
 
+cundo-%:
+	# List steps that will be undone.
+	workflow $(WORKFLOW) -c -u $* &
+
 undo-%:
 	# Undo a step.
 	workflow $(WORKFLOW) -r -u $* &
@@ -84,6 +88,10 @@ redo-all:
 redo-%:
 	# Set a step to ready.
 	workflowstep $(WORKFLOW) -p $* ready
+
+Fail-%:
+	# Fail a step if workflow is stopped and step need to update as FAILED.
+	workflowForceStepState $(WORKFLOW) $* FAILED
 
 kill-%:
 	# End a step.

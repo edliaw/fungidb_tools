@@ -5,19 +5,18 @@ SITE   = fungidb
 URL    = $(USER).$(SITE).org
 EMAIL  = $(USER)@$(SITE).org
 WWW    = /var/www/$(URL)
-TRUNK   = ~/GUS/current
+TRUNK   = ~/GUS/workflow
 
-GUS_BLD     ?= ReFlow
+GUS_BLD     ?= TuningManager ReFlow
 GUS_NOBLD   ?= CBIL WDK WSF FgpUtil install GusSchema
-APIDB_BLD   ?= ApiCommonShared EuPathDatasets FungiDBDatasets
-APIDB_NOBLD ?= ApiCommonData GBrowse ApiCommonWebService EuPathSiteCommon EuPathWebSvcCommon ApiCommonWebsite EuPathPresenters FungiDBPresenters
+APIDB_BLD   ?= ApiCommonShared
+APIDB_NOBLD ?= ApiCommonData GBrowse ApiCommonWebService EuPathSiteCommon EuPathWebSvcCommon ApiCommonWebsite EuPathPresenters FungiDBPresenters EuPathDatasets FungiDBDatasets
 WEB_BLDW    ?= ApiCommonWebsite
 
 GUS        = $(GUS_BLD) $(GUS_NOBLD)
 APIDB      = $(APIDB_BLD) $(APIDB_NOBLD)
 BLD_DIRS   = $(GUS_BLD) $(APIDB_BLD)
 NOBLD_DIRS = $(GUS_NOBLD) $(APIDB_NOBLD)
-ALL_DIRS   = $(GUS) $(APIDB) $(WEB_BLDW)
 
 SVN_CO  = svn co
 SVN_URL = https://www.cbil.upenn.edu/svn
@@ -63,10 +62,10 @@ wdkQuery-%:
 wdkCache:
 	wdkCache -model FungiDB -new
 
-all: $(GUS) $(APIDB)
+all: $(GUS) $(APIDB) GUS
 
 tuning:
-	cd $(TRUNK) && $(GUSENV) && cd ${PROJECT_HOME} && ${MAKE} tuning
+	cd $(TRUNK)/project_home && $(GUSENV) && ${MAKE} tuning
 	cd $(WWW) && $(GUSENV)
 
 sql:
@@ -95,6 +94,10 @@ checkout:
 
 %-u:
 	svn up $*
+
+GUS-b:
+	touch ./GusSchema/Definition/config/gus_schema.xml
+	bld GUS
 
 %-b:
 	bld $*
