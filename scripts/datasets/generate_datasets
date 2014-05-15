@@ -8,7 +8,6 @@ import warnings
 import gspread
 from lxml import etree
 from fungidb_tools import datasets
-from fungidb_tools.json_gspread import json_gspread
 
 
 def parse_arguments():
@@ -33,10 +32,6 @@ def parse_arguments():
                         help='check spreadsheet for errors')
     parser.add_argument('--orthomcl',
                         default="5.12", help='orthomcl version')
-    parser.add_argument('-e', '--email',
-                        help='gmail login')
-    parser.add_argument('-p', '--pword',
-                        help='gmail password')
     return parser.parse_args()
 
 
@@ -49,14 +44,8 @@ warnings.formatwarning = custom_formatwarning
 def main():
     args = parse_arguments()
 
-    gc = gspread.login(args.email, args.pword)
-    sh = gc.open(datasets.DEFAULT.GDOC)
-    wk = sh.worksheet(datasets.DEFAULT.GSHEET)
-
-    json_feed = json_gspread(wk)
-
-    with open(args.jsonfile, 'w') as jsonfile:
-        json.dump(json_feed, jsonfile, sort_keys=True, indent=2)
+    with open(args.jsonfile, 'rt') as jsonfile:
+        json_feed = json.load(jsonfile, encoding='unicode')
 
     organisms = [o for o in json_feed
                  if datasets.bool_from_sheet(o[datasets.COL.ISLOADED])]
