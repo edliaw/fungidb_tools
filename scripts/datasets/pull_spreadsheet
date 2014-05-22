@@ -19,11 +19,6 @@ def parse_arguments():
     parser.add_argument('--output',
                         default=datasets.DEFAULT.JSON,
                         help='json to dump')
-    parser.add_argument('-d', '--debug',
-                        action='store_true',
-                        help='check spreadsheet for errors')
-    parser.add_argument('--orthomcl',
-                        default="5.12", help='orthomcl version')
     parser.add_argument('-e', '--email',
                         help='gmail login')
     parser.add_argument('-p', '--pword',
