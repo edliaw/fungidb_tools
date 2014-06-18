@@ -269,7 +269,7 @@ def etree_summary(db, id=None, webenv=None, query_key=None, out=None):
     summary_handle.close()
 
     if out is not None:
-        et.write(out)
+        out.write(etree.tostring(et, encoding='unicode'))
     root = et.getroot()
     return root
 
@@ -299,6 +299,6 @@ def etree_fetch(db, id=None, webenv=None, query_key=None, out=None):
     fetch_handle.close()
 
     if out is not None:
-        et.write(out)
+        out.write(etree.tostring(et, encoding='unicode'))
     root = et.getroot()
     return root
