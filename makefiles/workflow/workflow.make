@@ -16,7 +16,7 @@ test:
 	# Test the controller
 	workflow $(WORKFLOW) -t &
 
-_reset_:
+Reset:
 	# Reset the controller.
 	workflow $(WORKFLOW) -reset
 
@@ -44,6 +44,9 @@ err-all-%:
 
 log-all-%:
 	@${MAKE} -s show-$* | awk '{ print "steps/" $$0 "/step.log" }'
+
+err:
+	vim $$(for f in $$($(FAILED)); do echo "steps/$$f/step.err"; done)
 
 
 
@@ -104,12 +107,6 @@ offline-%:
 online-%:
 	# On-line a step.
 	workflowstep $(WORKFLOW) -p $* online
-
-err-%:
-	vim "steps/$*/step.err"
-
-log-%:
-	vim "steps/$*/step.log"
 
 tail:
 	tail -f logs/controller.log
