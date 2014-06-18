@@ -11,6 +11,7 @@ import argparse
 from warnings import warn
 from fungidb_tools.aspera import Aspera
 from fungidb_tools import simple_eutils as eutils
+from lxml import etree
 
 NCBI_FTP = "anonftp@ftp-trace.ncbi.nlm.nih.gov:"
 SRA_FTP_DIR = "sra/sra-instant/reads"
@@ -72,7 +73,7 @@ def map_from_search(term):
         results['srp'] = root.find(SRP_ENTREZ).attrib['accession']
 
         results['pid'] = [pid.text for pid in root.findall(PID_ENTREZ)]
-        yield id, results
+        yield id, results, root
 
 
 def sra_ftp_address(term):
@@ -96,9 +97,14 @@ def main():
 
     for term in args.terms:
         srp_set = set()
-        for id, results in map_from_search(term):
+        for id, results, xml in map_from_search(term):
             print(id, results, sep='\t')
             srp_set.add(results['srp'])
+
+            outfn = os.path.join(args.outdir, results['srr'] + '.xml')
+            with open(outfn, 'w') as outfile:
+                outfile.write(etree.tounicode(xml))
+
         for srp in srp_set:
             ascp.fetch(sra_ftp_address(srp), args.outdir)
 
