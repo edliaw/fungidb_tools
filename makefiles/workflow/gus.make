@@ -2,15 +2,14 @@ BRANCH  ?= trunk
 FBRANCH ?= $(BRANCH)
 DB      ?= fungbl1n
 USER    ?= edliaw
-BUILD    = fung-build-6
+BUILD    = fung-build-7
 
-GUS_BLD     ?= TuningManager CBIL DJob GusSchema ReFlow WDK WSF FgpUtil
+GUS_BLD     ?= GusSchema DJob FgpUtil WSF WDK CBIL ReFlow TuningManager
 GUS_NOBLD   ?= WSFTemplate install
-APIDB_BLD   ?= DoTS ApiCommonShared ApiCommonData ApiCommonWorkflow ApiCommonWebsite EuPathSiteCommon GGTools GBrowse ApiCommonWebService EuPathWebSvcCommon
+APIDB_BLD   ?= DoTS GGTools EuPathSiteCommon EuPathWebSvcCommon GBrowse ApiCommonData ApiCommonWorkflow ApiCommonShared ApiCommonWebsite ApiCommonWebService
 APIDB_NOBLD ?= EuPathPresenters EuPathDatasets
-FUNGI_BLD   ?= FungiDBDatasets FungiDBPresenters
+FUNGI_BLD   ?= FungiDBPresenters FungiDBDatasets
 FUNGI_NOBLD ?= 
-
 
 GUS        = $(GUS_BLD) $(GUS_NOBLD)
 APIDB      = $(APIDB_BLD) $(APIDB_NOBLD)
@@ -43,7 +42,7 @@ all: $(ALL_DIRS)
 
 link:
 	# Activate this branch as the project home.
-	ln -fs $(shell basename $(shell readlink -f ${CURDIR}/..)) -T ~/GUS/current
+	ln -fs $(shell basename $(shell readlink -f ${CURDIR}/..)) -T ../current
 
 tuning:
 	tuningManager --instance $(DB) --propfile $(TUNING_PROP) --configFile $(TUNING_CONFIG) --doUpdate &
@@ -109,5 +108,10 @@ _initschema_:
 	rm GUS/Model/lib/perl/generated
 	${MAKE} GUS ApiCommonData
 
+props:
+	propertiesFromDatasets FungiDBDatasets
+
+inject:
+	presenterInjectTemplates -presentersDir ${PROJECT_HOME}/FungiDBPresenters/Model/lib/xml/datasetPresenters -templatesDir ${PROJECT_HOME}/ApiCommonShared/Model/lib/dst -contactsXmlFile ${PROJECT_HOME}/FungiDBPresenters/Model/lib/xml/datasetPresenters/contacts/contacts.xml
 
 .PHONY: common all link tuning add_tuning sql _clean_ checkout $(ALL_DIRS) _dropschema_ _initschema_

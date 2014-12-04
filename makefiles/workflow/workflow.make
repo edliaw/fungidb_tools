@@ -29,7 +29,6 @@ stop:
 	workflowStopController $(WORKFLOW)
 
 
-
 %-r:
 	@${MAKE} -s $*-RUNNING
 
@@ -47,8 +46,6 @@ log-all-%:
 
 err:
 	vim $$(for f in $$($(FAILED)); do echo "steps/$$f/step.err"; done)
-
-
 
 %-a:
 	@${MAKE} $*-$(FIRST_FAILED)
@@ -68,7 +65,7 @@ cundo-%:
 
 undo-%:
 	# Undo a step.
-	workflow $(WORKFLOW) -r -u $* &
+	workflow $(WORKFLOW) -r -u $*
 
 tundo-%:
 	# Test undo a step.
