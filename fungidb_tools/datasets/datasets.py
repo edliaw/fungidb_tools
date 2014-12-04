@@ -21,8 +21,8 @@ class DEFAULT(object):
                              "/Datasets/lib/xml/datasets/FungiDB.xml")
     DATASETS = os.path.expanduser("~/GUS/current/project_home/FungiDBDatasets"
                                   "/Datasets/lib/xml/datasets/FungiDB")
-    GDOC = "FungiDB Genomes Old"
-    GSHEET = "Edit"
+    GDOC = "FungiDB Genomes"
+    GSHEET = "Genomes"
 
 
 class COL(object):

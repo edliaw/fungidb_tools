@@ -7,15 +7,20 @@ from __future__ import print_function, unicode_literals
 import re
 import sys
 from functools import total_ordering
-from collections import OrderedDict
+from collections import OrderedDict, namedtuple
 
 
 R_WHITESPACE = re.compile(r'\s+')
+
+GFF3Row = namedtuple('GFF3Row', ['seqid', 'source', 'type', 'start', 'end',
+                                 'score', 'strand', 'phase', 'attr'])
 
 
 class Comment(object):
 
     """A GFF comment.
+
+    # This is a comment.
 
     Attributes:
         text String: comment text.
@@ -31,6 +36,8 @@ class Comment(object):
 class Directive(object):
 
     """A GFF directive.
+
+    ##FASTA
 
     Attributes:
         name String: directive type.
@@ -127,12 +134,11 @@ class GFF3Feature(object):
         self.children = set(children) if children else set()
 
     @classmethod
-    def from_row(cls, seqid, source, soterm, start, end, score, strand,
-                  phase, attributes):
+    def from_row(cls, row):
         """Take input from a GFF entry."""
         # Separate id and parents
-        _id = attributes.pop("ID", None)
-        parents = attributes.pop("Parent", None)
+        _id = row.attr.pop("ID", None)
+        parents = row.attr.pop("Parent", None)
 
         if _id is not None:
             assert len(_id) == 1, "Illegal character ',' in ID"
@@ -141,10 +147,11 @@ class GFF3Feature(object):
             #assert parents is not None, "No ID or Parents attribute"
             id = None
 
-        regions = [Region(seqid, start, end, score, strand, phase, attributes)]
-        return cls(seqid, source, soterm, id, parents, regions)
+        regions = [Region(row.seqid, row.start, row.end, row.score, row.strand,
+                          row.phase, row.attr)]
+        return cls(row.seqid, row.source, row.soterm, id, parents, row.regions)
 
-    def format(self, split_parents=False):
+    def to_rows(self, split_parents=False):
         outstr = []
 
         a = []
@@ -291,8 +298,8 @@ class GFF3Parser(object):
 
         attributes = self.parse_attributes(_attr)
 
-        f = GFF3Feature.from_row(seqid, source, soterm, start, end, score,
-                                  strand, phase, attributes)
+        f = GFF3Feature.from_row(GFF3Row(seqid, source, soterm, start, end,
+                                         score, strand, phase, attributes))
         return f
 
     def parse_attributes(self, attributes):

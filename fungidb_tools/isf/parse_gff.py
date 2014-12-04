@@ -181,7 +181,7 @@ class GFFParser(object):
                     val = urllib.parse.quote(urllib.parse.unquote(val.strip(self.d_quotes)))
                     attr[key] = val
                 except ValueError:
-                    raise ParseError("FAILED to split: %s" % line)
+                    raise ParseError("FAILED to split: %s\nAt %s using %s" % (line, s_pair, self.d_key))
             comment = self.d_attribute.join(comments)
             yield cols, attr, comment
 
