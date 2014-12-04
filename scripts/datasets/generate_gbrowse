@@ -1,0 +1,70 @@
+#!/usr/bin/env python3
+"""Print gbrowse tracks for each organism.
+
+2014-03-28
+Edward Liaw
+"""
+import sys
+import argparse
+import json
+from collections import OrderedDict
+from fungidb_tools import datasets
+
+
+def parse_arguments():
+    """Handle command-line arguments.
+    """
+    parser = argparse.ArgumentParser(description=__doc__,
+                                     fromfile_prefix_chars='@')
+    parser.add_argument('outfile',
+                        type=argparse.FileType('w'), nargs='?',
+                        default=sys.stdout, help='output file')
+    parser.add_argument('--jsonfile', '-j',
+                        default=datasets.DEFAULT.JSON,
+                        help='jsonized spreadsheet')
+    return parser.parse_args()
+
+
+def format_names(tracks):
+    for short_abbrev, o in tracks.items():
+        if len(o) > 1:
+            for long_abbrev, taxname in o:
+                yield long_abbrev, taxname
+        else:
+            long_abbrev, taxname = o[0]
+            yield short_abbrev, taxname
+
+
+def format_gbrowse(abbrev, taxname):
+    contig = ':"{0} contig" "{1}" contig ={0}_span ;'.format(abbrev, taxname)
+    genes =':"{0} genes" "{1}" genes ={0}_gene ;'.format(abbrev, taxname)
+    return '\n'.join((contig, genes))
+
+
+def main():
+    args = parse_arguments()
+
+    with open(args.jsonfile) as infile:
+        organisms = json.load(infile)
+    organisms = [o for o in organisms
+                 if datasets.bool_from_sheet(o[datasets.COL.ISLOADED])]
+
+    tracks = OrderedDict()
+
+    for o in organisms:
+        long_abbrev = o[datasets.COL.ABBREV].replace('-', '')
+        short_abbrev = long_abbrev[:4]
+        taxname = o[datasets.COL.TAXNAME]
+        tracks.setdefault(short_abbrev, []).append((long_abbrev, taxname))
+
+    tracks = list(format_names(tracks))
+
+    with args.outfile as outfile:
+        for abbrev, taxname in tracks:
+            print(format_gbrowse(abbrev, taxname), file=outfile)
+
+
+if __name__ == '__main__':
+    exit = main()
+    if exit:
+        sys.exit(exit)
